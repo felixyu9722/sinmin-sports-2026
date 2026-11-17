@@ -7,7 +7,9 @@
 
 ## 🔗 在线预览链接（可直接转发给运动会主任查看界面）
 
-- **🏠 公开查询与总成绩首页（师生手机端 / 电脑端）**：
+- **📱 纯净师生查分版（推荐印成二维码贴操场，无任何后台设置按钮）**：
+  `https://felixyu9722.github.io/sinmin-sports-2026/live.html`
+- **🏠 完整总览首页（供主任与工作人员一站式预览切换）**：
   `https://felixyu9722.github.io/sinmin-sports-2026/`
 - **📺 决赛现场大屏幕投影页（电视机 / LED 屏）**：
   `https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html`

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   <link rel="stylesheet" href="./css/style.css" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="arena-bg">
   <!-- 顶部导航 -->
@@ -30,11 +31,13 @@
 
       <div class="nav-actions">
         <nav class="page-switcher-bar" aria-label="页面切换与返回">
-          <a href="./index.html" class="switcher-pill" title="返回公开查询与总成绩首页">⬅ 返回首页</a>
+          <a href="./index.html" class="switcher-pill" title="返回工作总览首页">⬅ 返回首页</a>
           <span class="switcher-pill active">🎛️ 控制台</span>
           <a href="./tv-display.html" class="switcher-pill" title="直接进入电视大屏页">📺 电视大屏</a>
+          <a href="./live.html" target="_blank" class="switcher-pill" title="打开给全校师生看的纯净只读查分页">📱 师生版</a>
         </nav>
         <a href="./tv-display.html" target="_blank" class="btn btn-sm btn-primary" title="在新窗口打开大屏以拖动至电视/LED扩展屏">↗ 新窗投屏</a>
+        <button class="btn btn-sm btn-gold" id="btn-open-qr-poster" title="生成并打印给学生与老师扫码查分的 A4 海报">📱 扫码海报</button>
         <button class="btn btn-sm" id="btn-dl-template">📄 下载模板</button>
         <button class="btn btn-sm btn-emerald" id="btn-admin-export">⬇️ 导出归档</button>
         <button class="btn btn-sm" id="btn-cloud-config">☁️ 云端同步</button>
@@ -229,6 +232,48 @@
 
         <div style="display:flex; justify-content:flex-end;">
           <button class="btn btn-emerald" id="btn-save-cloud">✓ 保存全部云端配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 师生扫码查分 A4 海报模态框 -->
+  <div class="modal-backdrop" id="qr-poster-modal">
+    <div class="glass-panel modal-card animate__animated animate__zoomIn animate__faster" style="max-width:560px;">
+      <div class="section-header no-print">
+        <h3 class="section-title">📱 师生扫码查分海报（A4 一键打印）</h3>
+        <button class="btn btn-sm" id="btn-close-qr-poster">✕ 关闭</button>
+      </div>
+
+      <div class="no-print" style="display:flex; gap:8px; margin-bottom:14px; align-items:center;">
+        <input type="url" id="qr-target-url" class="input-control" style="flex:1; font-size:0.8rem;" value="https://felixyu9722.github.io/sinmin-sports-2026/live.html" />
+        <button class="btn btn-sm" id="btn-regen-qr">更新二维码</button>
+        <button class="btn btn-sm btn-primary" id="btn-print-qr-poster">🖨️ 打印 A4 海报</button>
+      </div>
+
+      <div id="qr-poster-printable" style="background:#ffffff; color:#0f172a; border-radius:16px; padding:28px 24px; text-align:center; border:2px solid #e2e8f0;">
+        <img src="./Sin Min Logo.png" alt="新民独立中学校徽" style="width:76px; height:76px; object-fit:contain; margin-bottom:10px;" />
+        <h2 style="margin:0; font-size:1.6rem; font-weight:900; color:#0f172a;">新民独立中学 2026 年度运动会</h2>
+        <div style="font-size:0.82rem; color:#475569; letter-spacing:0.08em; margin-top:4px;">SIN MIN MIDDLE SCHOOL ANNUAL SPORTS MEET</div>
+
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; max-width:260px; margin:16px auto;">
+          <div style="height:6px; border-radius:999px; background:#ff2a4b;"></div>
+          <div style="height:6px; border-radius:999px; background:#ffc700;"></div>
+          <div style="height:6px; border-radius:999px; background:#2979ff;"></div>
+          <div style="height:6px; border-radius:999px; background:#00e676;"></div>
+        </div>
+
+        <div style="display:inline-block; padding:14px; border-radius:14px; border:2px solid #cbd5e1; background:#ffffff; margin:6px 0 14px;">
+          <div id="qr-code-container" style="display:flex; align-items:center; justify-content:center; min-width:220px; min-height:220px;"></div>
+        </div>
+
+        <div style="font-size:1.2rem; font-weight:900; color:#0f172a; margin-bottom:6px;">📱 手机扫码 · 实时查看赛程与成绩</div>
+        <div style="font-size:0.88rem; color:#334155; line-height:1.6;">
+          红黄蓝青实时总积分榜 · 破纪录英雄榜<br/>
+          输入 4 位运动员编号或姓名，立即查看个人战绩
+        </div>
+        <div id="qr-url-caption" style="margin-top:12px; font-family:monospace; font-size:0.76rem; color:#64748b; word-break:break-all;">
+          https://felixyu9722.github.io/sinmin-sports-2026/live.html
         </div>
       </div>
     </div>
@@ -840,6 +885,52 @@
         }).catch(function (err) {
           S.showToast('拉取失败：' + err.message);
         });
+      });
+
+      // 扫码海报弹窗逻辑
+      var qrModal = document.getElementById('qr-poster-modal');
+      var qrUrlInput = document.getElementById('qr-target-url');
+      var qrContainer = document.getElementById('qr-code-container');
+      var qrCaption = document.getElementById('qr-url-caption');
+
+      function renderQrPosterCode() {
+        var url = qrUrlInput.value.trim() || 'https://felixyu9722.github.io/sinmin-sports-2026/live.html';
+        qrCaption.textContent = url;
+        qrContainer.innerHTML = '';
+        if (typeof window.QRCode === 'function') {
+          new window.QRCode(qrContainer, {
+            text: url,
+            width: 220,
+            height: 220,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: window.QRCode.CorrectLevel.M
+          });
+        } else {
+          var img = document.createElement('img');
+          img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(url);
+          img.alt = '查分二维码';
+          img.style.width = '220px';
+          img.style.height = '220px';
+          qrContainer.appendChild(img);
+        }
+      }
+
+      document.getElementById('btn-open-qr-poster').addEventListener('click', function () {
+        qrModal.classList.add('open');
+        renderQrPosterCode();
+      });
+      document.getElementById('btn-close-qr-poster').addEventListener('click', function () {
+        qrModal.classList.remove('open');
+      });
+      document.getElementById('btn-regen-qr').addEventListener('click', renderQrPosterCode);
+      document.getElementById('btn-print-qr-poster').addEventListener('click', function () {
+        document.body.classList.add('printing-qr-poster');
+        window.print();
+        setTimeout(function () { document.body.classList.remove('printing-qr-poster'); }, 600);
+      });
+      window.addEventListener('afterprint', function () {
+        document.body.classList.remove('printing-qr-poster');
       });
 
       renderEventsSidebar();

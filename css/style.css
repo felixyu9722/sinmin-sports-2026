@@ -1410,4 +1410,20 @@ body.tv-body {
     color: #000000 !important;
     border-color: #94a3b8 !important;
   }
+  body.printing-qr-poster .admin-layout {
+    display: none !important;
+  }
+  body.printing-qr-poster #qr-poster-modal {
+    position: static !important;
+    display: block !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+  body.printing-qr-poster #qr-poster-modal .modal-card {
+    max-width: 100% !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
 }

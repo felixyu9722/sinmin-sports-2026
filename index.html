@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新民中学 2026 运动会 · 实时成绩与总积分榜</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="arena-bg">
+  <!-- 顶部导航栏 -->
+  <header class="top-navbar">
+    <div class="nav-inner">
+      <div class="brand-area">
+        <div class="school-logo-wrap">
+          <img src="./Sin Min Logo.png" alt="新民中学校徽" />
+        </div>
+        <div class="brand-title">
+          <h1>
+            <span>新民中学 2026 运动会</span>
+            <span class="live-dot" id="sync-status-badge">实时联动中</span>
+          </h1>
+          <p>SIN MIN MIDDLE SCHOOL SPORTS MEET · 公开成绩查询与积分总榜</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <nav class="page-switcher-bar" aria-label="页面切换">
+          <span class="switcher-pill active">🏠 成绩首页</span>
+          <a href="./admin.html" class="switcher-pill">🎛️ 控制台</a>
+          <a href="./tv-display.html" class="switcher-pill">📺 电视大屏</a>
+        </nav>
+        <label class="btn btn-sm" title="直接解析本地 Excel 成绩表进行展示">
+          📂 读取 Excel 查看
+          <input type="file" id="public-excel-input" accept=".xlsx,.xls,.csv" hidden />
+        </label>
+        <button class="btn btn-sm" id="btn-open-gsheets">☁️ Google Sheets 同步</button>
+        <button class="btn btn-sm btn-emerald" id="btn-export-excel">⬇️ 一键导出 Excel</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 置顶：四色队伍实时总积分榜 -->
+    <section aria-label="四色队伍总积分榜">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>🏆</span>
+          <span>四色队伍实时总积分榜</span>
+          <span style="font-size:0.78rem; color:var(--text-secondary); font-weight:500;">(个人决赛 7-5-3-2-1 · 团体决赛 10-7-5-3-1 · 并列自动平分)</span>
+        </h2>
+        <div style="font-size:0.78rem; color:var(--text-secondary);" id="last-updated-label">更新时间：-</div>
+      </div>
+      <div class="scoreboard-grid" id="scoreboard-grid"></div>
+    </section>
+
+    <!-- 荣耀聚焦：最佳运动员实时榜 & 破大会纪录英雄榜 -->
+    <section class="spotlight-grid">
+      <div class="glass-panel animate__animated animate__fadeInUp" style="padding:18px;">
+        <div class="section-header">
+          <h3 class="section-title">👑 各组最佳运动员实时领跑榜 (章程 10.5)</h3>
+          <span style="font-size:0.74rem; color:var(--text-secondary);">以个人项目金牌最多为准，同数则共享</span>
+        </div>
+        <div class="mvp-mini-grid" id="mvp-mini-grid"></div>
+      </div>
+
+      <div class="glass-panel animate__animated animate__fadeInUp" style="padding:18px;">
+        <div class="section-header">
+          <h3 class="section-title">⚡ 破大会纪录英雄榜 (NEW RECORD)</h3>
+          <span class="badge-record" id="record-total-count">0 项新纪录</span>
+        </div>
+        <div id="records-spotlight-list" style="display:flex; flex-direction:column; gap:8px; max-height:210px; overflow-y:auto;"></div>
+      </div>
+    </section>
+
+    <!-- 多维筛选器与学生个人编号检索 -->
+    <section class="glass-panel filter-bar">
+      <div class="filter-row" style="justify-content:space-between;">
+        <div style="flex:1; min-width:260px; display:flex; gap:8px; align-items:center;">
+          <input
+            type="text"
+            id="search-input"
+            class="input-control"
+            style="width:100%;"
+            placeholder="🔍 输入 4位编号（如 1101）、学生姓名或班级，生成专属参赛战绩卡..."
+          />
+          <button class="btn btn-sm" id="btn-clear-search" style="display:none;">清除</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:0.78rem; color:var(--text-secondary);">号码布图例：</span>
+          <span class="bib-badge bib-white">甲组(高中)白布</span>
+          <span class="bib-badge bib-yellow">乙组(初中)黄布</span>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <span style="font-size:0.78rem; color:var(--text-secondary); min-width:52px;">组别：</span>
+        <div class="filter-chips" id="filter-group">
+          <button class="chip-btn active" data-val="all">全部组别</button>
+          <button class="chip-btn" data-val="男甲">男甲 (高中)</button>
+          <button class="chip-btn" data-val="女甲">女甲 (高中)</button>
+          <button class="chip-btn" data-val="男乙">男乙 (初中)</button>
+          <button class="chip-btn" data-val="女乙">女乙 (初中)</button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <span style="font-size:0.78rem; color:var(--text-secondary); min-width:52px;">色队：</span>
+        <div class="filter-chips" id="filter-team">
+          <button class="chip-btn active" data-val="all">全部色队</button>
+          <button class="chip-btn" data-val="red">🔴 红队 (1)</button>
+          <button class="chip-btn" data-val="yellow">🟡 黄队 (2)</button>
+          <button class="chip-btn" data-val="blue">🔵 蓝队 (3)</button>
+          <button class="chip-btn" data-val="green">🟢 青队 (4)</button>
+        </div>
+
+        <span style="font-size:0.78rem; color:var(--text-secondary); margin-left:10px;">类型：</span>
+        <div class="filter-chips" id="filter-type">
+          <button class="chip-btn active" data-val="all">全部项目</button>
+          <button class="chip-btn" data-val="track">🏃 径赛</button>
+          <button class="chip-btn" data-val="field">🏅 田赛</button>
+          <button class="chip-btn" data-val="team">🤝 接力/拔河团体</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 个人专属参赛卡（仅搜索时出现） -->
+    <section id="athlete-profile-card" style="display:none; margin-bottom:20px;"></section>
+
+    <!-- 赛程与完整成绩表 -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">📋 赛程与完整成绩表</h2>
+        <span style="font-size:0.82rem; color:var(--text-secondary);" id="events-count-label">共 0 个项目</span>
+      </div>
+      <div class="events-feed" id="events-feed"></div>
+    </section>
+
+    <!-- 颁奖台实体奖牌核算表（章程第9条） -->
+    <section class="glass-panel" style="margin-top:24px; padding:18px;">
+      <div class="section-header">
+        <h3 class="section-title">🎖️ 颁奖组实体奖牌发放核算表 (章程 9.1 - 9.4)</h3>
+        <span style="font-size:0.76rem; color:var(--text-secondary);">个人前3名各1面 · 接力前3名各5面 · 拔河/大队接力前3名各8面</span>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table" id="physical-medals-table"></table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Google Sheets 同步设置模态框 -->
+  <div class="modal-backdrop" id="gsheets-modal">
+    <div class="glass-panel modal-card animate__animated animate__zoomIn animate__faster">
+      <div class="section-header">
+        <h3 class="section-title">☁️ Google Sheets 决赛实时同步设置</h3>
+        <button class="btn btn-sm" id="btn-close-gsheets">✕ 关闭</button>
+      </div>
+      <p style="font-size:0.86rem; color:var(--text-secondary); line-height:1.6; margin-top:0;">
+        在 Google Sheets 中点击 <strong>文件 → 共享 → 发布到网络</strong>，将工作表发布为 <strong>CSV</strong> 格式并粘贴链接到下方，即可每 20 秒自动拉取决赛同步成绩（无需后端服务器）。
+      </p>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <label style="font-size:0.82rem; color:var(--text-secondary);">
+          Google Sheets 已发布 CSV 链接：
+          <input type="url" id="gsheets-csv-url" class="input-control" style="width:100%; margin-top:6px;" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" />
+        </label>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; cursor:pointer;">
+            <input type="checkbox" id="gsheets-auto-poll" />
+            <span>开启每 20 秒自动同步</span>
+          </label>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-sm" id="btn-save-gsheets">保存链接</button>
+            <button class="btn btn-sm btn-primary" id="btn-sync-gsheets-now">立即拉取同步</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/core.js"></script>
+  <script>
+    (function () {
+      var S = window.SinMinSports;
+      var state = S.loadState();
+      var filters = { group: 'all', team: 'all', type: 'all', query: '' };
+      var activeStageTab = {}; // eventId -> 'final' | 'prelim'
+      var pollTimer = null;
+
+      function renderAll(highlightAnimate) {
+        renderScoreboard(highlightAnimate);
+        renderMvpAndRecords();
+        renderAthleteSearchCard();
+        renderEventsFeed();
+        renderPhysicalMedalsTable();
+        var updatedEl = document.getElementById('last-updated-label');
+        if (updatedEl && state.meta && state.meta.updatedAt) {
+          var d = new Date(state.meta.updatedAt);
+          updatedEl.textContent = '最近更新：' + d.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+      }
+
+      function renderScoreboard(highlightAnimate) {
+        var standings = S.computeStandings(state);
+        var container = document.getElementById('scoreboard-grid');
+        container.innerHTML = standings.rankedTeams.map(function (t) {
+          var pct = Math.max(8, t.progressPct || 0);
+          return (
+            '<div class="house-card house-' + t.id + ' animate__animated ' + (highlightAnimate ? 'animate__pulse' : 'animate__fadeInUp') + '">' +
+              '<div class="house-card-header">' +
+                '<div style="display:flex; align-items:center; gap:8px;">' +
+                  '<span class="bib-dot team-dot-' + t.id + '" style="width:12px; height:12px;"></span>' +
+                  '<span style="font-size:1.15rem; font-weight:800;">' + S.escapeHtml(t.name) + '</span>' +
+                  '<span style="font-size:0.72rem; color:var(--text-secondary);">' + S.escapeHtml(t.enName) + '</span>' +
+                '</div>' +
+                '<span class="house-rank-badge ' + (t.rank === 1 ? 'house-rank-1' : '') + '">第 ' + t.rank + ' 名</span>' +
+              '</div>' +
+              '<div style="display:flex; align-items:baseline; justify-content:space-between;">' +
+                '<div class="house-score-num" style="color:' + t.color + ';">' + t.points + '<span style="font-size:0.9rem; margin-left:4px; color:var(--text-secondary);">分</span></div>' +
+                '<div style="font-size:0.76rem; color:var(--text-secondary);">精神奖: <strong>' + t.spiritScore + '</strong></div>' +
+              '</div>' +
+              '<div class="house-progress-track">' +
+                '<div class="house-progress-fill" style="width:' + pct + '%; background:linear-gradient(90deg, ' + t.color + ', #ffffff);"></div>' +
+              '</div>' +
+              '<div class="house-medals-row">' +
+                '<span class="medal-chip" style="color:var(--gold);">🥇 ' + t.gold + '</span>' +
+                '<span class="medal-chip" style="color:var(--silver);">🥈 ' + t.silver + '</span>' +
+                '<span class="medal-chip" style="color:var(--bronze);">🥉 ' + t.bronze + '</span>' +
+                '<span style="font-size:0.74rem; color:var(--text-secondary);">实体牌 ' + t.physicalMedals + ' 面</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function renderMvpAndRecords() {
+        var standings = S.computeStandings(state);
+        var mvpEl = document.getElementById('mvp-mini-grid');
+        mvpEl.innerHTML = S.GROUP_ORDER.map(function (grp) {
+          var info = standings.bestAthletes[grp];
+          if (!info || info.leaders.length === 0) {
+            return (
+              '<div class="mvp-mini-card">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                  '<span class="skew-tag" style="background:rgba(148,163,184,0.16); padding:2px 8px; font-size:0.74rem;"><span>' + grp + '</span></span>' +
+                  '<span style="font-size:0.74rem; color:var(--text-muted);">暂未产生个人金牌</span>' +
+                '</div>' +
+                '<div style="color:var(--text-muted); font-size:0.84rem;">等待决赛完赛...</div>' +
+              '</div>'
+            );
+          }
+          var namesHtml = info.leaders.map(function (l) {
+            return '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+              S.renderBibHtml(l.bib, grp) +
+              '<strong>' + S.escapeHtml(l.name) + '</strong>' +
+              S.renderTeamPillHtml(l.team) +
+            '</div>';
+          }).join('');
+          return (
+            '<div class="mvp-mini-card">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                '<span class="skew-tag" style="background:rgba(255,215,0,0.18); color:#ffd700; padding:2px 8px; font-size:0.74rem;"><span>' + grp + '</span></span>' +
+                '<span style="font-size:0.76rem; color:#ffd700; font-weight:700;">🥇 ' + info.maxGolds + ' 金' + (info.shared ? ' · 并列共享' : '') + '</span>' +
+              '</div>' +
+              namesHtml +
+            '</div>'
+          );
+        }).join('');
+
+        var recListEl = document.getElementById('records-spotlight-list');
+        var recCountEl = document.getElementById('record-total-count');
+        recCountEl.textContent = standings.recordsList.length + ' 项新纪录';
+        if (standings.recordsList.length === 0) {
+          recListEl.innerHTML = '<div style="color:var(--text-muted); font-size:0.86rem; padding:12px 0;">暂未有打破大会纪录的成绩，期待新纪录诞生！</div>';
+        } else {
+          recListEl.innerHTML = standings.recordsList.map(function (r) {
+            return (
+              '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border-radius:10px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.28);">' +
+                '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+                  '<span class="badge-record">NR</span>' +
+                  '<strong>' + S.escapeHtml(r.eventName) + '</strong>' +
+                  '<span>' + S.escapeHtml(r.name) + '</span>' +
+                  S.renderTeamPillHtml(r.team) +
+                '</div>' +
+                '<div style="text-align:right; font-family:var(--font-mono); white-space:nowrap;">' +
+                  '<strong style="color:var(--gold); font-size:0.95rem;">' + S.escapeHtml(r.newMark) + '</strong>' +
+                  '<div style="font-size:0.7rem; color:var(--text-secondary);">原纪录 ' + S.escapeHtml(r.oldMark) + '</div>' +
+                '</div>' +
+              '</div>'
+            );
+          }).join('');
+        }
+      }
+
+      function renderAthleteSearchCard() {
+        var box = document.getElementById('athlete-profile-card');
+        var q = filters.query.trim().toLowerCase();
+        if (!q) {
+          box.style.display = 'none';
+          box.innerHTML = '';
+          return;
+        }
+        var matches = {};
+        (state.events || []).forEach(function (ev) {
+          var finalComputed = S.calculateEntries(ev.finalEntries || [], ev, true);
+          var prelimInfo = S.computePrelimQualifiers(ev);
+
+          function scanList(list, stageName) {
+            list.forEach(function (entry) {
+              var hay = [entry.bib, entry.name, entry.className].join(' ').toLowerCase();
+              if (hay.indexOf(q) !== -1) {
+                var key = (entry.bib || entry.name) + '_' + (entry.group || ev.group);
+                if (!matches[key]) {
+                  matches[key] = {
+                    bib: entry.bib,
+                    name: entry.name,
+                    className: entry.className,
+                    team: S.normalizeTeamId(entry.team),
+                    group: entry.group || ev.group,
+                    totalPoints: 0,
+                    items: []
+                  };
+                }
+                matches[key].totalPoints = Math.round((matches[key].totalPoints + (entry.points || 0)) * 100) / 100;
+                matches[key].items.push({
+                  eventName: ev.group + ' ' + ev.name,
+                  stage: stageName,
+                  lane: entry.lane,
+                  mark: S.formatMarkDisplay(entry, ev),
+                  rank: entry.rank || entry.heatRank || '-',
+                  points: entry.points || 0,
+                  isRecord: !!entry.isRecord,
+                  status: entry.status || 'OK'
+                });
+              }
+            });
+          }
+          scanList(finalComputed, '决赛');
+          scanList(prelimInfo.entries, '预赛');
+        });
+
+        var list = Object.keys(matches).map(function (k) { return matches[k]; });
+        if (list.length === 0) {
+          box.style.display = 'block';
+          box.innerHTML = '<div class="glass-panel" style="padding:16px; color:var(--text-secondary);">未找到与「' + S.escapeHtml(filters.query) + '」匹配的选手或编号。</div>';
+          return;
+        }
+
+        box.style.display = 'block';
+        box.innerHTML = list.slice(0, 4).map(function (ath) {
+          return (
+            '<div class="glass-panel animate__animated animate__fadeIn" style="padding:18px; margin-bottom:12px; border-color:rgba(56,189,248,0.45);">' +
+              '<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">' +
+                '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+                  S.renderBibHtml(ath.bib, ath.group) +
+                  '<strong style="font-size:1.2rem;">' + S.escapeHtml(ath.name) + '</strong>' +
+                  '<span style="color:var(--text-secondary); font-size:0.88rem;">' + S.escapeHtml(ath.className || '') + ' · ' + S.escapeHtml(ath.group) + '</span>' +
+                  S.renderTeamPillHtml(ath.team) +
+                '</div>' +
+                '<div style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--accent-cyan);">' +
+                  '为队伍贡献总分：' + ath.totalPoints + ' 分' +
+                '</div>' +
+              '</div>' +
+              '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px;">' +
+                ath.items.map(function (it) {
+                  return (
+                    '<div style="padding:10px 12px; border-radius:10px; background:rgba(9,14,28,0.7); border:1px solid rgba(148,163,184,0.16);">' +
+                      '<div style="font-weight:700; font-size:0.88rem; margin-bottom:4px;">' + S.escapeHtml(it.eventName) + ' <span style="color:var(--accent-cyan); font-size:0.76rem;">[' + it.stage + ']</span></div>' +
+                      '<div style="font-size:0.82rem; color:var(--text-secondary);">第 ' + (it.lane || '-') + ' 道 · 成绩 <strong style="color:#fff;">' + S.escapeHtml(it.mark) + '</strong></div>' +
+                      '<div style="font-size:0.8rem; margin-top:4px; display:flex; justify-content:space-between;">' +
+                        '<span>名次：第 ' + it.rank + ' 名</span>' +
+                        '<span style="color:#34d399; font-weight:700;">' + (it.points ? ('+' + it.points + ' 分') : (it.status !== 'OK' ? it.status : '未计分')) + '</span>' +
+                      '</div>' +
+                    '</div>'
+                  );
+                }).join('') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function renderEventsFeed() {
+        var feedEl = document.getElementById('events-feed');
+        var dnsMap = S.getDnsDisqualifications(state).warnings;
+        var q = filters.query.trim().toLowerCase();
+
+        var filteredEvents = (state.events || []).filter(function (ev) {
+          if (filters.group !== 'all' && ev.group !== filters.group) return false;
+          if (filters.type !== 'all') {
+            if (filters.type === 'team' && !ev.isTeam) return false;
+            if (filters.type === 'track' && (ev.type !== 'track' || ev.isTeam)) return false;
+            if (filters.type === 'field' && ev.type !== 'field') return false;
+          }
+          var allEntries = (ev.finalEntries || []).concat(ev.prelimEntries || []);
+          if (filters.team !== 'all') {
+            var hasTeam = allEntries.some(function (e) { return S.normalizeTeamId(e.team) === filters.team; });
+            if (!hasTeam) return false;
+          }
+          if (q) {
+            var hitEvent = (ev.name + ' ' + ev.group).toLowerCase().indexOf(q) !== -1;
+            var hitEntry = allEntries.some(function (e) {
+              return [e.bib, e.name, e.className].join(' ').toLowerCase().indexOf(q) !== -1;
+            });
+            if (!hitEvent && !hitEntry) return false;
+          }
+          return true;
+        });
+
+        document.getElementById('events-count-label').textContent = '显示 ' + filteredEvents.length + ' / ' + (state.events || []).length + ' 个项目';
+
+        if (filteredEvents.length === 0) {
+          feedEl.innerHTML = '<div class="glass-panel" style="padding:36px; text-align:center; color:var(--text-secondary);">当前筛选条件下暂无赛事项目</div>';
+          return;
+        }
+
+        feedEl.innerHTML = filteredEvents.map(function (ev) {
+          var hasPrelims = ev.prelimEntries && ev.prelimEntries.length > 0;
+          var hasFinals = ev.finalEntries && ev.finalEntries.length > 0;
+          var stageMode = activeStageTab[ev.id] || (hasFinals ? 'final' : (hasPrelims ? 'prelim' : 'final'));
+
+          var statusBadge = ev.status === 'finished'
+            ? '<span style="padding:3px 9px; border-radius:999px; background:rgba(16,185,129,0.16); color:#34d399; font-size:0.75rem; font-weight:700;">✓ 决赛已完赛</span>'
+            : (ev.status === 'prelims_done'
+              ? '<span style="padding:3px 9px; border-radius:999px; background:rgba(245,158,11,0.18); color:#fbbf24; font-size:0.75rem; font-weight:700;">⏳ 预赛已出炉</span>'
+              : '<span style="padding:3px 9px; border-radius:999px; background:rgba(56,189,248,0.16); color:#7dd3fc; font-size:0.75rem; font-weight:700;">🕒 检录 / 待赛</span>');
+
+          var stageSwitchHtml = '';
+          if (hasPrelims) {
+            stageSwitchHtml = (
+              '<div style="display:flex; gap:6px;">' +
+                '<button class="chip-btn ' + (stageMode === 'final' ? 'active' : '') + '" data-stage-ev="' + ev.id + '" data-stage="final">决赛名单/成绩</button>' +
+                '<button class="chip-btn ' + (stageMode === 'prelim' ? 'active' : '') + '" data-stage-ev="' + ev.id + '" data-stage="prelim">预赛分组与晋级(Q/q)</button>' +
+              '</div>'
+            );
+          }
+
+          var tableHtml = '';
+          if (stageMode === 'prelim' && hasPrelims) {
+            var pInfo = S.computePrelimQualifiers(ev);
+            var pRows = pInfo.entries.filter(function (e) {
+              return filters.team === 'all' || S.normalizeTeamId(e.team) === filters.team;
+            });
+            tableHtml = (
+              '<table class="data-table">' +
+                '<thead><tr><th>分组</th><th>道次</th><th>号码布</th><th>选手 / 班级</th><th>色队</th><th>成绩</th><th>组内名次</th><th>晋级</th></tr></thead>' +
+                '<tbody>' +
+                  pRows.map(function (entry) {
+                    var qBadge = entry.qualBadge === 'Q'
+                      ? '<span class="badge-q-big" title="小组第一直接晋级">Q</span>'
+                      : (entry.qualBadge === 'q' ? '<span class="badge-q-small" title="按成绩择优晋级">q</span>' : '<span style="color:var(--text-muted);">-</span>');
+                    var dnsWarn = dnsMap[ev.id + '|' + entry.bib];
+                    return (
+                      '<tr>' +
+                        '<td>第 ' + (entry.heat || 1) + ' 组</td>' +
+                        '<td style="font-family:var(--font-mono); font-weight:700;">' + (entry.lane || '-') + '</td>' +
+                        '<td>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</td>' +
+                        '<td><strong>' + S.escapeHtml(entry.name) + '</strong> <span style="color:var(--text-secondary); font-size:0.78rem;">' + S.escapeHtml(entry.className || '') + '</span>' +
+                          (dnsWarn ? '<div class="badge-status-warn" style="margin-top:4px;">' + S.escapeHtml(dnsWarn) + '</div>' : '') +
+                        '</td>' +
+                        '<td>' + S.renderTeamPillHtml(entry.team) + '</td>' +
+                        '<td style="font-family:var(--font-mono); font-weight:700;">' + S.escapeHtml(S.formatMarkDisplay(entry, ev)) + '</td>' +
+                        '<td>' + (entry.heatRank ? '第 ' + entry.heatRank + ' 名' : '-') + '</td>' +
+                        '<td>' + qBadge + '</td>' +
+                      '</tr>'
+                    );
+                  }).join('') +
+                '</tbody>' +
+              '</table>'
+            );
+          } else {
+            var fComputed = S.calculateEntries(ev.finalEntries || [], ev, true).filter(function (e) {
+              return filters.team === 'all' || S.normalizeTeamId(e.team) === filters.team;
+            });
+            if (fComputed.length === 0) {
+              tableHtml = '<div style="padding:14px; color:var(--text-secondary); font-size:0.86rem;">决赛名单待预赛结束或检录后生成。</div>';
+            } else {
+              tableHtml = (
+                '<table class="data-table">' +
+                  '<thead><tr><th>名次</th><th>道次</th><th>号码布</th><th>选手 / 队伍</th><th>色队</th><th>成绩' + (ev.type === 'field' ? ' (三次试跳/投)' : '') + '</th><th>得分</th><th>备注</th></tr></thead>' +
+                  '<tbody>' +
+                    fComputed.map(function (entry) {
+                      var rankCell = entry.rank === 1 ? '<span class="rank-medal-1">🥇 1</span>'
+                        : (entry.rank === 2 ? '<span class="rank-medal-2">🥈 2</span>'
+                        : (entry.rank === 3 ? '<span class="rank-medal-3">🥉 3</span>'
+                        : (entry.rank ? '<strong>' + entry.rank + '</strong>' : '<span style="color:var(--text-muted);">-</span>')));
+                      if (entry.isTied && entry.rank) rankCell += ' <span style="font-size:0.72rem; color:#fbbf24;">(并列)</span>';
+
+                      var fieldDetail = '';
+                      if (ev.type === 'field') {
+                        var attempts = [entry.attempt1, entry.attempt2, entry.attempt3].filter(function (x) { return x !== undefined && x !== ''; });
+                        if (attempts.length > 0) {
+                          fieldDetail = '<div style="font-size:0.72rem; color:var(--text-secondary);">试次: ' + S.escapeHtml(attempts.join(' / ')) + '</div>';
+                        }
+                      }
+
+                      var badges = [];
+                      if (entry.isRecord) badges.push('<span class="badge-record">NEW RECORD</span>');
+                      if (entry.windAssisted) badges.push('<span class="badge-wind" title="顺风超过+2.0m/s，成绩有效但不计破纪录">超风速 ' + S.escapeHtml(ev.wind) + 'w</span>');
+                      if (entry.qualBadge === 'Q') badges.push('<span class="badge-q-big">预赛Q</span>');
+                      if (entry.qualBadge === 'q') badges.push('<span class="badge-q-small">预赛q</span>');
+                      var dnsWarn = dnsMap[ev.id + '|' + entry.bib];
+                      if (dnsWarn) badges.push('<span class="badge-status-warn">' + S.escapeHtml(dnsWarn) + '</span>');
+
+                      return (
+                        '<tr>' +
+                          '<td>' + rankCell + '</td>' +
+                          '<td style="font-family:var(--font-mono);">第 ' + (entry.lane || '-') + ' 道</td>' +
+                          '<td>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</td>' +
+                          '<td><strong>' + S.escapeHtml(entry.name) + '</strong> <span style="color:var(--text-secondary); font-size:0.78rem;">' + S.escapeHtml(entry.className || '') + '</span></td>' +
+                          '<td>' + S.renderTeamPillHtml(entry.team) + '</td>' +
+                          '<td style="font-family:var(--font-mono); font-weight:800; font-size:0.96rem;">' + S.escapeHtml(S.formatMarkDisplay(entry, ev)) + fieldDetail + '</td>' +
+                          '<td style="font-family:var(--font-display); font-weight:800; color:' + (entry.points > 0 ? '#34d399' : 'var(--text-muted)') + ';">' + (entry.points > 0 ? '+' + entry.points : '0') + '</td>' +
+                          '<td><div style="display:flex; gap:5px; flex-wrap:wrap;">' + (badges.join('') || '<span style="color:var(--text-muted);">-</span>') + '</div></td>' +
+                        '</tr>'
+                      );
+                    }).join('') +
+                  '</tbody>' +
+                '</table>'
+              );
+            }
+          }
+
+          return (
+            '<article class="event-card animate__animated animate__fadeIn">' +
+              '<div class="event-card-head">' +
+                '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+                  '<span class="skew-tag" style="background:rgba(56,189,248,0.18); color:#7dd3fc; padding:4px 10px; font-size:0.8rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+                  '<h3 style="margin:0; font-size:1.15rem; font-weight:800;">' + S.escapeHtml(ev.name) + '</h3>' +
+                  '<span style="font-size:0.76rem; color:var(--text-secondary);">' + (ev.isTeam ? '团体赛 (10-7-5-3-1)' : '个人赛 (7-5-3-2-1)') + '</span>' +
+                  (ev.scheduleTime ? '<span style="font-size:0.76rem; color:var(--text-muted);">🕒 ' + S.escapeHtml(ev.scheduleTime) + '</span>' : '') +
+                  statusBadge +
+                '</div>' +
+                '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+                  (ev.recordMark ? '<span style="font-size:0.78rem; color:#fcd34d;">大会纪录：<strong>' + S.escapeHtml(ev.recordMark) + '</strong> ' + S.escapeHtml(ev.recordHolder || '') + '</span>' : '') +
+                  (ev.wind ? '<span style="font-size:0.76rem; color:var(--text-secondary);">风速 ' + S.escapeHtml(ev.wind) + ' m/s</span>' : '') +
+                  stageSwitchHtml +
+                '</div>' +
+              '</div>' +
+              '<div class="data-table-wrap">' + tableHtml + '</div>' +
+            '</article>'
+          );
+        }).join('');
+      }
+
+      function renderPhysicalMedalsTable() {
+        var standings = S.computeStandings(state);
+        var table = document.getElementById('physical-medals-table');
+        table.innerHTML = (
+          '<thead><tr><th>已完赛项目</th><th>前3名每队奖牌数</th><th>🔴 红队</th><th>🟡 黄队</th><th>🔵 蓝队</th><th>🟢 青队</th></tr></thead>' +
+          '<tbody>' +
+            standings.physicalBreakdown.map(function (row) {
+              return '<tr><td><strong>' + S.escapeHtml(row.eventName) + '</strong></td><td>' + row.multiplier + ' 面/队</td><td>' + row.red + '</td><td>' + row.yellow + '</td><td>' + row.blue + '</td><td>' + row.green + '</td></tr>';
+            }).join('') +
+            '<tr style="background:rgba(56,189,248,0.1); font-weight:800;">' +
+              '<td>实体奖牌总计</td><td>-</td>' +
+              '<td style="color:var(--team-red);">' + standings.teamsMap.red.physicalMedals + ' 面</td>' +
+              '<td style="color:var(--team-yellow);">' + standings.teamsMap.yellow.physicalMedals + ' 面</td>' +
+              '<td style="color:var(--team-blue);">' + standings.teamsMap.blue.physicalMedals + ' 面</td>' +
+              '<td style="color:var(--team-green);">' + standings.teamsMap.green.physicalMedals + ' 面</td>' +
+            '</tr>' +
+          '</tbody>'
+        );
+      }
+
+      // 事件绑定
+      function setupChipFilter(containerId, key) {
+        var wrap = document.getElementById(containerId);
+        wrap.addEventListener('click', function (e) {
+          var btn = e.target.closest('button[data-val]');
+          if (!btn) return;
+          wrap.querySelectorAll('.chip-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          filters[key] = btn.getAttribute('data-val');
+          renderAthleteSearchCard();
+          renderEventsFeed();
+        });
+      }
+      setupChipFilter('filter-group', 'group');
+      setupChipFilter('filter-team', 'team');
+      setupChipFilter('filter-type', 'type');
+
+      var searchInput = document.getElementById('search-input');
+      var clearBtn = document.getElementById('btn-clear-search');
+      searchInput.addEventListener('input', function () {
+        filters.query = searchInput.value;
+        clearBtn.style.display = filters.query ? 'inline-flex' : 'none';
+        renderAthleteSearchCard();
+        renderEventsFeed();
+      });
+      clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        filters.query = '';
+        clearBtn.style.display = 'none';
+        renderAthleteSearchCard();
+        renderEventsFeed();
+      });
+
+      document.getElementById('events-feed').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-stage-ev]');
+        if (!btn) return;
+        var evId = btn.getAttribute('data-stage-ev');
+        activeStageTab[evId] = btn.getAttribute('data-stage');
+        renderEventsFeed();
+      });
+
+      document.getElementById('public-excel-input').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        S.importExcelFile(file, state).then(function (res) {
+          state = res.state;
+          S.saveState(state, true);
+          renderAll(true);
+          S.showToast('成功解析 Excel：导入 ' + res.importedCount + ' 条选手成绩记录');
+        }).catch(function (err) {
+          S.showToast('Excel 读取失败：' + err.message);
+        });
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-export-excel').addEventListener('click', function () {
+        try {
+          S.exportArchiveExcel(state);
+          S.showToast('已导出格式化 Excel 归档文件（含5张统计工作表）');
+        } catch (err) {
+          S.showToast('导出失败：' + err.message);
+        }
+      });
+
+      // Google Sheets 同步弹窗逻辑
+      var gModal = document.getElementById('gsheets-modal');
+      var csvInput = document.getElementById('gsheets-csv-url');
+      var autoCheck = document.getElementById('gsheets-auto-poll');
+
+      document.getElementById('btn-open-gsheets').addEventListener('click', function () {
+        csvInput.value = (state.meta && state.meta.googleSheetCsvUrl) || '';
+        gModal.classList.add('open');
+      });
+      document.getElementById('btn-close-gsheets').addEventListener('click', function () {
+        gModal.classList.remove('open');
+      });
+      document.getElementById('btn-save-gsheets').addEventListener('click', function () {
+        state.meta.googleSheetCsvUrl = csvInput.value.trim();
+        S.saveState(state, false);
+        S.showToast('已保存 Google Sheets CSV 同步地址');
+      });
+
+      function runGsheetsSync() {
+        var url = csvInput.value.trim() || (state.meta && state.meta.googleSheetCsvUrl);
+        S.fetchFromGoogleSheetsCsv(url, state).then(function (res) {
+          state = res.state;
+          state.meta.googleSheetCsvUrl = url;
+          S.saveState(state, true);
+          renderAll(true);
+          S.showToast('Google Sheets 同步成功：更新 ' + res.importedCount + ' 条数据');
+        }).catch(function (err) {
+          S.showToast('同步失败：' + err.message);
+        });
+      }
+      document.getElementById('btn-sync-gsheets-now').addEventListener('click', runGsheetsSync);
+      autoCheck.addEventListener('change', function () {
+        if (pollTimer) clearInterval(pollTimer);
+        if (autoCheck.checked) {
+          pollTimer = setInterval(runGsheetsSync, 20000);
+          S.showToast('已开启每 20 秒自动同步 Google Sheets');
+        }
+      });
+
+      // 接收来自控制台 admin.html 的 BroadcastChannel 实时推送
+      S.subscribeSync(function (newState) {
+        state = newState;
+        renderAll(true);
+        S.showToast('⚡ 赛果已实时同步更新');
+      });
+
+      // 自动从 GitHub / 同源 data/live-state.json 拉取最新成绩（供手机端浏览）
+      function checkRemoteLiveState(silent) {
+        S.fetchFromRemoteStateJson('', state, false).then(function (res) {
+          if (res && res.updated && res.state) {
+            state = res.state;
+            S.saveState(state, false);
+            renderAll(true);
+            if (!silent) S.showToast('☁️ 已同步最新云端赛果');
+          }
+        }).catch(function () {});
+      }
+
+      renderAll(false);
+      checkRemoteLiveState(true);
+      setInterval(function () { checkRemoteLiveState(true); }, 20000);
+    })();
+  </script>
+</body>
+</html>

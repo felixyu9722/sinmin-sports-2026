@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新民中学 2026 运动会 · 现场录入与大屏导播控制台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link rel="stylesheet" href="./css/style.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="arena-bg">
+  <!-- 顶部导航 -->
+  <header class="top-navbar no-print">
+    <div class="nav-inner">
+      <div class="brand-area">
+        <div class="school-logo-wrap">
+          <img src="./Sin Min Logo.png" alt="新民中学校徽" />
+        </div>
+        <div class="brand-title">
+          <h1>
+            <span>现场成绩录入与导播控制台</span>
+            <span class="live-dot">BroadcastChannel 零延迟在线</span>
+          </h1>
+          <p>检录处 / 记录台专用 · 核对无误后再推送至电视大屏，杜绝录入过程误显</p>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <nav class="page-switcher-bar" aria-label="页面切换与返回">
+          <a href="./index.html" class="switcher-pill" title="返回公开查询与总成绩首页">⬅ 返回首页</a>
+          <span class="switcher-pill active">🎛️ 控制台</span>
+          <a href="./tv-display.html" class="switcher-pill" title="直接进入电视大屏页">📺 电视大屏</a>
+        </nav>
+        <a href="./tv-display.html" target="_blank" class="btn btn-sm btn-primary" title="在新窗口打开大屏以拖动至电视/LED扩展屏">↗ 新窗投屏</a>
+        <button class="btn btn-sm" id="btn-dl-template">📄 下载模板</button>
+        <button class="btn btn-sm btn-emerald" id="btn-admin-export">⬇️ 导出归档</button>
+        <button class="btn btn-sm" id="btn-cloud-config">☁️ 云端同步</button>
+        <button class="btn btn-sm" id="btn-reset-demo" title="重置为初始演示数据">🔄 重置</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+    <!-- 左栏：Excel 导入与项目选择 -->
+    <aside class="admin-sidebar-col no-print" style="display:flex; flex-direction:column; gap:14px;">
+      <div class="glass-panel" style="padding:14px;">
+        <div class="dropzone-box" id="excel-dropzone">
+          <div style="font-size:1.5rem; margin-bottom:4px;">📥</div>
+          <div style="font-weight:700; font-size:0.9rem;">拖入 Excel 报名/成绩表</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">支持 .xlsx / .xls / .csv 纯前端批量导入</div>
+          <input type="file" id="admin-excel-input" accept=".xlsx,.xls,.csv" hidden />
+        </div>
+      </div>
+
+      <div class="glass-panel" style="padding:14px;">
+        <div class="section-header" style="margin-bottom:10px;">
+          <h2 class="section-title" style="font-size:0.95rem;">📋 赛事项目列表</h2>
+          <button class="btn btn-sm btn-primary" id="btn-open-new-event">+ 新建</button>
+        </div>
+        <div class="admin-sidebar-events" id="admin-events-list"></div>
+      </div>
+    </aside>
+
+    <!-- 中栏：核心成绩录入与自动计算工作台 -->
+    <section class="glass-panel" style="padding:16px;" id="admin-workspace"></section>
+
+    <!-- 右栏：大屏导播遥控与精神奖评分 -->
+    <aside class="admin-director-col no-print" style="display:flex; flex-direction:column; gap:12px;">
+      <div class="glass-panel" style="padding:14px;">
+        <div class="section-header" style="margin-bottom:8px;">
+          <h3 class="section-title" style="font-size:0.94rem;">📺 电视大屏导播遥控</h3>
+          <span style="font-size:0.72rem; color:#34d399;" id="director-sync-hint">就绪</span>
+        </div>
+
+        <!-- PiP 电视画面实时状态预览 -->
+        <div class="pip-preview" style="margin-bottom:10px; padding:10px 12px;">
+          <div style="font-size:0.7rem; color:var(--accent-cyan); font-weight:800; letter-spacing:0.08em; margin-bottom:3px;">当前电视机正在显示 (PiP 状态)</div>
+          <div style="font-size:0.94rem; font-weight:800;" id="pip-mode-text">-</div>
+          <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:2px;" id="pip-event-text">-</div>
+        </div>
+
+        <button class="btn btn-gold" style="width:100%; padding:10px 12px; font-size:0.92rem; margin-bottom:10px;" id="btn-push-results-tv">
+          ⚡ 核对无误 · 推送当前成绩到大屏
+        </button>
+
+        <div style="font-size:0.76rem; color:var(--text-secondary); margin-bottom:6px;">一键切换电视屏幕画面模式：</div>
+        <div class="mode-btn-grid" id="director-mode-buttons">
+          <button class="btn btn-sm" data-tv-mode="standings">🏆 四队总榜</button>
+          <button class="btn btn-sm" data-tv-mode="all_finals">📋 当天决赛总览</button>
+          <button class="btn btn-sm" data-tv-mode="trophies">👑 奖杯颁发细节</button>
+          <button class="btn btn-sm" data-tv-mode="live_results">⚡ 单项成绩</button>
+          <button class="btn btn-sm" data-tv-mode="startlist">🏃 决赛名单</button>
+          <button class="btn btn-sm" data-tv-mode="qualifiers">🎯 预赛晋级</button>
+          <button class="btn btn-sm" data-tv-mode="podium" style="grid-column:span 2;">🥇 颁奖典礼领奖台</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+          <button class="btn btn-sm btn-emerald" id="btn-trigger-fanfare">🎆 手动重播破纪录礼花特效</button>
+          <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-secondary);">
+            <input type="checkbox" id="chk-auto-tts" />
+            <span>推送成绩时在本机自动语音播报前三名</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 紧急检录通知广播 -->
+      <div class="glass-panel" style="padding:16px;">
+        <h3 class="section-title" style="font-size:0.95rem; margin-bottom:10px;">📢 电视顶部紧急检录广播</h3>
+        <input type="text" id="input-urgent-notice" class="input-control" style="width:100%; margin-bottom:8px;" placeholder="例：请女子乙组 100米决赛选手立即至检录处！" />
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-danger" style="flex:1;" id="btn-push-notice">推送插播</button>
+          <button class="btn btn-sm" id="btn-clear-notice">撤下通知</button>
+        </div>
+      </div>
+
+      <!-- 四队实时总分速览 & 精神奖评分（章程 9.5） -->
+      <div class="glass-panel" style="padding:16px;">
+        <h3 class="section-title" style="font-size:0.95rem; margin-bottom:10px;">🔥 四队实时总分与精神奖评分</h3>
+        <div id="admin-mini-standings" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 新建项目模态框 -->
+  <div class="modal-backdrop" id="new-event-modal">
+    <div class="glass-panel modal-card animate__animated animate__zoomIn animate__faster">
+      <div class="section-header">
+        <h3 class="section-title">➕ 新建比赛项目</h3>
+        <button class="btn btn-sm" id="btn-close-new-ev">✕ 关闭</button>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <label style="font-size:0.82rem; color:var(--text-secondary);">项目名称
+          <input type="text" id="new-ev-name" class="input-control" style="width:100%; margin-top:4px;" placeholder="例：400米 / 三级跳远" />
+        </label>
+        <label style="font-size:0.82rem; color:var(--text-secondary);">组别
+          <select id="new-ev-group" class="select-control" style="width:100%; margin-top:4px;">
+            <option value="男甲">男甲 (高中 · 白号码布)</option>
+            <option value="女甲">女甲 (高中 · 白号码布)</option>
+            <option value="男乙">男乙 (初中 · 黄号码布)</option>
+            <option value="女乙">女乙 (初中 · 黄号码布)</option>
+          </select>
+        </label>
+        <label style="font-size:0.82rem; color:var(--text-secondary);">项目类型
+          <select id="new-ev-type" class="select-control" style="width:100%; margin-top:4px;">
+            <option value="track">径赛 (时间越短越好)</option>
+            <option value="field">田赛 (远度/高度越高越好，3次试跳)</option>
+            <option value="relay">接力赛 (团体 10-7-5-3-1)</option>
+            <option value="tug">拔河赛 (团体 10-7-5-3-1)</option>
+          </select>
+        </label>
+        <label style="font-size:0.82rem; color:var(--text-secondary);">实体奖牌规则 (章程 9)
+          <select id="new-ev-medal-rule" class="select-control" style="width:100%; margin-top:4px;">
+            <option value="individual">个人项目 (前3名各1面)</option>
+            <option value="relay">接力赛 (前3名各5面)</option>
+            <option value="tug_or_grand">拔河 / 大队接力 (前3名各8面)</option>
+          </select>
+        </label>
+        <label style="font-size:0.82rem; color:var(--text-secondary);">大会纪录（可选）
+          <input type="text" id="new-ev-record" class="input-control" style="width:100%; margin-top:4px;" placeholder="例：52.30 或 5.45" />
+        </label>
+        <label style="font-size:0.82rem; color:var(--text-secondary);">比赛时间（可选）
+          <input type="text" id="new-ev-time" class="input-control" style="width:100%; margin-top:4px;" placeholder="例：14:30" />
+        </label>
+      </div>
+      <div style="margin-top:14px; display:flex; align-items:center; justify-content:space-between;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; cursor:pointer;">
+          <input type="checkbox" id="new-ev-60m" />
+          <span>60米项目 (启用 6 条决赛道次 4-3-2-5-1-6 规则)</span>
+        </label>
+        <button class="btn btn-primary" id="btn-create-event">确认创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 云端 GitHub & Google Sheets 同步配置模态框 -->
+  <div class="modal-backdrop" id="cloud-modal">
+    <div class="glass-panel modal-card animate__animated animate__zoomIn animate__faster">
+      <div class="section-header">
+        <h3 class="section-title">☁️ 云端同步设置（手机端浏览联动）</h3>
+        <button class="btn btn-sm" id="btn-close-cloud">✕ 关闭</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="padding:12px; border-radius:12px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.28);">
+          <div style="font-weight:800; font-size:0.88rem; color:#7dd3fc; margin-bottom:8px;">方案 A：GitHub Pages 直推同步（供全校师生手机浏览）</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; color:var(--text-secondary);">
+              GitHub 仓库 (格式：用户名/仓库名)：
+              <input type="text" id="cloud-gh-repo" class="input-control input-mono" style="width:100%; margin-top:4px;" placeholder="felixyu9722/sinmin-sports-2026" />
+            </label>
+            <label style="font-size:0.8rem; color:var(--text-secondary);">
+              GitHub Token（仅保存在本机浏览器，不上传；用于自动更新 <code>data/live-state.json</code>）：
+              <input type="password" id="cloud-gh-token" class="input-control input-mono" style="width:100%; margin-top:4px;" placeholder="ghp_... 或 github_pat_..." />
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer;">
+              <input type="checkbox" id="cloud-gh-autopush" />
+              <span>推送大屏时自动同步更新 GitHub 手机端成绩</span>
+            </label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-sm btn-primary" id="btn-push-gh-now">☁️ 立即同步到 GitHub</button>
+              <button class="btn btn-sm" id="btn-dl-state-json">💾 导出 live-state.json</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:12px; border-radius:12px; background:rgba(15,23,42,0.55); border:1px solid var(--border-subtle);">
+          <div style="font-weight:800; font-size:0.88rem; color:#e2e8f0; margin-bottom:8px;">方案 B：Google Sheets 同步（可选）</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size:0.8rem; color:var(--text-secondary);">
+              Google Apps Script Web App URL (推送写入表格)：
+              <input type="url" id="cloud-webhook-url" class="input-control" style="width:100%; margin-top:4px;" placeholder="https://script.google.com/macros/s/.../exec" />
+            </label>
+            <label style="font-size:0.8rem; color:var(--text-secondary);">
+              Google Sheets 已发布 CSV 链接 (从表格拉取)：
+              <input type="url" id="cloud-csv-url" class="input-control" style="width:100%; margin-top:4px;" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" />
+            </label>
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+              <button class="btn btn-sm" id="btn-pull-cloud-now">从 CSV 拉取</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-emerald" id="btn-save-cloud">✓ 保存全部云端配置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/core.js"></script>
+  <script>
+    (function () {
+      var S = window.SinMinSports;
+      var state = S.loadState();
+      var tvCmd = S.loadTvCommand(state);
+      var selectedEventId = (state.events[0] && state.events[0].id) || '';
+      var activeStage = 'final'; // 'final' | 'prelim'
+
+      function getSelectedEvent() {
+        var ev = (state.events || []).find(function (e) { return e.id === selectedEventId; });
+        if (!ev && state.events.length > 0) {
+          ev = state.events[0];
+          selectedEventId = ev.id;
+        }
+        return ev || null;
+      }
+
+      function renderEventsSidebar() {
+        var listEl = document.getElementById('admin-events-list');
+        listEl.innerHTML = (state.events || []).map(function (ev) {
+          var isSelected = ev.id === selectedEventId;
+          var badge = ev.status === 'finished'
+            ? '<span style="color:#34d399; font-size:0.72rem;">✓ 已完赛</span>'
+            : (ev.status === 'prelims_done'
+              ? '<span style="color:#fbbf24; font-size:0.72rem;">⏳ 预赛已录</span>'
+              : '<span style="color:#7dd3fc; font-size:0.72rem;">🕒 待赛</span>');
+          return (
+            '<button class="event-selector-item ' + (isSelected ? 'active' : '') + '" data-ev-id="' + ev.id + '">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+                '<span class="skew-tag" style="background:rgba(56,189,248,0.16); color:#7dd3fc; padding:2px 7px; font-size:0.72rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+                badge +
+              '</div>' +
+              '<div style="font-weight:700; font-size:0.92rem;">' + S.escapeHtml(ev.name) + '</div>' +
+              '<div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">' +
+                '决赛 ' + (ev.finalEntries ? ev.finalEntries.length : 0) + ' 人' +
+                (ev.prelimEntries && ev.prelimEntries.length ? ' · 预赛 ' + ev.prelimEntries.length + ' 人' : '') +
+              '</div>' +
+            '</button>'
+          );
+        }).join('');
+      }
+
+      function renderDirectorPanel() {
+        var resolvedMode = tvCmd.mode === 'mvp' ? 'trophies' : tvCmd.mode;
+        var modeInfo = S.TV_MODES[resolvedMode] || S.TV_MODES.standings;
+        document.getElementById('pip-mode-text').textContent = modeInfo.icon + ' ' + modeInfo.label;
+        var tvEv = (state.events || []).find(function (e) { return e.id === tvCmd.eventId; });
+        document.getElementById('pip-event-text').textContent = tvEv ? ('当前关联项目：' + tvEv.group + ' ' + tvEv.name) : '全校实时总积分大屏';
+
+        document.querySelectorAll('#director-mode-buttons [data-tv-mode]').forEach(function (btn) {
+          btn.classList.toggle('is-active', btn.getAttribute('data-tv-mode') === resolvedMode);
+        });
+
+        document.getElementById('input-urgent-notice').value = tvCmd.urgentNotice || '';
+
+        var standings = S.computeStandings(state);
+        var miniEl = document.getElementById('admin-mini-standings');
+        miniEl.innerHTML = standings.rankedTeams.map(function (t) {
+          return (
+            '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:10px; background:rgba(9,14,28,0.7); border:1px solid rgba(148,163,184,0.14);">' +
+              '<div style="display:flex; align-items:center; gap:7px;">' +
+                '<span class="bib-dot team-dot-' + t.id + '"></span>' +
+                '<strong>' + S.escapeHtml(t.name) + '</strong>' +
+                '<span style="font-family:var(--font-display); font-weight:800; color:' + t.color + ';">' + t.points + '分</span>' +
+              '</div>' +
+              '<label style="font-size:0.74rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">精神:' +
+                '<input type="number" min="0" max="200" class="input-control input-mono" style="width:62px; padding:4px 6px; font-size:0.8rem;" data-spirit-team="' + t.id + '" value="' + t.spiritScore + '" />' +
+              '</label>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      function renderWorkspace() {
+        var ws = document.getElementById('admin-workspace');
+        var ev = getSelectedEvent();
+        if (!ev) {
+          ws.innerHTML = '<div style="padding:40px; text-align:center; color:var(--text-secondary);">请从左侧选择或新建一个比赛项目。</div>';
+          return;
+        }
+
+        // 若当前项目只有预赛数据且无决赛数据，自动切到预赛页签
+        if ((!ev.finalEntries || ev.finalEntries.length === 0) && ev.prelimEntries && ev.prelimEntries.length > 0 && activeStage !== 'prelim') {
+          activeStage = 'prelim';
+        }
+
+        var dnsWarnings = S.getDnsDisqualifications(state).warnings;
+        var isField = ev.type === 'field';
+        var entriesList = activeStage === 'prelim' ? (ev.prelimEntries || []) : (ev.finalEntries || []);
+
+        // 实时预演计算名次、得分与破纪录
+        var previewMap = {};
+        if (activeStage === 'prelim') {
+          var qInfo = S.computePrelimQualifiers(ev);
+          qInfo.entries.forEach(function (item) {
+            previewMap[(item.bib || '') + '_' + (item.lane || '') + '_' + (item.heat || 1)] = item;
+          });
+        } else {
+          var fComputed = S.calculateEntries(ev.finalEntries || [], ev, true);
+          fComputed.forEach(function (item) {
+            previewMap[(item.bib || '') + '_' + (item.lane || '') + '_' + (item._origIdx)] = item;
+          });
+        }
+
+        var tableBodyHtml = entriesList.map(function (entry, idx) {
+          var key = activeStage === 'prelim'
+            ? ((entry.bib || '') + '_' + (entry.lane || '') + '_' + (entry.heat || 1))
+            : ((entry.bib || '') + '_' + (entry.lane || '') + '_' + idx);
+          var calc = previewMap[key] || {};
+          var tid = S.normalizeTeamId(entry.team);
+          var grp = entry.group || ev.group;
+          var dnsWarn = dnsWarnings[ev.id + '|' + entry.bib];
+
+          var previewBadge = '';
+          if (activeStage === 'prelim') {
+            previewBadge = (calc.heatRank ? ('组第' + calc.heatRank + ' ') : '') +
+              (calc.qualBadge === 'Q' ? '<span class="badge-q-big">Q</span>' : (calc.qualBadge === 'q' ? '<span class="badge-q-small">q</span>' : ''));
+          } else {
+            if (calc.rank) {
+              previewBadge += '<strong style="color:' + (calc.rank === 1 ? 'var(--gold)' : '#e2e8f0') + ';">第' + calc.rank + '名</strong> ';
+            }
+            if (calc.points > 0) {
+              previewBadge += '<span style="color:#34d399; font-weight:700;">+' + calc.points + '分</span> ';
+            }
+            if (calc.isRecord) {
+              previewBadge += '<span class="badge-record">NR</span> ';
+            }
+            if (calc.windAssisted) {
+              previewBadge += '<span class="badge-wind">超风速</span>';
+            }
+          }
+
+          var resultInputsHtml = '';
+          if (isField) {
+            resultInputsHtml = (
+              '<div style="display:flex; gap:3px;">' +
+                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt1" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt1 || '') + '" placeholder="试1" />' +
+                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt2" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt2 || '') + '" placeholder="试2" />' +
+                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt3" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt3 || '') + '" placeholder="试3" />' +
+              '</div>'
+            );
+          } else {
+            resultInputsHtml = (
+              '<input type="text" class="input-control input-mono" style="width:82px; padding:5px 6px; font-size:0.82rem;" data-field="result" data-idx="' + idx + '" value="' + S.escapeHtml(entry.result || '') + '" placeholder="' + (ev.type === 'tug' ? '名次1-4' : '11.42') + '" />'
+            );
+          }
+
+          return (
+            '<tr data-row-idx="' + idx + '">' +
+              (activeStage === 'prelim' ? '<td><input type="number" min="1" class="input-control input-mono" style="width:42px; padding:4px;" data-field="heat" data-idx="' + idx + '" value="' + (entry.heat || 1) + '" /></td>' : '') +
+              '<td><input type="number" min="1" max="8" class="input-control input-mono" style="width:44px; padding:4px;" data-field="lane" data-idx="' + idx + '" value="' + (entry.lane || (idx + 1)) + '" /></td>' +
+              '<td>' +
+                '<div style="display:flex; align-items:center; gap:4px;">' +
+                  '<input type="text" maxlength="4" class="input-control input-mono" style="width:54px; padding:4px 5px; font-size:0.8rem;" data-field="bib" data-idx="' + idx + '" value="' + S.escapeHtml(entry.bib || '') + '" placeholder="1101" />' +
+                  S.renderBibHtml(entry.bib, grp) +
+                '</div>' +
+              '</td>' +
+              '<td>' +
+                '<div style="display:flex; gap:4px;">' +
+                  '<input type="text" class="input-control" style="width:84px; padding:4px 6px; font-size:0.8rem;" data-field="name" data-idx="' + idx + '" value="' + S.escapeHtml(entry.name || '') + '" placeholder="姓名" />' +
+                  '<input type="text" class="input-control" style="width:66px; padding:4px 6px; font-size:0.8rem;" data-field="className" data-idx="' + idx + '" value="' + S.escapeHtml(entry.className || '') + '" placeholder="班级" />' +
+                '</div>' +
+                (dnsWarn ? '<div class="badge-status-warn" style="margin-top:4px;">' + S.escapeHtml(dnsWarn) + '</div>' : '') +
+              '</td>' +
+              '<td>' +
+                '<select class="select-control" style="padding:4px 5px; font-size:0.8rem;" data-field="team" data-idx="' + idx + '">' +
+                  '<option value="red" ' + (tid === 'red' ? 'selected' : '') + '>红队</option>' +
+                  '<option value="yellow" ' + (tid === 'yellow' ? 'selected' : '') + '>黄队</option>' +
+                  '<option value="blue" ' + (tid === 'blue' ? 'selected' : '') + '>蓝队</option>' +
+                  '<option value="green" ' + (tid === 'green' ? 'selected' : '') + '>青队</option>' +
+                '</select>' +
+              '</td>' +
+              '<td>' + resultInputsHtml + '</td>' +
+              '<td>' +
+                '<select class="select-control" style="padding:4px 4px; font-size:0.78rem;" data-field="status" data-idx="' + idx + '">' +
+                  '<option value="OK" ' + ((entry.status || 'OK') === 'OK' ? 'selected' : '') + '>正常 OK</option>' +
+                  '<option value="DNS" ' + (entry.status === 'DNS' ? 'selected' : '') + '>缺席 DNS</option>' +
+                  '<option value="DNF" ' + (entry.status === 'DNF' ? 'selected' : '') + '>未完 DNF</option>' +
+                  '<option value="DQ" ' + (entry.status === 'DQ' ? 'selected' : '') + '>犯规 DQ</option>' +
+                  '<option value="NM" ' + (entry.status === 'NM' ? 'selected' : '') + '>无成绩 NM</option>' +
+                '</select>' +
+              '</td>' +
+              '<td style="white-space:nowrap;">' + (previewBadge || '<span style="color:var(--text-muted);">-</span>') + '</td>' +
+              '<td class="no-print"><button class="btn btn-sm" style="color:#fca5a5;" data-del-idx="' + idx + '" title="移除该行">✕</button></td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        ws.innerHTML = (
+          '<div class="section-header" style="border-bottom:1px solid var(--border-subtle); padding-bottom:14px;">' +
+            '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+              '<span class="skew-tag" style="background:rgba(56,189,248,0.2); color:#7dd3fc; padding:5px 12px;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+              '<h2 style="margin:0; font-size:1.35rem; font-weight:800;">' + S.escapeHtml(ev.name) + '</h2>' +
+              '<span style="font-size:0.78rem; color:var(--text-secondary);">' + (ev.isTeam ? '团体赛 (10-7-5-3-1)' : '个人赛 (7-5-3-2-1)') + ' · 实领奖牌 ' + (ev.physicalMedalCount || 1) + '面/队</span>' +
+            '</div>' +
+            '<div class="no-print" style="display:flex; gap:8px;">' +
+              '<button class="btn btn-sm" id="btn-print-sheet">🖨️ 打印检录/成绩单</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="no-print" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-bottom:16px; padding:12px; border-radius:12px; background:rgba(9,14,28,0.6);">' +
+            '<label style="font-size:0.76rem; color:var(--text-secondary);">大会纪录' +
+              '<input type="text" id="ev-meta-record" class="input-control input-mono" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.recordMark || '') + '" placeholder="如 11.35" />' +
+            '</label>' +
+            '<label style="font-size:0.76rem; color:var(--text-secondary);">原纪录保持者' +
+              '<input type="text" id="ev-meta-holder" class="input-control" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.recordHolder || '') + '" placeholder="姓名 (年份)" />' +
+            '</label>' +
+            '<label style="font-size:0.76rem; color:var(--text-secondary);">风速 (m/s, &gt;+2.0不破纪录)' +
+              '<input type="text" id="ev-meta-wind" class="input-control input-mono" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.wind || '') + '" placeholder="如 +0.8" />' +
+            '</label>' +
+            '<label style="font-size:0.76rem; color:var(--text-secondary);">当前状态' +
+              '<select id="ev-meta-status" class="select-control" style="width:100%; margin-top:4px;">' +
+                '<option value="startlist" ' + (ev.status === 'startlist' ? 'selected' : '') + '>待赛 / 检录中</option>' +
+                '<option value="prelims_done" ' + (ev.status === 'prelims_done' ? 'selected' : '') + '>预赛已完成</option>' +
+                '<option value="finished" ' + (ev.status === 'finished' ? 'selected' : '') + '>决赛已完赛</option>' +
+              '</select>' +
+            '</label>' +
+          '</div>' +
+
+          '<div class="no-print" style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">' +
+            '<div style="display:flex; gap:8px;">' +
+              '<button class="chip-btn ' + (activeStage === 'final' ? 'active' : '') + '" id="tab-stage-final">🏁 决赛录入与预演 (' + (ev.finalEntries ? ev.finalEntries.length : 0) + ')</button>' +
+              '<button class="chip-btn ' + (activeStage === 'prelim' ? 'active' : '') + '" id="tab-stage-prelim">⏱️ 预赛录入与道次编排 (' + (ev.prelimEntries ? ev.prelimEntries.length : 0) + ')</button>' +
+            '</div>' +
+            '<div style="display:flex; gap:8px;">' +
+              (activeStage === 'prelim' ? '<button class="btn btn-sm btn-emerald" id="btn-gen-finals">⚡ 依章程一键生成决赛名单与道次</button>' : '') +
+              '<button class="btn btn-sm btn-primary" id="btn-add-entry">+ 添加选手/队伍</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="data-table-wrap">' +
+            '<table class="data-table" id="admin-entry-table">' +
+              '<thead><tr>' +
+                (activeStage === 'prelim' ? '<th>分组</th>' : '') +
+                '<th>道次</th><th>4位编号 (自动识别)</th><th>姓名 / 班级</th><th>色队</th>' +
+                '<th>' + (isField ? '三次试跳/投 (m)' : (ev.type === 'tug' ? '名次' : '成绩')) + '</th>' +
+                '<th>状态</th><th>实时名次/得分预演</th><th class="no-print">操作</th>' +
+              '</tr></thead>' +
+              '<tbody>' + (tableBodyHtml || '<tr><td colspan="9" style="text-align:center; padding:24px; color:var(--text-secondary);">暂无选手，请点击右上角「+ 添加选手/队伍」或拖入 Excel 导入。</td></tr>') + '</tbody>' +
+            '</table>' +
+          '</div>'
+        );
+      }
+
+      function persistAndSyncLocal(broadcast) {
+        S.saveState(state, broadcast !== false);
+        renderEventsSidebar();
+        renderDirectorPanel();
+      }
+
+      // 事件代理：工作台输入实时自动识别编号与计算
+      document.getElementById('admin-workspace').addEventListener('input', function (e) {
+        var ev = getSelectedEvent();
+        if (!ev) return;
+
+        if (e.target.id === 'ev-meta-record') { ev.recordMark = e.target.value.trim(); persistAndSyncLocal(false); renderWorkspace(); return; }
+        if (e.target.id === 'ev-meta-holder') { ev.recordHolder = e.target.value.trim(); persistAndSyncLocal(false); return; }
+        if (e.target.id === 'ev-meta-wind') { ev.wind = e.target.value.trim(); persistAndSyncLocal(false); renderWorkspace(); return; }
+
+        var idx = e.target.getAttribute('data-idx');
+        var field = e.target.getAttribute('data-field');
+        if (idx === null || !field) return;
+
+        var list = activeStage === 'prelim' ? ev.prelimEntries : ev.finalEntries;
+        var entry = list[Number(idx)];
+        if (!entry) return;
+
+        var val = e.target.value;
+        if (field === 'lane' || field === 'heat') {
+          entry[field] = Number(val) || 1;
+        } else if (field === 'bib') {
+          entry.bib = val.trim();
+          var parsed = S.parseBib(entry.bib);
+          if (parsed.valid) {
+            entry.team = parsed.team;
+            entry.group = parsed.group;
+          }
+          persistAndSyncLocal(false);
+          renderWorkspace();
+          return;
+        } else {
+          entry[field] = val;
+        }
+
+        if (activeStage === 'final' && (field === 'result' || field.indexOf('attempt') === 0) && val.trim()) {
+          ev.status = 'finished';
+        }
+        persistAndSyncLocal(false);
+      });
+
+      // 当输入失焦或下拉更改时重绘实时名次/得分预演（避免打字时焦点丢失）
+      document.getElementById('admin-workspace').addEventListener('change', function (e) {
+        var ev = getSelectedEvent();
+        if (!ev) return;
+        if (e.target.id === 'ev-meta-status') {
+          ev.status = e.target.value;
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          return;
+        }
+        if (e.target.getAttribute('data-field')) {
+          renderWorkspace();
+        }
+      });
+
+      document.getElementById('admin-workspace').addEventListener('click', function (e) {
+        var ev = getSelectedEvent();
+        if (!ev) return;
+
+        if (e.target.id === 'tab-stage-final') { activeStage = 'final'; renderWorkspace(); return; }
+        if (e.target.id === 'tab-stage-prelim') { activeStage = 'prelim'; renderWorkspace(); return; }
+        if (e.target.id === 'btn-print-sheet') { window.print(); return; }
+
+        if (e.target.id === 'btn-add-entry') {
+          var targetArr = activeStage === 'prelim' ? ev.prelimEntries : ev.finalEntries;
+          targetArr.push({
+            heat: 1,
+            lane: targetArr.length + 1,
+            bib: '',
+            name: '',
+            className: '',
+            team: 'red',
+            group: ev.group,
+            result: '',
+            attempt1: '',
+            attempt2: '',
+            attempt3: '',
+            status: 'OK'
+          });
+          persistAndSyncLocal(false);
+          renderWorkspace();
+          return;
+        }
+
+        if (e.target.id === 'btn-gen-finals') {
+          var qInfo = S.computePrelimQualifiers(ev);
+          if (qInfo.qualifiers.length === 0) {
+            S.showToast('请先在预赛录入有效成绩后再生成决赛名单');
+            return;
+          }
+          ev.finalEntries = qInfo.qualifiers;
+          ev.status = 'prelims_done';
+          activeStage = 'final';
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          S.showToast('已按章程 (' + qInfo.laneRule + ') 生成 ' + qInfo.qualifiers.length + ' 人决赛道次！');
+          return;
+        }
+
+        var delBtn = e.target.closest('button[data-del-idx]');
+        if (delBtn) {
+          var delIdx = Number(delBtn.getAttribute('data-del-idx'));
+          var arr = activeStage === 'prelim' ? ev.prelimEntries : ev.finalEntries;
+          arr.splice(delIdx, 1);
+          persistAndSyncLocal(false);
+          renderWorkspace();
+        }
+      });
+
+      // 左侧项目切换
+      document.getElementById('admin-events-list').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-ev-id]');
+        if (!btn) return;
+        selectedEventId = btn.getAttribute('data-ev-id');
+        activeStage = 'final';
+        renderEventsSidebar();
+        renderWorkspace();
+      });
+
+      // 导播遥控：推送成绩到大屏
+      document.getElementById('btn-push-results-tv').addEventListener('click', function () {
+        var ev = getSelectedEvent();
+        if (!ev) return;
+        if (activeStage === 'final' && ev.finalEntries.some(function (x) { return x.result || x.attempt1; })) {
+          ev.status = 'finished';
+        }
+        persistAndSyncLocal(true);
+
+        var targetMode = activeStage === 'prelim' ? 'qualifiers' : 'live_results';
+        tvCmd = S.pushTvCommand({ mode: targetMode, eventId: ev.id });
+        renderDirectorPanel();
+
+        // 若配置了 Google Apps Script Webhook，则同步写入云端表格
+        if (state.meta && state.meta.googleAppsScriptUrl) {
+          S.pushToGoogleAppsScript(state.meta.googleAppsScriptUrl, state).catch(function () {});
+        }
+        // 若开启了 GitHub 自动同步且本地配置了 Token，则自动推送到 GitHub 供手机端查看
+        if (state.meta && state.meta.githubAutoPush && S.getSavedGithubToken()) {
+          S.pushStateToGitHub(state.meta.githubRepo, S.getSavedGithubToken(), state)
+            .then(function () { S.showToast('📱 已同步推送至 GitHub 手机端'); })
+            .catch(function (err) { S.showToast('GitHub 同步失败：' + err.message); });
+        }
+
+        // 自动语音播报
+        if (document.getElementById('chk-auto-tts').checked && targetMode === 'live_results') {
+          var ranked = S.calculateEntries(ev.finalEntries || [], ev, true).filter(function (x) { return x.rank && x.rank <= 3; });
+          if (ranked.length > 0) {
+            var speech = ev.group + ev.name + '决赛成绩揭晓。' + ranked.map(function (r) {
+              return '第' + r.rank + '名，' + S.TEAMS[S.normalizeTeamId(r.team)].name + r.name + '，成绩' + S.formatMarkDisplay(r, ev) + (r.isRecord ? '，打破大会纪录！' : '。');
+            }).join('');
+            S.speakAnnouncement(speech);
+          }
+        }
+        S.showToast('🚀 已将【' + ev.group + ' ' + ev.name + '】推送至电视大屏幕！');
+      });
+
+      // 六大电视模式切换
+      document.getElementById('director-mode-buttons').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-tv-mode]');
+        if (!btn) return;
+        var mode = btn.getAttribute('data-tv-mode');
+        var ev = getSelectedEvent();
+        persistAndSyncLocal(true);
+        tvCmd = S.pushTvCommand({ mode: mode, eventId: ev ? ev.id : '' });
+        renderDirectorPanel();
+        S.showToast('📺 电视大屏已切换至：' + S.TV_MODES[mode].label);
+      });
+
+      document.getElementById('btn-trigger-fanfare').addEventListener('click', function () {
+        var ev = getSelectedEvent();
+        tvCmd = S.pushTvCommand({ mode: 'live_results', eventId: ev ? ev.id : '', playFanfareAt: Date.now() });
+        S.showToast('🎆 已向电视大屏发送礼花庆祝指令！');
+      });
+
+      // 紧急检录通知
+      document.getElementById('btn-push-notice').addEventListener('click', function () {
+        var text = document.getElementById('input-urgent-notice').value.trim();
+        tvCmd = S.pushTvCommand({ urgentNotice: text });
+        S.showToast(text ? '📢 紧急通知已推送至电视大屏顶部' : '请输入通知内容');
+      });
+      document.getElementById('btn-clear-notice').addEventListener('click', function () {
+        document.getElementById('input-urgent-notice').value = '';
+        tvCmd = S.pushTvCommand({ urgentNotice: '' });
+        S.showToast('已撤下电视紧急通知横幅');
+      });
+
+      // 精神奖评分实时修改
+      document.getElementById('admin-mini-standings').addEventListener('change', function (e) {
+        var tid = e.target.getAttribute('data-spirit-team');
+        if (!tid) return;
+        state.spiritScores = state.spiritScores || {};
+        state.spiritScores[tid] = Number(e.target.value) || 0;
+        persistAndSyncLocal(true);
+        S.showToast('已更新' + S.TEAMS[tid].name + '最佳精神奖评分');
+      });
+
+      // Excel 拖放导入
+      var dropzone = document.getElementById('excel-dropzone');
+      var fileInput = document.getElementById('admin-excel-input');
+      dropzone.addEventListener('click', function () { fileInput.click(); });
+      dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('dragover'); });
+      dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('dragover'); });
+      dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleExcelUpload(e.dataTransfer.files[0]);
+        }
+      });
+      fileInput.addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) handleExcelUpload(e.target.files[0]);
+        e.target.value = '';
+      });
+
+      function handleExcelUpload(file) {
+        S.importExcelFile(file, state).then(function (res) {
+          state = res.state;
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          S.showToast('Excel 批量导入成功：共处理 ' + res.importedCount + ' 条记录！');
+        }).catch(function (err) {
+          S.showToast('Excel 导入失败：' + err.message);
+        });
+      }
+
+      document.getElementById('btn-dl-template').addEventListener('click', function () {
+        S.downloadTemplateExcel();
+        S.showToast('已下载《新民中学2026运动会_报名与成绩导入模板.xlsx》');
+      });
+
+      document.getElementById('btn-admin-export').addEventListener('click', function () {
+        S.exportArchiveExcel(state);
+        S.showToast('已导出完整运动会成绩归档 Excel');
+      });
+
+      document.getElementById('btn-reset-demo').addEventListener('click', function () {
+        if (!confirm('确认将本地数据重置为新民中学 2026 默认演示赛程吗？')) return;
+        state = S.createDefaultState();
+        selectedEventId = state.events[0].id;
+        persistAndSyncLocal(true);
+        renderWorkspace();
+        S.showToast('已恢复默认演示数据');
+      });
+
+      // 新建项目模态框
+      var newEvModal = document.getElementById('new-event-modal');
+      document.getElementById('btn-open-new-event').addEventListener('click', function () { newEvModal.classList.add('open'); });
+      document.getElementById('btn-close-new-ev').addEventListener('click', function () { newEvModal.classList.remove('open'); });
+      document.getElementById('btn-create-event').addEventListener('click', function () {
+        var name = document.getElementById('new-ev-name').value.trim();
+        if (!name) { S.showToast('请输入项目名称'); return; }
+        var group = document.getElementById('new-ev-group').value;
+        var type = document.getElementById('new-ev-type').value;
+        var medalRule = document.getElementById('new-ev-medal-rule').value;
+        var isTeam = type === 'relay' || type === 'tug' || medalRule !== 'individual';
+        var newEv = {
+          id: 'ev_' + Date.now(),
+          order: state.events.length + 1,
+          name: name,
+          group: group,
+          type: type,
+          isTeam: isTeam,
+          is60m: document.getElementById('new-ev-60m').checked || name.indexOf('60') !== -1,
+          windCheck: /60|100|200|跳远/.test(name),
+          wind: '',
+          physicalMedalCount: medalRule === 'tug_or_grand' ? 8 : (medalRule === 'relay' ? 5 : 1),
+          teamMedalRule: medalRule,
+          recordMark: document.getElementById('new-ev-record').value.trim(),
+          recordHolder: '',
+          scheduleTime: document.getElementById('new-ev-time').value.trim(),
+          status: 'startlist',
+          prelimEntries: [],
+          finalEntries: []
+        };
+        state.events.push(newEv);
+        selectedEventId = newEv.id;
+        newEvModal.classList.remove('open');
+        persistAndSyncLocal(true);
+        renderWorkspace();
+        S.showToast('已创建新项目：' + group + ' ' + name);
+      });
+
+      // 云端配置模态框
+      var cloudModal = document.getElementById('cloud-modal');
+      document.getElementById('btn-cloud-config').addEventListener('click', function () {
+        document.getElementById('cloud-gh-repo').value = (state.meta && state.meta.githubRepo) || S.DEFAULT_GITHUB_REPO;
+        document.getElementById('cloud-gh-token').value = S.getSavedGithubToken();
+        document.getElementById('cloud-gh-autopush').checked = !!(state.meta && state.meta.githubAutoPush);
+        document.getElementById('cloud-webhook-url').value = (state.meta && state.meta.googleAppsScriptUrl) || '';
+        document.getElementById('cloud-csv-url').value = (state.meta && state.meta.googleSheetCsvUrl) || '';
+        cloudModal.classList.add('open');
+      });
+      document.getElementById('btn-close-cloud').addEventListener('click', function () { cloudModal.classList.remove('open'); });
+      document.getElementById('btn-save-cloud').addEventListener('click', function () {
+        state.meta.githubRepo = document.getElementById('cloud-gh-repo').value.trim() || S.DEFAULT_GITHUB_REPO;
+        state.meta.githubAutoPush = document.getElementById('cloud-gh-autopush').checked;
+        S.saveGithubToken(document.getElementById('cloud-gh-token').value);
+        state.meta.googleAppsScriptUrl = document.getElementById('cloud-webhook-url').value.trim();
+        state.meta.googleSheetCsvUrl = document.getElementById('cloud-csv-url').value.trim();
+        persistAndSyncLocal(true);
+        cloudModal.classList.remove('open');
+        S.showToast('云端同步配置已保存');
+      });
+      document.getElementById('btn-push-gh-now').addEventListener('click', function () {
+        var repo = document.getElementById('cloud-gh-repo').value.trim() || S.DEFAULT_GITHUB_REPO;
+        var token = document.getElementById('cloud-gh-token').value.trim();
+        S.saveGithubToken(token);
+        state.meta.githubRepo = repo;
+        S.pushStateToGitHub(repo, token, state).then(function () {
+          S.showToast('☁️ 已成功推送最新成绩到 GitHub 手机端！');
+        }).catch(function (err) {
+          S.showToast('推送失败：' + err.message);
+        });
+      });
+      document.getElementById('btn-dl-state-json').addEventListener('click', function () {
+        S.downloadStateJson(state);
+        S.showToast('已导出 live-state.json（可覆盖仓库 data/ 目录）');
+      });
+      document.getElementById('btn-pull-cloud-now').addEventListener('click', function () {
+        var csv = document.getElementById('cloud-csv-url').value.trim();
+        S.fetchFromGoogleSheetsCsv(csv, state).then(function (res) {
+          state = res.state;
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          S.showToast('已从 Google Sheets 拉取 ' + res.importedCount + ' 条记录');
+        }).catch(function (err) {
+          S.showToast('拉取失败：' + err.message);
+        });
+      });
+
+      renderEventsSidebar();
+      renderWorkspace();
+      renderDirectorPanel();
+    })();
+  </script>
+</body>
+</html>

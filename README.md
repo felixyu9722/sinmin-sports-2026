@@ -1,4 +1,4 @@
-# 新民中学 2026 年度运动会 · 实时成绩与电视大屏转播系统
+# 新民独立中学 2026 年度运动会 · 实时成绩与电视大屏转播系统
 
 > **Sin Min Middle School Annual Sports Meet 2026**
 > 纯前端零后端架构 · SheetJS Excel 读写 · BroadcastChannel 现场电视零延迟联动 · GitHub Pages 手机端浏览

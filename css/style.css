@@ -1,5 +1,5 @@
 /* ==========================================================================
-   新民中学 (Sin Min Middle School) 2026 运动会系统
+   新民独立中学 (Sin Min Middle School) 2026 运动会系统
    Broadcast-Grade Dark Sports Theme + Animate.css Integration
    ========================================================================== */
 
@@ -681,7 +681,7 @@ body.tv-body {
 
 .tv-topbar {
   height: 84px;
-  padding: 0 36px;
+  padding: 0 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -692,31 +692,36 @@ body.tv-body {
 .tv-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 .tv-brand .school-logo-wrap {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
 }
 .tv-brand h1 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.85rem;
+  font-size: 1.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tv-title-gradient {
   background: linear-gradient(90deg, #ffffff 0%, #bae6fd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .tv-brand .tv-sub {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #94a3b8;
   letter-spacing: 0.08em;
 }
 .tv-meta-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
 }
 .tv-clock {
   font-family: var(--font-display);
@@ -724,6 +729,75 @@ body.tv-body {
   font-weight: 800;
   color: var(--accent-cyan);
   letter-spacing: 0.05em;
+}
+
+/* 黑色闪亮 LIVE 标记 */
+.live-black-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3px 11px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #05070d 0%, #1e293b 52%, #05070d 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  overflow: hidden;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: blackLiveShine 2.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+.live-black-badge::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 55%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-22deg);
+  animation: liveSweep 2.6s infinite;
+}
+@keyframes blackLiveShine {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.6); }
+  50% { box-shadow: 0 0 22px rgba(255, 255, 255, 0.78), inset 0 1px 0 rgba(255, 255, 255, 0.75); border-color: #ffffff; }
+}
+@keyframes liveSweep {
+  0% { left: -80%; }
+  45%, 100% { left: 145%; }
+}
+
+/* 大号醒目 ON AIR 直播标识 */
+.on-air-badge-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.14));
+  border: 2px solid #34d399;
+  color: #6ee7b7;
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.42);
+  white-space: nowrap;
+}
+.on-air-badge-lg::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 14px #34d399;
+  animation: liveBlink 1.1s infinite;
 }
 
 .tv-urgent-banner {
@@ -949,10 +1023,10 @@ body.tv-body {
 .tv-ticker-track {
   display: inline-block;
   padding-left: 100%;
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   font-weight: 600;
   color: #e2e8f0;
-  animation: tickerScroll 38s linear infinite;
+  animation: tickerScroll 130s linear infinite;
 }
 .tv-ticker-track:hover {
   animation-play-state: paused;

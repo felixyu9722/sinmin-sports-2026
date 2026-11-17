@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>新民中学 2026 运动会 · 现场录入与大屏导播控制台</title>
+  <title>新民独立中学 2026 运动会 · 现场录入与大屏导播控制台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -17,11 +17,11 @@
     <div class="nav-inner">
       <div class="brand-area">
         <div class="school-logo-wrap">
-          <img src="./Sin Min Logo.png" alt="新民中学校徽" />
+          <img src="./Sin Min Logo.png" alt="新民独立中学校徽" />
         </div>
         <div class="brand-title">
           <h1>
-            <span>现场成绩录入与导播控制台</span>
+            <span>新民独立中学 · 现场成绩录入与导播控制台</span>
             <span class="live-dot">BroadcastChannel 零延迟在线</span>
           </h1>
           <p>检录处 / 记录台专用 · 核对无误后再推送至电视大屏，杜绝录入过程误显</p>
@@ -707,7 +707,7 @@
 
       document.getElementById('btn-dl-template').addEventListener('click', function () {
         S.downloadTemplateExcel();
-        S.showToast('已下载《新民中学2026运动会_报名与成绩导入模板.xlsx》');
+        S.showToast('已下载《新民独立中学2026运动会_报名与成绩导入模板.xlsx》');
       });
 
       document.getElementById('btn-admin-export').addEventListener('click', function () {
@@ -716,7 +716,7 @@
       });
 
       document.getElementById('btn-reset-demo').addEventListener('click', function () {
-        if (!confirm('确认将本地数据重置为新民中学 2026 默认演示赛程吗？')) return;
+        if (!confirm('确认将本地数据重置为新民独立中学 2026 默认演示赛程吗？')) return;
         state = S.createDefaultState();
         selectedEventId = state.events[0].id;
         persistAndSyncLocal(true);

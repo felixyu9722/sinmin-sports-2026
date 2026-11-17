@@ -1,25 +1,32 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>新民中学 2026 运动会 · 决赛现场大屏幕转播</title>
+  <title>新民独立中学 2026 运动会 · 决赛现场大屏幕转播</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Inter:wght@500;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Inter:wght@500;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   <link rel="stylesheet" href="./css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
+
 <body class="tv-body">
   <!-- 顶部广播级台标与三端返回栏 -->
   <header class="tv-topbar">
     <div class="tv-brand">
       <div class="school-logo-wrap">
-        <img src="./Sin Min Logo.png" alt="新民中学校徽" />
+        <img src="./Sin Min Logo.png" alt="新民独立中学校徽" />
       </div>
       <div>
-        <h1>新民中学 2026 年度运动会 · LIVE</h1>
+        <h1>
+          <span class="tv-title-gradient">新民独立中学 2026 年度运动会</span>
+          <span class="live-black-badge">LIVE</span>
+        </h1>
         <div class="tv-sub">SIN MIN MIDDLE SCHOOL SPORTS MEET · 大屏幕实时转播</div>
       </div>
     </div>
@@ -30,11 +37,12 @@
         <a href="./admin.html" class="switcher-pill" title="进入现场录入控制台">🎛️ 控制台</a>
         <span class="switcher-pill active">📺 电视大屏</span>
       </nav>
-      <div class="skew-tag" style="background:rgba(56,189,248,0.16); border:1px solid rgba(56,189,248,0.45); padding:6px 14px; color:#7dd3fc;">
+      <div class="skew-tag"
+        style="background:rgba(56,189,248,0.16); border:1px solid rgba(56,189,248,0.45); padding:6px 14px; color:#7dd3fc;">
         <span id="tv-mode-pill" style="font-size:0.95rem;">🏆 四队总积分榜</span>
       </div>
-      <div class="live-dot" style="font-size:0.86rem; padding:5px 12px;">ON AIR</div>
-      <div class="tv-clock" id="tv-clock" style="font-size:1.65rem;">00:00:00</div>
+      <div class="on-air-badge-lg">ON AIR</div>
+      <div class="tv-clock" id="tv-clock" style="font-size:2.05rem;">00:00</div>
     </div>
   </header>
 
@@ -52,7 +60,8 @@
 
     <div class="tv-control-group">
       <button class="btn btn-sm" id="btn-prev-ev" title="上一项 / 上一页 (←)">◀</button>
-      <select id="tv-event-select" class="select-control" style="padding:5px 10px; font-size:0.82rem; max-width:210px;"></select>
+      <select id="tv-event-select" class="select-control"
+        style="padding:5px 10px; font-size:0.82rem; max-width:210px;"></select>
       <button class="btn btn-sm" id="btn-next-ev" title="下一项 / 下一页 (→)">▶</button>
 
       <button class="btn btn-sm" id="btn-auto-cycle" title="在总榜、当天决赛总览、奖杯细节间每12秒自动切换">🔄 自动轮播: 关</button>
@@ -77,21 +86,26 @@
   <!-- 破大会纪录全屏震撼特效遮罩 -->
   <div class="tv-record-overlay" id="tv-record-overlay">
     <div class="animate__animated animate__zoomIn" style="max-width:1100px;">
-      <div style="font-size:1.6rem; letter-spacing:0.25em; color:#fde047; font-weight:800; margin-bottom:10px;">★ SIN MIN MEET RECORD BROKEN ★</div>
+      <div style="font-size:1.6rem; letter-spacing:0.25em; color:#fde047; font-weight:800; margin-bottom:10px;">★ SIN
+        MIN MEET RECORD BROKEN ★</div>
       <div class="tv-record-flash-title animate__animated animate__tada animate__infinite">破大会纪录！</div>
       <div style="font-size:2.4rem; font-weight:900; color:#ffffff; margin:20px 0 10px;" id="overlay-rec-event"></div>
-      <div style="display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap; margin-bottom:18px;" id="overlay-rec-athlete"></div>
-      <div style="font-family:var(--font-display); font-size:4.2rem; font-weight:900; color:#ffd700; text-shadow:0 0 36px rgba(255,215,0,0.85);" id="overlay-rec-mark"></div>
+      <div
+        style="display:flex; align-items:center; justify-content:center; gap:18px; flex-wrap:wrap; margin-bottom:18px;"
+        id="overlay-rec-athlete"></div>
+      <div
+        style="font-family:var(--font-display); font-size:4.2rem; font-weight:900; color:#ffd700; text-shadow:0 0 36px rgba(255,215,0,0.85);"
+        id="overlay-rec-mark"></div>
       <div style="font-size:1.3rem; color:#cbd5e1; margin-top:8px;" id="overlay-rec-old"></div>
     </div>
   </div>
 
   <!-- 底部体育新闻滚播条（Ticker） -->
   <footer class="tv-ticker">
-    <div class="tv-ticker-label">⚡ 最新战报 LIVE</div>
+    <div class="tv-ticker-label">⚡ 最新战报 <span class="live-black-badge">LIVE</span></div>
     <div class="tv-ticker-track-wrap">
       <div class="tv-ticker-track" id="tv-ticker-track">
-        新民中学 2026 年度运动会实时战报加载中...
+        新民独立中学 2026 年度运动会实时战报加载中...
       </div>
     </div>
   </footer>
@@ -112,10 +126,14 @@
       var autoCycleEnabled = false;
       var cycleOrder = ['standings', 'all_finals', 'trophies'];
 
-      // 实时时钟
+      // 实时时钟（仅显示时:分，不显示秒针）
       function updateClock() {
         var now = new Date();
-        document.getElementById('tv-clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        document.getElementById('tv-clock').textContent = now.toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
       }
       updateClock();
       setInterval(updateClock, 1000);
@@ -221,47 +239,47 @@
         var standings = S.computeStandings(state);
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-            '<div>' +
-              '<div style="color:var(--accent-cyan); font-weight:800; letter-spacing:0.15em; font-size:0.95rem; margin-bottom:4px;">OVERALL TEAM STANDINGS</div>' +
-              '<h2 class="tv-event-title">四色队伍实时总积分与奖牌榜</h2>' +
-            '</div>' +
-            '<div style="text-align:right;">' +
-              '<div style="font-size:1.05rem; color:var(--text-secondary);">新纪录诞生 <strong style="color:var(--gold); font-size:1.45rem;">' + standings.recordsList.length + '</strong> 项 · 已实发奖牌总计 <strong style="color:#34d399;">' + (standings.teamsMap.red.physicalMedals + standings.teamsMap.yellow.physicalMedals + standings.teamsMap.blue.physicalMedals + standings.teamsMap.green.physicalMedals) + '</strong> 面</div>' +
-              '<div style="font-size:0.92rem; color:var(--text-secondary);">个人决赛 7-5-3-2-1 · 团体决赛 10-7-5-3-1</div>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:var(--accent-cyan); font-weight:800; letter-spacing:0.15em; font-size:0.95rem; margin-bottom:4px;">OVERALL TEAM STANDINGS</div>' +
+          '<h2 class="tv-event-title">四色队伍实时总积分与奖牌榜</h2>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+          '<div style="font-size:1.05rem; color:var(--text-secondary);">新纪录诞生 <strong style="color:var(--gold); font-size:1.45rem;">' + standings.recordsList.length + '</strong> 项 · 已实发奖牌总计 <strong style="color:#34d399;">' + (standings.teamsMap.red.physicalMedals + standings.teamsMap.yellow.physicalMedals + standings.teamsMap.blue.physicalMedals + standings.teamsMap.green.physicalMedals) + '</strong> 面</div>' +
+          '<div style="font-size:0.92rem; color:var(--text-secondary);">个人决赛 7-5-3-2-1 · 团体决赛 10-7-5-3-1</div>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-standings-grid">' +
-            standings.rankedTeams.map(function (t, idx) {
-              var delay = (idx * 0.09) + 's';
-              var pct = Math.max(10, t.progressPct || 0);
-              return (
-                '<div class="tv-house-panel house-' + t.id + ' animate__animated animate__zoomIn" style="animation-delay:' + delay + ';">' +
-                  '<div style="display:flex; align-items:center; justify-content:space-between;">' +
-                    '<div style="display:flex; align-items:center; gap:14px;">' +
-                      '<span class="bib-dot team-dot-' + t.id + '" style="width:22px; height:22px; box-shadow:0 0 18px ' + t.color + ';"></span>' +
-                      '<div>' +
-                        '<div style="font-size:2rem; font-weight:900; line-height:1;">' + S.escapeHtml(t.name) + '</div>' +
-                        '<div style="font-size:0.85rem; color:var(--text-secondary); letter-spacing:0.12em;">' + S.escapeHtml(t.enName) + '</div>' +
-                      '</div>' +
-                    '</div>' +
-                    '<div class="skew-tag ' + (t.rank === 1 ? 'house-rank-1' : '') + '" style="padding:7px 16px; font-size:1.25rem; background:' + (t.rank === 1 ? 'linear-gradient(135deg,#ffd700,#f59e0b)' : 'rgba(255,255,255,0.1)') + ';">' +
-                      '<span>第 ' + t.rank + ' 名</span>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div style="display:flex; align-items:baseline; justify-content:space-between; margin:10px 0 6px;">' +
-                    '<div class="tv-house-score" style="color:' + t.color + ';">' + t.points + '<span style="font-size:1.25rem; color:var(--text-secondary); margin-left:6px;">PTS</span></div>' +
-                    '<div style="display:flex; gap:16px; font-size:1.45rem; font-family:var(--font-display); font-weight:800;">' +
-                      '<span style="color:var(--gold);">🥇 ' + t.gold + '</span>' +
-                      '<span style="color:var(--silver);">🥈 ' + t.silver + '</span>' +
-                      '<span style="color:var(--bronze);">🥉 ' + t.bronze + '</span>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div style="height:14px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden;">' +
-                    '<div style="height:100%; width:' + pct + '%; border-radius:999px; background:linear-gradient(90deg, ' + t.color + ', #ffffff); transition:width 1s ease;"></div>' +
-                  '</div>' +
-                '</div>'
-              );
-            }).join('') +
+          standings.rankedTeams.map(function (t, idx) {
+            var delay = (idx * 0.09) + 's';
+            var pct = Math.max(10, t.progressPct || 0);
+            return (
+              '<div class="tv-house-panel house-' + t.id + ' animate__animated animate__zoomIn" style="animation-delay:' + delay + ';">' +
+              '<div style="display:flex; align-items:center; justify-content:space-between;">' +
+              '<div style="display:flex; align-items:center; gap:14px;">' +
+              '<span class="bib-dot team-dot-' + t.id + '" style="width:22px; height:22px; box-shadow:0 0 18px ' + t.color + ';"></span>' +
+              '<div>' +
+              '<div style="font-size:2rem; font-weight:900; line-height:1;">' + S.escapeHtml(t.name) + '</div>' +
+              '<div style="font-size:0.85rem; color:var(--text-secondary); letter-spacing:0.12em;">' + S.escapeHtml(t.enName) + '</div>' +
+              '</div>' +
+              '</div>' +
+              '<div class="skew-tag ' + (t.rank === 1 ? 'house-rank-1' : '') + '" style="padding:7px 16px; font-size:1.25rem; background:' + (t.rank === 1 ? 'linear-gradient(135deg,#ffd700,#f59e0b)' : 'rgba(255,255,255,0.1)') + ';">' +
+              '<span>第 ' + t.rank + ' 名</span>' +
+              '</div>' +
+              '</div>' +
+              '<div style="display:flex; align-items:baseline; justify-content:space-between; margin:10px 0 6px;">' +
+              '<div class="tv-house-score" style="color:' + t.color + ';">' + t.points + '<span style="font-size:1.25rem; color:var(--text-secondary); margin-left:6px;">PTS</span></div>' +
+              '<div style="display:flex; gap:16px; font-size:1.45rem; font-family:var(--font-display); font-weight:800;">' +
+              '<span style="color:var(--gold);">🥇 ' + t.gold + '</span>' +
+              '<span style="color:var(--silver);">🥈 ' + t.silver + '</span>' +
+              '<span style="color:var(--bronze);">🥉 ' + t.bronze + '</span>' +
+              '</div>' +
+              '</div>' +
+              '<div style="height:14px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden;">' +
+              '<div style="height:100%; width:' + pct + '%; border-radius:999px; background:linear-gradient(90deg, ' + t.color + ', #ffffff); transition:width 1s ease;"></div>' +
+              '</div>' +
+              '</div>'
+            );
+          }).join('') +
           '</div>'
         );
       }
@@ -283,65 +301,65 @@
 
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown" style="margin-bottom:14px;">' +
-            '<div>' +
-              '<div style="color:#38bdf8; font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TODAY\'S FINALS SUMMARY · 当天决赛成绩汇总榜</div>' +
-              '<h2 class="tv-event-title" style="font-size:2.3rem;">当天已完赛决赛项目与前三名成绩总览</h2>' +
-            '</div>' +
-            '<div style="display:flex; align-items:center; gap:12px;">' +
-              '<div class="tv-record-pill" style="padding:8px 16px;">' +
-                '<div style="font-size:0.8rem; color:var(--text-secondary);">已完赛 <strong style="color:#34d399;">' + finishedEvents.length + '</strong> 项 · 待赛 <strong style="color:#fbbf24;">' + pendingCount + '</strong> 项 · 新纪录 <strong style="color:var(--gold);">' + standings.recordsList.length + '</strong> 项</div>' +
-              '</div>' +
-              (totalPages > 1
-                ? '<div style="display:flex; align-items:center; gap:6px;">' +
-                    '<button class="btn btn-sm" id="btn-finals-prev-pg">◀</button>' +
-                    '<span style="font-family:var(--font-display); font-weight:800; padding:0 6px;">第 ' + (allFinalsPage + 1) + ' / ' + totalPages + ' 页</span>' +
-                    '<button class="btn btn-sm" id="btn-finals-next-pg">▶</button>' +
-                  '</div>'
-                : '') +
-            '</div>' +
+          '<div>' +
+          '<div style="color:#38bdf8; font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TODAY\'S FINALS SUMMARY · 当天决赛成绩汇总榜</div>' +
+          '<h2 class="tv-event-title" style="font-size:2.3rem;">当天已完赛决赛项目与前三名成绩总览</h2>' +
+          '</div>' +
+          '<div style="display:flex; align-items:center; gap:12px;">' +
+          '<div class="tv-record-pill" style="padding:8px 16px;">' +
+          '<div style="font-size:0.8rem; color:var(--text-secondary);">已完赛 <strong style="color:#34d399;">' + finishedEvents.length + '</strong> 项 · 待赛 <strong style="color:#fbbf24;">' + pendingCount + '</strong> 项 · 新纪录 <strong style="color:var(--gold);">' + standings.recordsList.length + '</strong> 项</div>' +
+          '</div>' +
+          (totalPages > 1
+            ? '<div style="display:flex; align-items:center; gap:6px;">' +
+            '<button class="btn btn-sm" id="btn-finals-prev-pg">◀</button>' +
+            '<span style="font-family:var(--font-display); font-weight:800; padding:0 6px;">第 ' + (allFinalsPage + 1) + ' / ' + totalPages + ' 页</span>' +
+            '<button class="btn btn-sm" id="btn-finals-next-pg">▶</button>' +
+            '</div>'
+            : '') +
+          '</div>' +
           '</div>' +
           (slice.length === 0
             ? '<div style="margin:auto; font-size:1.8rem; color:var(--text-secondary);">暂无已完赛决赛项目</div>'
             : '<div class="tv-all-finals-grid">' +
-                slice.map(function (ev, idx) {
-                  var top3 = S.calculateEntries(ev.finalEntries, ev, true).filter(function (x) { return x.rank && x.rank <= 3; });
-                  var hasNR = top3.some(function (x) { return x.isRecord; });
+            slice.map(function (ev, idx) {
+              var top3 = S.calculateEntries(ev.finalEntries, ev, true).filter(function (x) { return x.rank && x.rank <= 3; });
+              var hasNR = top3.some(function (x) { return x.isRecord; });
+              return (
+                '<div class="tv-final-summary-card animate__animated animate__fadeInUp" style="animation-delay:' + (idx * 0.07) + 's;">' +
+                '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(148,163,184,0.16); padding-bottom:8px;">' +
+                '<div style="display:flex; align-items:center; gap:8px;">' +
+                '<span class="skew-tag" style="background:rgba(56,189,248,0.2); color:#7dd3fc; padding:3px 9px; font-size:0.82rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+                '<strong style="font-size:1.25rem;">' + S.escapeHtml(ev.name) + '</strong>' +
+                '</div>' +
+                '<div style="display:flex; align-items:center; gap:6px;">' +
+                (hasNR ? '<span class="badge-record">NEW RECORD</span>' : '') +
+                '<span style="font-size:0.75rem; color:var(--text-secondary);">实领' + (ev.physicalMedalCount || 1) + '面/队</span>' +
+                '</div>' +
+                '</div>' +
+                '<div style="display:flex; flex-direction:column; gap:7px;">' +
+                top3.map(function (r) {
+                  var tid = S.normalizeTeamId(r.team);
+                  var teamObj = S.TEAMS[tid];
+                  var medal = r.rank === 1 ? '🥇' : (r.rank === 2 ? '🥈' : '🥉');
                   return (
-                    '<div class="tv-final-summary-card animate__animated animate__fadeInUp" style="animation-delay:' + (idx * 0.07) + 's;">' +
-                      '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(148,163,184,0.16); padding-bottom:8px;">' +
-                        '<div style="display:flex; align-items:center; gap:8px;">' +
-                          '<span class="skew-tag" style="background:rgba(56,189,248,0.2); color:#7dd3fc; padding:3px 9px; font-size:0.82rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
-                          '<strong style="font-size:1.25rem;">' + S.escapeHtml(ev.name) + '</strong>' +
-                        '</div>' +
-                        '<div style="display:flex; align-items:center; gap:6px;">' +
-                          (hasNR ? '<span class="badge-record">NEW RECORD</span>' : '') +
-                          '<span style="font-size:0.75rem; color:var(--text-secondary);">实领' + (ev.physicalMedalCount || 1) + '面/队</span>' +
-                        '</div>' +
-                      '</div>' +
-                      '<div style="display:flex; flex-direction:column; gap:7px;">' +
-                        top3.map(function (r) {
-                          var tid = S.normalizeTeamId(r.team);
-                          var teamObj = S.TEAMS[tid];
-                          var medal = r.rank === 1 ? '🥇' : (r.rank === 2 ? '🥈' : '🥉');
-                          return (
-                            '<div class="tv-final-podium-row" style="border-left-color:' + teamObj.color + ';">' +
-                              '<div style="display:flex; align-items:center; gap:7px; min-width:0;">' +
-                                '<span style="font-size:1.2rem;">' + medal + '</span>' +
-                                S.renderBibHtml(r.bib, r.group || ev.group) +
-                                '<strong style="font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + S.escapeHtml(r.name) + '</strong>' +
-                              '</div>' +
-                              '<div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">' +
-                                '<span style="font-family:var(--font-display); font-weight:800; font-size:1.1rem; color:' + (r.isRecord ? 'var(--gold)' : '#ffffff') + ';">' + S.escapeHtml(S.formatMarkDisplay(r, ev)) + '</span>' +
-                                '<span style="font-size:0.78rem; color:#34d399; font-weight:800;">+' + (r.points || 0) + '分</span>' +
-                              '</div>' +
-                            '</div>'
-                          );
-                        }).join('') +
-                      '</div>' +
+                    '<div class="tv-final-podium-row" style="border-left-color:' + teamObj.color + ';">' +
+                    '<div style="display:flex; align-items:center; gap:7px; min-width:0;">' +
+                    '<span style="font-size:1.2rem;">' + medal + '</span>' +
+                    S.renderBibHtml(r.bib, r.group || ev.group) +
+                    '<strong style="font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + S.escapeHtml(r.name) + '</strong>' +
+                    '</div>' +
+                    '<div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">' +
+                    '<span style="font-family:var(--font-display); font-weight:800; font-size:1.1rem; color:' + (r.isRecord ? 'var(--gold)' : '#ffffff') + ';">' + S.escapeHtml(S.formatMarkDisplay(r, ev)) + '</span>' +
+                    '<span style="font-size:0.78rem; color:#34d399; font-weight:800;">+' + (r.points || 0) + '分</span>' +
+                    '</div>' +
                     '</div>'
                   );
                 }).join('') +
-              '</div>')
+                '</div>' +
+                '</div>'
+              );
+            }).join('') +
+            '</div>')
         );
 
         var prevPg = document.getElementById('btn-finals-prev-pg');
@@ -359,107 +377,107 @@
 
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown" style="margin-bottom:14px;">' +
-            '<div>' +
-              '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TROPHIES & MEDALS CEREMONY · 章程第 9 & 10.5 条奖项详情</div>' +
-              '<h2 class="tv-event-title" style="font-size:2.3rem;">大会 6 座荣誉奖杯与实体奖牌颁发细则</h2>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TROPHIES & MEDALS CEREMONY · 章程第 9 & 10.5 条奖项详情</div>' +
+          '<h2 class="tv-event-title" style="font-size:2.3rem;">大会 6 座荣誉奖杯与实体奖牌颁发细则</h2>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-trophy-grid">' +
-            // 左栏：6 座大会奖杯细节
-            '<div style="display:flex; flex-direction:column; gap:12px;">' +
-              '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">' +
-                '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6);">' +
-                  '<div style="font-size:0.86rem; color:var(--gold); font-weight:800;">🏆 全场总冠军杯 (1座)</div>' +
-                  '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：以全场四队总积分为准</div>' +
-                  '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
-                    '<strong style="font-size:2rem; color:' + champion.color + ';">' + S.escapeHtml(champion.name) + '</strong>' +
-                    '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--gold);">' + champion.points + '分</span>' +
-                  '</div>' +
-                  '<div style="font-size:0.84rem; color:var(--text-secondary);">🥇' + champion.gold + ' 🥈' + champion.silver + ' 🥉' + champion.bronze + '</div>' +
-                '</div>' +
-                '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(56,189,248,0.5);">' +
-                  '<div style="font-size:0.86rem; color:var(--accent-cyan); font-weight:800;">🔥 最佳精神奖杯 (1座)</div>' +
-                  '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：各行政单位主任评分</div>' +
-                  '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
-                    '<strong style="font-size:2rem; color:' + spiritChamp.color + ';">' + S.escapeHtml(spiritChamp.name) + '</strong>' +
-                    '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--accent-cyan);">' + spiritChamp.score + '分</span>' +
-                  '</div>' +
-                  '<div style="display:flex; gap:8px; font-size:0.76rem; color:var(--text-secondary);">' +
-                    standings.spiritSorted.map(function (sp) {
-                      return '<span style="color:' + sp.color + '; font-weight:700;">' + sp.name + ':' + sp.score + '</span>';
-                    }).join('·') +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
+          // 左栏：6 座大会奖杯细节
+          '<div style="display:flex; flex-direction:column; gap:12px;">' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">' +
+          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6);">' +
+          '<div style="font-size:0.86rem; color:var(--gold); font-weight:800;">🏆 全场总冠军杯 (1座)</div>' +
+          '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：以全场四队总积分为准</div>' +
+          '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
+          '<strong style="font-size:2rem; color:' + champion.color + ';">' + S.escapeHtml(champion.name) + '</strong>' +
+          '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--gold);">' + champion.points + '分</span>' +
+          '</div>' +
+          '<div style="font-size:0.84rem; color:var(--text-secondary);">🥇' + champion.gold + ' 🥈' + champion.silver + ' 🥉' + champion.bronze + '</div>' +
+          '</div>' +
+          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(56,189,248,0.5);">' +
+          '<div style="font-size:0.86rem; color:var(--accent-cyan); font-weight:800;">🔥 最佳精神奖杯 (1座)</div>' +
+          '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：各行政单位主任评分</div>' +
+          '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
+          '<strong style="font-size:2rem; color:' + spiritChamp.color + ';">' + S.escapeHtml(spiritChamp.name) + '</strong>' +
+          '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--accent-cyan);">' + spiritChamp.score + '分</span>' +
+          '</div>' +
+          '<div style="display:flex; gap:8px; font-size:0.76rem; color:var(--text-secondary);">' +
+          standings.spiritSorted.map(function (sp) {
+            return '<span style="color:' + sp.color + '; font-weight:700;">' + sp.name + ':' + sp.score + '</span>';
+          }).join('·') +
+          '</div>' +
+          '</div>' +
+          '</div>' +
 
-              '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="flex:1;">' +
-                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-                  '<div style="font-size:1.05rem; color:var(--gold); font-weight:800;">👑 最佳运动员奖杯 (4座：男甲 / 女甲 / 男乙 / 女乙)</div>' +
-                  '<span style="font-size:0.76rem; color:var(--text-secondary);">章程 10.5：个人金牌最多者，同数共享</span>' +
-                '</div>' +
-                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; align-content:center;">' +
-                  S.GROUP_ORDER.map(function (grp) {
-                    var info = standings.bestAthletes[grp];
-                    return (
-                      '<div style="padding:11px 13px; border-radius:12px; background:rgba(7,12,24,0.78); border:1px solid rgba(255,215,0,0.22);">' +
-                        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
-                          '<span class="skew-tag" style="background:rgba(255,215,0,0.2); color:var(--gold); padding:2px 8px; font-size:0.82rem;"><span>' + grp + ' 奖杯</span></span>' +
-                          '<span style="color:var(--gold); font-weight:800; font-size:0.85rem;">' + (info.maxGolds > 0 ? ('🥇 个人 ' + info.maxGolds + ' 金' + (info.shared ? ' (共享)' : '')) : '待定') + '</span>' +
-                        '</div>' +
-                        (info.leaders.length === 0
-                          ? '<div style="color:var(--text-muted); font-size:0.9rem;">暂无个人金牌</div>'
-                          : info.leaders.map(function (l) {
-                              return (
-                                '<div style="margin-bottom:4px;">' +
-                                  '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
-                                    S.renderBibHtml(l.bib, grp) +
-                                    '<strong style="font-size:1.1rem;">' + S.escapeHtml(l.name) + '</strong>' +
-                                    S.renderTeamPillHtml(l.team) +
-                                  '</div>' +
-                                  '<div style="font-size:0.74rem; color:var(--text-secondary); margin-top:2px;">金牌项目：' + S.escapeHtml(l.events.join('、')) + '</div>' +
-                                '</div>'
-                              );
-                            }).join('')) +
-                      '</div>'
-                    );
-                  }).join('') +
-                '</div>' +
+          '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="flex:1;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+          '<div style="font-size:1.05rem; color:var(--gold); font-weight:800;">👑 最佳运动员奖杯 (4座：男甲 / 女甲 / 男乙 / 女乙)</div>' +
+          '<span style="font-size:0.76rem; color:var(--text-secondary);">章程 10.5：个人金牌最多者，同数共享</span>' +
+          '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; align-content:center;">' +
+          S.GROUP_ORDER.map(function (grp) {
+            var info = standings.bestAthletes[grp];
+            return (
+              '<div style="padding:11px 13px; border-radius:12px; background:rgba(7,12,24,0.78); border:1px solid rgba(255,215,0,0.22);">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+              '<span class="skew-tag" style="background:rgba(255,215,0,0.2); color:var(--gold); padding:2px 8px; font-size:0.82rem;"><span>' + grp + ' 奖杯</span></span>' +
+              '<span style="color:var(--gold); font-weight:800; font-size:0.85rem;">' + (info.maxGolds > 0 ? ('🥇 个人 ' + info.maxGolds + ' 金' + (info.shared ? ' (共享)' : '')) : '待定') + '</span>' +
               '</div>' +
-            '</div>' +
-
-            // 右栏：章程第9条实体奖牌分配细节与统计
-            '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="border-color:rgba(56,189,248,0.38);">' +
-              '<div style="font-size:1.05rem; color:#7dd3fc; font-weight:800;">🎖️ 实体奖牌颁发规格与各队实领统计 (章程 9.1 - 9.4)</div>' +
-              '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">' +
-                '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.1 个人项目</div><div style="font-weight:800; color:var(--gold); font-size:1.05rem;">金/银/铜 各1面</div></div>' +
-                '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.2 接力赛</div><div style="font-weight:800; color:#34d399; font-size:1.05rem;">前三名 各5面</div></div>' +
-                '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.3 拔河赛</div><div style="font-weight:800; color:#38bdf8; font-size:1.05rem;">前三名 各8面</div></div>' +
-                '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.4 大队接力</div><div style="font-weight:800; color:#fbbf24; font-size:1.05rem;">前三名 各8面</div></div>' +
-              '</div>' +
-
-              '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">' +
-                standings.rankedTeams.map(function (t) {
+              (info.leaders.length === 0
+                ? '<div style="color:var(--text-muted); font-size:0.9rem;">暂无个人金牌</div>'
+                : info.leaders.map(function (l) {
                   return (
-                    '<div style="padding:10px 12px; border-radius:12px; background:rgba(7,12,24,0.8); border:1px solid ' + t.color + ';">' +
-                      '<div style="font-weight:800; color:' + t.color + '; font-size:1rem;">' + S.escapeHtml(t.name) + '</div>' +
-                      '<div style="font-family:var(--font-display); font-size:1.95rem; font-weight:900;">' + t.physicalMedals + '<span style="font-size:0.85rem; color:var(--text-secondary); margin-left:3px;">面</span></div>' +
-                      '<div style="font-size:0.74rem; color:var(--text-secondary);">🥇' + t.gold + ' 🥈' + t.silver + ' 🥉' + t.bronze + '</div>' +
+                    '<div style="margin-bottom:4px;">' +
+                    '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
+                    S.renderBibHtml(l.bib, grp) +
+                    '<strong style="font-size:1.1rem;">' + S.escapeHtml(l.name) + '</strong>' +
+                    S.renderTeamPillHtml(l.team) +
+                    '</div>' +
+                    '<div style="font-size:0.74rem; color:var(--text-secondary); margin-top:2px;">金牌项目：' + S.escapeHtml(l.events.join('、')) + '</div>' +
                     '</div>'
                   );
-                }).join('') +
-              '</div>' +
+                }).join('')) +
+              '</div>'
+            );
+          }).join('') +
+          '</div>' +
+          '</div>' +
+          '</div>' +
 
-              '<div style="flex:1; overflow-y:auto; border-radius:10px; background:rgba(7,12,24,0.65); padding:8px 12px;">' +
-                '<table class="data-table" style="font-size:0.84rem;">' +
-                  '<thead><tr><th>已完赛项目</th><th>规格</th><th>🔴红</th><th>🟡黄</th><th>🔵蓝</th><th>🟢青</th></tr></thead>' +
-                  '<tbody>' +
-                    standings.physicalBreakdown.map(function (row) {
-                      return '<tr><td><strong>' + S.escapeHtml(row.eventName) + '</strong></td><td>' + row.multiplier + '面/队</td><td>' + (row.red || '-') + '</td><td>' + (row.yellow || '-') + '</td><td>' + (row.blue || '-') + '</td><td>' + (row.green || '-') + '</td></tr>';
-                    }).join('') +
-                  '</tbody>' +
-                '</table>' +
-              '</div>' +
-            '</div>' +
+          // 右栏：章程第9条实体奖牌分配细节与统计
+          '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="border-color:rgba(56,189,248,0.38);">' +
+          '<div style="font-size:1.05rem; color:#7dd3fc; font-weight:800;">🎖️ 实体奖牌颁发规格与各队实领统计 (章程 9.1 - 9.4)</div>' +
+          '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">' +
+          '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.1 个人项目</div><div style="font-weight:800; color:var(--gold); font-size:1.05rem;">金/银/铜 各1面</div></div>' +
+          '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.2 接力赛</div><div style="font-weight:800; color:#34d399; font-size:1.05rem;">前三名 各5面</div></div>' +
+          '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.3 拔河赛</div><div style="font-weight:800; color:#38bdf8; font-size:1.05rem;">前三名 各8面</div></div>' +
+          '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.4 大队接力</div><div style="font-weight:800; color:#fbbf24; font-size:1.05rem;">前三名 各8面</div></div>' +
+          '</div>' +
+
+          '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">' +
+          standings.rankedTeams.map(function (t) {
+            return (
+              '<div style="padding:10px 12px; border-radius:12px; background:rgba(7,12,24,0.8); border:1px solid ' + t.color + ';">' +
+              '<div style="font-weight:800; color:' + t.color + '; font-size:1rem;">' + S.escapeHtml(t.name) + '</div>' +
+              '<div style="font-family:var(--font-display); font-size:1.95rem; font-weight:900;">' + t.physicalMedals + '<span style="font-size:0.85rem; color:var(--text-secondary); margin-left:3px;">面</span></div>' +
+              '<div style="font-size:0.74rem; color:var(--text-secondary);">🥇' + t.gold + ' 🥈' + t.silver + ' 🥉' + t.bronze + '</div>' +
+              '</div>'
+            );
+          }).join('') +
+          '</div>' +
+
+          '<div style="flex:1; overflow-y:auto; border-radius:10px; background:rgba(7,12,24,0.65); padding:8px 12px;">' +
+          '<table class="data-table" style="font-size:0.84rem;">' +
+          '<thead><tr><th>已完赛项目</th><th>规格</th><th>🔴红</th><th>🟡黄</th><th>🔵蓝</th><th>🟢青</th></tr></thead>' +
+          '<tbody>' +
+          standings.physicalBreakdown.map(function (row) {
+            return '<tr><td><strong>' + S.escapeHtml(row.eventName) + '</strong></td><td>' + row.multiplier + '面/队</td><td>' + (row.red || '-') + '</td><td>' + (row.yellow || '-') + '</td><td>' + (row.blue || '-') + '</td><td>' + (row.green || '-') + '</td></tr>';
+          }).join('') +
+          '</tbody>' +
+          '</table>' +
+          '</div>' +
+          '</div>' +
           '</div>'
         );
 
@@ -477,40 +495,40 @@
 
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-            '<div>' +
-              '<div style="color:#00e676; font-weight:800; letter-spacing:0.15em; font-size:1rem;">OFFICIAL LIVE RESULTS · 决赛成绩正式揭晓</div>' +
-              '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
-            '</div>' +
-            '<div class="tv-record-pill">' +
-              '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录 ' + (ev.wind ? ' · 风速 ' + S.escapeHtml(ev.wind) + ' m/s' : '') + '</div>' +
-              '<div style="font-family:var(--font-display); font-size:1.75rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '无') + '</div>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:#00e676; font-weight:800; letter-spacing:0.15em; font-size:1rem;">OFFICIAL LIVE RESULTS · 决赛成绩正式揭晓</div>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
+          '</div>' +
+          '<div class="tv-record-pill">' +
+          '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录 ' + (ev.wind ? ' · 风速 ' + S.escapeHtml(ev.wind) + ' m/s' : '') + '</div>' +
+          '<div style="font-family:var(--font-display); font-size:1.75rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '无') + '</div>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-lanes-list">' +
-            computed.slice(0, 8).map(function (entry, idx) {
-              var tid = S.normalizeTeamId(entry.team);
-              var medal = entry.rank === 1 ? '🥇' : (entry.rank === 2 ? '🥈' : (entry.rank === 3 ? '🥉' : (entry.rank ? ('#' + entry.rank) : entry.status)));
-              var rankColor = entry.rank === 1 ? 'var(--gold)' : (entry.rank === 2 ? 'var(--silver)' : (entry.rank === 3 ? 'var(--bronze)' : '#94a3b8'));
-              var markText = S.formatMarkDisplay(entry, ev);
+          computed.slice(0, 8).map(function (entry, idx) {
+            var tid = S.normalizeTeamId(entry.team);
+            var medal = entry.rank === 1 ? '🥇' : (entry.rank === 2 ? '🥈' : (entry.rank === 3 ? '🥉' : (entry.rank ? ('#' + entry.rank) : entry.status)));
+            var rankColor = entry.rank === 1 ? 'var(--gold)' : (entry.rank === 2 ? 'var(--silver)' : (entry.rank === 3 ? 'var(--bronze)' : '#94a3b8'));
+            var markText = S.formatMarkDisplay(entry, ev);
 
-              return (
-                '<div class="tv-lane-row team-border-' + tid + ' ' + (entry.isRecord ? 'is-record' : '') + ' animate__animated animate__backInRight" style="animation-delay:' + (idx * 0.1) + 's;">' +
-                  '<div class="tv-lane-num" style="color:' + rankColor + '; font-size:2.1rem;">' + medal + '</div>' +
-                  '<div>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
-                  '<div>' +
-                    '<div class="tv-athlete-name" style="display:flex; align-items:center; gap:10px;">' +
-                      '<span>' + S.escapeHtml(entry.name) + '</span>' +
-                      (entry.isRecord ? '<span class="badge-record" style="font-size:0.9rem; padding:4px 10px;">★ 破大会纪录</span>' : '') +
-                      (entry.windAssisted ? '<span class="badge-wind" style="font-size:0.85rem;">超风速</span>' : '') +
-                    '</div>' +
-                    '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + ' · 第 ' + (entry.lane || '-') + ' 道' + (entry.isTied ? ' · 并列名次' : '') + '</div>' +
-                  '</div>' +
-                  '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
-                  '<div class="tv-result-time" style="color:' + (entry.isRecord ? 'var(--gold)' : '#ffffff') + ';">' + S.escapeHtml(markText) + '</div>' +
-                  '<div class="tv-points-badge">' + (entry.points > 0 ? ('+' + entry.points + ' 分') : (entry.status !== 'OK' ? entry.status : '0 分')) + '</div>' +
-                '</div>'
-              );
-            }).join('') +
+            return (
+              '<div class="tv-lane-row team-border-' + tid + ' ' + (entry.isRecord ? 'is-record' : '') + ' animate__animated animate__backInRight" style="animation-delay:' + (idx * 0.1) + 's;">' +
+              '<div class="tv-lane-num" style="color:' + rankColor + '; font-size:2.1rem;">' + medal + '</div>' +
+              '<div>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
+              '<div>' +
+              '<div class="tv-athlete-name" style="display:flex; align-items:center; gap:10px;">' +
+              '<span>' + S.escapeHtml(entry.name) + '</span>' +
+              (entry.isRecord ? '<span class="badge-record" style="font-size:0.9rem; padding:4px 10px;">★ 破大会纪录</span>' : '') +
+              (entry.windAssisted ? '<span class="badge-wind" style="font-size:0.85rem;">超风速</span>' : '') +
+              '</div>' +
+              '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + ' · 第 ' + (entry.lane || '-') + ' 道' + (entry.isTied ? ' · 并列名次' : '') + '</div>' +
+              '</div>' +
+              '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
+              '<div class="tv-result-time" style="color:' + (entry.isRecord ? 'var(--gold)' : '#ffffff') + ';">' + S.escapeHtml(markText) + '</div>' +
+              '<div class="tv-points-badge">' + (entry.points > 0 ? ('+' + entry.points + ' 分') : (entry.status !== 'OK' ? entry.status : '0 分')) + '</div>' +
+              '</div>'
+            );
+          }).join('') +
           '</div>'
         );
 
@@ -530,37 +548,37 @@
         var entries = (ev.finalEntries || []).slice().sort(function (a, b) { return (a.lane || 0) - (b.lane || 0); });
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-            '<div>' +
-              '<div style="color:#38bdf8; font-weight:800; letter-spacing:0.15em; font-size:1rem;">START LIST · 决赛检录道次名单</div>' +
-              '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">决赛</span></h2>' +
-            '</div>' +
-            '<div class="tv-record-pill">' +
-              '<div style="font-size:0.85rem; color:#fcd34d;">大会纪录 MEET RECORD</div>' +
-              '<div style="font-family:var(--font-display); font-size:1.85rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '待创立') + '</div>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:#38bdf8; font-weight:800; letter-spacing:0.15em; font-size:1rem;">START LIST · 决赛检录道次名单</div>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">决赛</span></h2>' +
+          '</div>' +
+          '<div class="tv-record-pill">' +
+          '<div style="font-size:0.85rem; color:#fcd34d;">大会纪录 MEET RECORD</div>' +
+          '<div style="font-family:var(--font-display); font-size:1.85rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '待创立') + '</div>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-lanes-list">' +
-            (entries.length === 0
-              ? '<div style="text-align:center; font-size:1.8rem; color:var(--text-secondary);">该项目决赛名单尚未编排</div>'
-              : entries.map(function (entry, idx) {
-                  var tid = S.normalizeTeamId(entry.team);
-                  var qHtml = entry.qualBadge === 'Q'
-                    ? '<span class="badge-q-big" style="font-size:1.1rem; padding:4px 10px;">Q 晋级</span>'
-                    : (entry.qualBadge === 'q' ? '<span class="badge-q-small" style="font-size:1.1rem; padding:4px 10px;">q 晋级</span>' : '<span style="color:var(--text-muted); font-size:1.1rem;">直入决赛</span>');
-                  return (
-                    '<div class="tv-lane-row team-border-' + tid + ' animate__animated animate__fadeInRight" style="animation-delay:' + (idx * 0.08) + 's;">' +
-                      '<div class="tv-lane-num" style="color:var(--accent-cyan);">道 ' + (entry.lane || (idx + 1)) + '</div>' +
-                      '<div>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
-                      '<div>' +
-                        '<div class="tv-athlete-name">' + S.escapeHtml(entry.name) + '</div>' +
-                        '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + '</div>' +
-                      '</div>' +
-                      '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
-                      '<div style="text-align:right; font-family:var(--font-mono); font-size:1.25rem; color:#cbd5e1;">' + (entry.prelimMark && entry.prelimMark !== '-' ? '预赛 ' + S.escapeHtml(entry.prelimMark) : '准备出赛') + '</div>' +
-                      '<div style="text-align:center;">' + qHtml + '</div>' +
-                    '</div>'
-                  );
-                }).join('')) +
+          (entries.length === 0
+            ? '<div style="text-align:center; font-size:1.8rem; color:var(--text-secondary);">该项目决赛名单尚未编排</div>'
+            : entries.map(function (entry, idx) {
+              var tid = S.normalizeTeamId(entry.team);
+              var qHtml = entry.qualBadge === 'Q'
+                ? '<span class="badge-q-big" style="font-size:1.1rem; padding:4px 10px;">Q 晋级</span>'
+                : (entry.qualBadge === 'q' ? '<span class="badge-q-small" style="font-size:1.1rem; padding:4px 10px;">q 晋级</span>' : '<span style="color:var(--text-muted); font-size:1.1rem;">直入决赛</span>');
+              return (
+                '<div class="tv-lane-row team-border-' + tid + ' animate__animated animate__fadeInRight" style="animation-delay:' + (idx * 0.08) + 's;">' +
+                '<div class="tv-lane-num" style="color:var(--accent-cyan);">道 ' + (entry.lane || (idx + 1)) + '</div>' +
+                '<div>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
+                '<div>' +
+                '<div class="tv-athlete-name">' + S.escapeHtml(entry.name) + '</div>' +
+                '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + '</div>' +
+                '</div>' +
+                '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
+                '<div style="text-align:right; font-family:var(--font-mono); font-size:1.25rem; color:#cbd5e1;">' + (entry.prelimMark && entry.prelimMark !== '-' ? '预赛 ' + S.escapeHtml(entry.prelimMark) : '准备出赛') + '</div>' +
+                '<div style="text-align:center;">' + qHtml + '</div>' +
+                '</div>'
+              );
+            }).join('')) +
           '</div>'
         );
       }
@@ -571,34 +589,34 @@
         var qInfo = S.computePrelimQualifiers(ev);
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-            '<div>' +
-              '<div style="color:#fbbf24; font-weight:800; letter-spacing:0.15em; font-size:1rem;">QUALIFIERS & FINAL LANE ASSIGNMENT · 依章程自动编排决赛道次</div>' +
-              '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">晋级决赛名单</span></h2>' +
-            '</div>' +
-            '<div class="tv-record-pill">' +
-              '<div style="font-size:0.85rem; color:#7dd3fc;">道次分配规则</div>' +
-              '<div style="font-family:var(--font-display); font-size:1.4rem; font-weight:800;">' + S.escapeHtml(qInfo.laneRule) + '</div>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:#fbbf24; font-weight:800; letter-spacing:0.15em; font-size:1rem;">QUALIFIERS & FINAL LANE ASSIGNMENT · 依章程自动编排决赛道次</div>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">晋级决赛名单</span></h2>' +
+          '</div>' +
+          '<div class="tv-record-pill">' +
+          '<div style="font-size:0.85rem; color:#7dd3fc;">道次分配规则</div>' +
+          '<div style="font-family:var(--font-display); font-size:1.4rem; font-weight:800;">' + S.escapeHtml(qInfo.laneRule) + '</div>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-lanes-list">' +
-            (qInfo.qualifiers.length === 0
-              ? '<div style="text-align:center; font-size:1.7rem; color:var(--text-secondary);">该项目暂无预赛晋级数据（可切换其他带预赛的项目）</div>'
-              : qInfo.qualifiers.map(function (q, idx) {
-                  var tid = S.normalizeTeamId(q.team);
-                  return (
-                    '<div class="tv-lane-row team-border-' + tid + ' animate__animated animate__fadeInUp" style="animation-delay:' + (idx * 0.08) + 's;">' +
-                      '<div class="tv-lane-num" style="color:#fbbf24;">道 ' + q.lane + '</div>' +
-                      '<div>' + S.renderBibHtml(q.bib, q.group || ev.group) + '</div>' +
-                      '<div>' +
-                        '<div class="tv-athlete-name">' + S.escapeHtml(q.name) + '</div>' +
-                        '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(q.className || '') + '</div>' +
-                      '</div>' +
-                      '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
-                      '<div class="tv-result-time" style="font-size:1.65rem;">预赛 ' + S.escapeHtml(q.prelimMark) + '</div>' +
-                      '<div style="text-align:center;">' + (q.qualBadge === 'Q' ? '<span class="badge-q-big" style="font-size:1.2rem; padding:5px 14px;">Q 小组第一</span>' : '<span class="badge-q-small" style="font-size:1.2rem; padding:5px 14px;">q 择优晋级</span>') + '</div>' +
-                    '</div>'
-                  );
-                }).join('')) +
+          (qInfo.qualifiers.length === 0
+            ? '<div style="text-align:center; font-size:1.7rem; color:var(--text-secondary);">该项目暂无预赛晋级数据（可切换其他带预赛的项目）</div>'
+            : qInfo.qualifiers.map(function (q, idx) {
+              var tid = S.normalizeTeamId(q.team);
+              return (
+                '<div class="tv-lane-row team-border-' + tid + ' animate__animated animate__fadeInUp" style="animation-delay:' + (idx * 0.08) + 's;">' +
+                '<div class="tv-lane-num" style="color:#fbbf24;">道 ' + q.lane + '</div>' +
+                '<div>' + S.renderBibHtml(q.bib, q.group || ev.group) + '</div>' +
+                '<div>' +
+                '<div class="tv-athlete-name">' + S.escapeHtml(q.name) + '</div>' +
+                '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(q.className || '') + '</div>' +
+                '</div>' +
+                '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
+                '<div class="tv-result-time" style="font-size:1.65rem;">预赛 ' + S.escapeHtml(q.prelimMark) + '</div>' +
+                '<div style="text-align:center;">' + (q.qualBadge === 'Q' ? '<span class="badge-q-big" style="font-size:1.2rem; padding:5px 14px;">Q 小组第一</span>' : '<span class="badge-q-small" style="font-size:1.2rem; padding:5px 14px;">q 择优晋级</span>') + '</div>' +
+                '</div>'
+              );
+            }).join('')) +
           '</div>'
         );
       }
@@ -618,28 +636,28 @@
           var tid = S.normalizeTeamId(entry.team);
           return (
             '<div class="podium-block ' + cls + ' animate__animated animate__bounceInUp">' +
-              '<div style="font-size:3.4rem; line-height:1;">' + medalEmoji + '</div>' +
-              '<div style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--text-secondary); margin:6px 0 10px;">第 ' + place + ' 名</div>' +
-              '<div style="margin-bottom:8px;">' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
-              '<div style="font-size:2rem; font-weight:900; margin-bottom:6px;">' + S.escapeHtml(entry.name) + '</div>' +
-              '<div style="margin-bottom:10px;">' + S.renderTeamPillHtml(tid) + '</div>' +
-              '<div style="font-family:var(--font-display); font-size:2.2rem; font-weight:900; color:#ffffff;">' + S.escapeHtml(S.formatMarkDisplay(entry, ev)) + '</div>' +
-              '<div style="margin-top:8px; color:#34d399; font-weight:800; font-size:1.1rem;">+' + (entry.points || 0) + ' 分 · 实领奖牌 ' + (ev.physicalMedalCount || 1) + ' 面</div>' +
+            '<div style="font-size:3.4rem; line-height:1;">' + medalEmoji + '</div>' +
+            '<div style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--text-secondary); margin:6px 0 10px;">第 ' + place + ' 名</div>' +
+            '<div style="margin-bottom:8px;">' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
+            '<div style="font-size:2rem; font-weight:900; margin-bottom:6px;">' + S.escapeHtml(entry.name) + '</div>' +
+            '<div style="margin-bottom:10px;">' + S.renderTeamPillHtml(tid) + '</div>' +
+            '<div style="font-family:var(--font-display); font-size:2.2rem; font-weight:900; color:#ffffff;">' + S.escapeHtml(S.formatMarkDisplay(entry, ev)) + '</div>' +
+            '<div style="margin-top:8px; color:#34d399; font-weight:800; font-size:1.1rem;">+' + (entry.points || 0) + ' 分 · 实领奖牌 ' + (ev.physicalMedalCount || 1) + ' 面</div>' +
             '</div>'
           );
         }
 
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-            '<div>' +
-              '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:1rem;">VICTORY CEREMONY · 颁奖典礼荣誉时刻</div>' +
-              '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:var(--gold);">前三名领奖台</span></h2>' +
-            '</div>' +
+          '<div>' +
+          '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:1rem;">VICTORY CEREMONY · 颁奖典礼荣誉时刻</div>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(ev.group + ' ' + ev.name) + ' <span style="color:var(--gold);">前三名领奖台</span></h2>' +
+          '</div>' +
           '</div>' +
           '<div class="tv-podium-stage">' +
-            blockHtml(p2, 2, 'podium-2', '🥈') +
-            blockHtml(p1, 1, 'podium-1', '🥇') +
-            blockHtml(p3, 3, 'podium-3', '🥉') +
+          blockHtml(p2, 2, 'podium-2', '🥈') +
+          blockHtml(p1, 1, 'podium-1', '🥇') +
+          blockHtml(p3, 3, 'podium-3', '🥉') +
           '</div>'
         );
 
@@ -735,9 +753,9 @@
 
       document.getElementById('btn-fullscreen').addEventListener('click', function () {
         if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(function () {});
+          document.documentElement.requestFullscreen().catch(function () { });
         } else {
-          document.exitFullscreen().catch(function () {});
+          document.exitFullscreen().catch(function () { });
         }
       });
 
@@ -771,4 +789,5 @@
     })();
   </script>
 </body>
+
 </html>

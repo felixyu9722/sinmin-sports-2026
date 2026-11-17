@@ -1,5 +1,5 @@
 /* ==========================================================================
-   新民中学 (Sin Min Middle School) 2026 运动会核心规则引擎与跨屏数据总线
+   新民独立中学 (Sin Min Middle School) 2026 运动会核心规则引擎与跨屏数据总线
    兼容 file:// 双击运行与静态服务器部署 (挂载于 window.SinMinSports)
    ========================================================================== */
 (function (global) {
@@ -479,7 +479,7 @@
       // 实体奖牌倍数（章程 9.1 - 9.4）
       var medalMultiplier = ev.physicalMedalCount ? Number(ev.physicalMedalCount) : (
         ev.teamMedalRule === 'tug_or_grand' ? 8 :
-        ev.teamMedalRule === 'relay' ? 5 : 1
+          ev.teamMedalRule === 'relay' ? 5 : 1
       );
 
       var eventMedals = { eventName: (ev.group ? ev.group + ' ' : '') + ev.name, multiplier: medalMultiplier, red: 0, yellow: 0, blue: 0, green: 0 };
@@ -585,12 +585,12 @@
   }
 
   // =========================================================================
-  // 7. 预置丰富的新民中学 2026 运动会演示数据集
+  // 7. 预置丰富的新民独立中学 2026 运动会演示数据集
   // =========================================================================
   function createDefaultState() {
     return {
       meta: {
-        title: '新民中学 2026 年度运动会',
+        title: '新民独立中学 2026 年度运动会',
         subtitle: 'SIN MIN MIDDLE SCHOOL ANNUAL SPORTS MEET 2026',
         updatedAt: '2026-11-17T04:00:00.000Z',
         githubRepo: DEFAULT_GITHUB_REPO,
@@ -1034,7 +1034,7 @@
     XLSX.utils.book_append_sheet(wb, ws1, '报名与成绩导入表');
 
     var guideRows = [
-      ['新民中学 2026 运动会 Excel 导入规则说明'],
+      ['新民独立中学 2026 运动会 Excel 导入规则说明'],
       ['1. 4位数编号规则（章程第14条）', '第1位=队伍(1红,2黄,3蓝,4青)；第2位=组别(1男甲,2男乙,4女甲,5女乙)；后2位=序号'],
       ['2. 号码布颜色（章程第13条）', '甲组（男甲/女甲）自动匹配白色号码布；乙组（男乙/女乙）自动匹配黄色号码布'],
       ['3. 积分规则（章程第10.2条）', '个人决赛前五名: 7,5,3,2,1分；团体决赛前五名: 10,7,5,3,1分；预赛不计分'],
@@ -1043,7 +1043,7 @@
     var ws2 = XLSX.utils.aoa_to_sheet(guideRows);
     XLSX.utils.book_append_sheet(wb, ws2, '填表与章程说明');
 
-    XLSX.writeFile(wb, '新民中学2026运动会_报名与成绩导入模板.xlsx');
+    XLSX.writeFile(wb, '新民独立中学2026运动会_报名与成绩导入模板.xlsx');
   }
 
   function importExcelFile(file, currentState) {
@@ -1281,7 +1281,7 @@
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s5), '5_颁奖台实体奖牌核算表');
 
     var dateTag = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, '新民中学2026运动会_完整成绩归档_' + dateTag + '.xlsx');
+    XLSX.writeFile(wb, '新民独立中学2026运动会_完整成绩归档_' + dateTag + '.xlsx');
   }
 
   // =========================================================================
@@ -1391,7 +1391,7 @@
       .catch(function () { return null; })
       .then(function (existing) {
         var body = {
-          message: 'chore: 实时更新新民中学运动会成绩 (' + new Date().toLocaleTimeString('zh-CN', { hour12: false }) + ')',
+          message: 'chore: 实时更新新民独立中学运动会成绩 (' + new Date().toLocaleTimeString('zh-CN', { hour12: false }) + ')',
           content: b64Content,
           branch: 'main'
         };
@@ -1433,7 +1433,7 @@
       if (Ctx) audioCtx = new Ctx();
     }
     if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume().catch(function () {});
+      audioCtx.resume().catch(function () { });
     }
     return audioCtx;
   }
@@ -1561,7 +1561,7 @@
       items.push('📢 【' + ev.group + ' ' + ev.name + '】' + podiumStr);
     });
     if (items.length === 0) {
-      return '欢迎莅临新民中学 2026 年度运动会现场！各项目实时成绩将同步播报。';
+      return '欢迎莅临新民独立中学 2026 年度运动会现场！各项目实时成绩将同步播报。';
     }
     return items.join('     ✦     ');
   }

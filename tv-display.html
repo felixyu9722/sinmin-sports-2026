@@ -520,7 +520,7 @@
           '<h2 class="tv-event-title">' + S.escapeHtml(S.getDivisionLabel(ev.group) + ' · ' + ev.group + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
           '</div>' +
           '<div class="tv-record-pill">' +
-          '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录 ' + (ev.wind ? ' · 风速 ' + S.escapeHtml(ev.wind) + ' m/s' : '') + '</div>' +
+          '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录</div>' +
           '<div style="font-family:var(--font-display); font-size:1.75rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '无') + '</div>' +
           '</div>' +
           '</div>' +
@@ -544,7 +544,6 @@
               '<div class="tv-athlete-name" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
               '<span>' + S.escapeHtml(entry.name) + '</span>' +
               (entry.isRecord ? '<span class="badge-record" style="font-size:0.9rem; padding:4px 10px;">★ 破大会纪录</span>' : '') +
-              (entry.windAssisted ? '<span class="badge-wind" style="font-size:0.85rem;">超风速</span>' : '') +
               '</div>' +
               '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + ' · 第 ' + (entry.lane || '-') + ' 道' + (entry.isTied ? ' · 并列名次' : '') + '</div>' +
               '</div>' +

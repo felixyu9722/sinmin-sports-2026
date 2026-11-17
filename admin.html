@@ -438,9 +438,6 @@
             if (calc.isRecord) {
               previewBadge += '<span class="badge-record">NR</span> ';
             }
-            if (calc.windAssisted) {
-              previewBadge += '<span class="badge-wind">超风速</span>';
-            }
           }
 
           var resultInputsHtml = '';
@@ -511,15 +508,12 @@
             '</div>' +
           '</div>' +
 
-          '<div class="no-print" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-bottom:16px; padding:12px; border-radius:12px; background:rgba(9,14,28,0.6);">' +
+          '<div class="no-print" style="display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:16px; padding:12px; border-radius:12px; background:rgba(9,14,28,0.6);">' +
             '<label style="font-size:0.76rem; color:var(--text-secondary);">大会纪录' +
               '<input type="text" id="ev-meta-record" class="input-control input-mono" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.recordMark || '') + '" placeholder="如 11.35" />' +
             '</label>' +
             '<label style="font-size:0.76rem; color:var(--text-secondary);">原纪录保持者' +
               '<input type="text" id="ev-meta-holder" class="input-control" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.recordHolder || '') + '" placeholder="姓名 (年份)" />' +
-            '</label>' +
-            '<label style="font-size:0.76rem; color:var(--text-secondary);">风速 (m/s, &gt;+2.0不破纪录)' +
-              '<input type="text" id="ev-meta-wind" class="input-control input-mono" style="width:100%; margin-top:4px;" value="' + S.escapeHtml(ev.wind || '') + '" placeholder="如 +0.8" />' +
             '</label>' +
             '<label style="font-size:0.76rem; color:var(--text-secondary);">当前状态' +
               '<select id="ev-meta-status" class="select-control" style="width:100%; margin-top:4px;">' +
@@ -568,7 +562,6 @@
 
         if (e.target.id === 'ev-meta-record') { ev.recordMark = e.target.value.trim(); persistAndSyncLocal(false); renderWorkspace(); return; }
         if (e.target.id === 'ev-meta-holder') { ev.recordHolder = e.target.value.trim(); persistAndSyncLocal(false); return; }
-        if (e.target.id === 'ev-meta-wind') { ev.wind = e.target.value.trim(); persistAndSyncLocal(false); renderWorkspace(); return; }
 
         var idx = e.target.getAttribute('data-idx');
         var field = e.target.getAttribute('data-field');
@@ -820,7 +813,7 @@
           type: type,
           isTeam: isTeam,
           is60m: document.getElementById('new-ev-60m').checked || name.indexOf('60') !== -1,
-          windCheck: /60|100|200|跳远/.test(name),
+          windCheck: false,
           wind: '',
           physicalMedalCount: medalRule === 'tug_or_grand' ? 8 : (medalRule === 'relay' ? 5 : 1),
           teamMedalRule: medalRule,

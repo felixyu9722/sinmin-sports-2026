@@ -450,7 +450,6 @@
 
                       var badges = [];
                       if (entry.isRecord) badges.push('<span class="badge-record">NEW RECORD</span>');
-                      if (entry.windAssisted) badges.push('<span class="badge-wind" title="顺风超过+2.0m/s，成绩有效但不计破纪录">超风速 ' + S.escapeHtml(ev.wind) + 'w</span>');
                       var dnsWarn = dnsMap[ev.id + '|' + entry.bib];
                       if (dnsWarn) badges.push('<span class="badge-status-warn">' + S.escapeHtml(dnsWarn) + '</span>');
 
@@ -485,7 +484,6 @@
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
                   (ev.recordMark ? '<span style="font-size:0.78rem; color:#fcd34d;">大会纪录：<strong>' + S.escapeHtml(ev.recordMark) + '</strong> ' + S.escapeHtml(ev.recordHolder || '') + '</span>' : '') +
-                  (ev.wind ? '<span style="font-size:0.76rem; color:var(--text-secondary);">风速 ' + S.escapeHtml(ev.wind) + ' m/s</span>' : '') +
                   stageSwitchHtml +
                 '</div>' +
               '</div>' +

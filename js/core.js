@@ -186,7 +186,7 @@
   }
 
   // =========================================================================
-  // 3. 成绩排名、并列平分（章程10.3-10.4）、风速与破纪录计算
+  // 3. 成绩排名、并列平分（章程10.3-10.4）与破纪录计算
   // =========================================================================
   function calculateEntries(entries, event, isFinalStage) {
     var cloned = (entries || []).map(function (item, idx) {
@@ -194,8 +194,7 @@
     });
 
     var recordVal = parseNumericRecord(event);
-    var windVal = parseFloat(event.wind);
-    var isWindAssisted = !!(event.windCheck && !isNaN(windVal) && windVal > 2.0);
+    var isWindAssisted = false;
 
     var validList = [];
     var invalidList = [];
@@ -612,8 +611,8 @@
           type: 'track',
           isTeam: false,
           is60m: false,
-          windCheck: true,
-          wind: '+0.8',
+          windCheck: false,
+          wind: '',
           physicalMedalCount: 1,
           teamMedalRule: 'individual',
           recordMark: '11.35',
@@ -645,8 +644,8 @@
           type: 'field',
           isTeam: false,
           is60m: false,
-          windCheck: true,
-          wind: '+1.1',
+          windCheck: false,
+          wind: '',
           physicalMedalCount: 1,
           teamMedalRule: 'individual',
           recordMark: '5.12',
@@ -670,8 +669,8 @@
           type: 'track',
           isTeam: false,
           is60m: false,
-          windCheck: true,
-          wind: '+0.4',
+          windCheck: false,
+          wind: '',
           physicalMedalCount: 1,
           teamMedalRule: 'individual',
           recordMark: '22.90',
@@ -694,8 +693,8 @@
           type: 'track',
           isTeam: false,
           is60m: true,
-          windCheck: true,
-          wind: '+0.6',
+          windCheck: false,
+          wind: '',
           physicalMedalCount: 1,
           teamMedalRule: 'individual',
           recordMark: '7.45',
@@ -729,8 +728,8 @@
           type: 'track',
           isTeam: false,
           is60m: false,
-          windCheck: true,
-          wind: '+0.5',
+          windCheck: false,
+          wind: '',
           physicalMedalCount: 1,
           teamMedalRule: 'individual',
           recordMark: '13.20',
@@ -1028,11 +1027,11 @@
     var wb = XLSX.utils.book_new();
 
     var regRows = [
-      ['项目名称', '组别', '项目类型(径赛/田赛/接力/拔河)', '是否团体赛(是/否)', '是否60米6道(是/否)', '阶段(预赛/决赛)', '预赛分组', '道次', '运动员编号(4位)', '姓名', '班级', '队伍(红/黄/蓝/青)', '成绩(径赛秒或分:秒/田赛米)', '试跳2', '试跳3', '状态(OK/DNS/DNF/DQ)', '大会纪录', '风速'],
-      ['100米', '男甲', '径赛', '否', '否', '预赛', 1, 2, '1101', '林宇轩', '高二理1', '红', '11.42', '', '', 'OK', '11.35', '+0.8'],
-      ['100米', '男甲', '径赛', '否', '否', '预赛', 2, 2, '2102', '李浩然', '高三理1', '黄', '11.38', '', '', 'OK', '11.35', '+0.8'],
-      ['跳远', '女甲', '田赛', '否', '否', '决赛', 1, 1, '1402', '杨思琪', '高三理1', '红', '5.04', '5.21', '5.15', 'OK', '5.12', '+1.1'],
-      ['4×100米接力', '男甲', '接力', '是', '否', '决赛', 1, 3, '1100', '红队男甲接力队', '高中代表队', '红', '44.62', '', '', 'OK', '44.80', '']
+      ['项目名称', '组别', '项目类型(径赛/田赛/接力/拔河)', '是否团体赛(是/否)', '是否60米6道(是/否)', '阶段(预赛/决赛)', '预赛分组', '道次', '运动员编号(4位)', '姓名', '班级', '队伍(红/黄/蓝/青)', '成绩(径赛秒或分:秒/田赛米)', '试跳2', '试跳3', '状态(OK/DNS/DNF/DQ)', '大会纪录'],
+      ['100米', '男甲', '径赛', '否', '否', '预赛', 1, 2, '1101', '林宇轩', '高二理1', '红', '11.42', '', '', 'OK', '11.35'],
+      ['100米', '男甲', '径赛', '否', '否', '预赛', 2, 2, '2102', '李浩然', '高三理1', '黄', '11.38', '', '', 'OK', '11.35'],
+      ['跳远', '女甲', '田赛', '否', '否', '决赛', 1, 1, '1402', '杨思琪', '高三理1', '红', '5.04', '5.21', '5.15', 'OK', '5.12'],
+      ['4×100米接力', '男甲', '接力', '是', '否', '决赛', 1, 3, '1100', '红队男甲接力队', '高中代表队', '红', '44.62', '', '', 'OK', '44.80']
     ];
     var ws1 = XLSX.utils.aoa_to_sheet(regRows);
     XLSX.utils.book_append_sheet(wb, ws1, '报名与成绩导入表');
@@ -1117,7 +1116,6 @@
       var is60m = is60mRaw === '是' || eventName.indexOf('60') !== -1;
 
       var recordMark = String(pick(row, ['大会纪录', '纪录', 'Record'])).trim();
-      var wind = String(pick(row, ['风速', 'Wind'])).trim();
       var stageRaw = String(pick(row, ['阶段(预赛/决赛)', '阶段', 'Stage'])).trim();
       var isPrelim = stageRaw.indexOf('预') !== -1 || stageRaw.indexOf('初') !== -1 || stageRaw.toLowerCase() === 'prelim';
 
@@ -1133,8 +1131,8 @@
           type: type,
           isTeam: isTeam,
           is60m: is60m,
-          windCheck: eventName.indexOf('60') !== -1 || eventName.indexOf('100') !== -1 || eventName.indexOf('200') !== -1 || eventName.indexOf('跳远') !== -1,
-          wind: wind,
+          windCheck: false,
+          wind: '',
           physicalMedalCount: medalRule === 'tug_or_grand' ? 8 : (medalRule === 'relay' ? 5 : 1),
           teamMedalRule: medalRule,
           recordMark: recordMark,
@@ -1151,7 +1149,6 @@
 
       var targetEv = nextState.events[evIdx];
       if (recordMark && !targetEv.recordMark) targetEv.recordMark = recordMark;
-      if (wind) targetEv.wind = wind;
 
       var entry = {
         heat: Number(pick(row, ['预赛分组', '分组', 'Heat']) || 1),
@@ -1212,7 +1209,7 @@
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2), '2_最佳运动员奖杯');
 
     // Sheet 3: 决赛完整成绩单
-    var s3 = [['项目', '组别', '类型', '名次', '道次', '编号', '号码布', '姓名', '班级', '色队', '成绩', '风速', '得分', '破大会纪录', '状态']];
+    var s3 = [['项目', '组别', '类型', '名次', '道次', '编号', '号码布', '姓名', '班级', '色队', '成绩', '得分', '破大会纪录', '状态']];
     (state.events || []).forEach(function (ev) {
       var computed = calculateEntries(ev.finalEntries || [], ev, true);
       computed.forEach(function (entry) {
@@ -1230,7 +1227,6 @@
           entry.className || '-',
           TEAMS[tid].name,
           formatMarkDisplay(entry, ev),
-          ev.wind || '-',
           entry.points || 0,
           entry.isRecord ? 'NEW RECORD (破纪录)' : '',
           entry.status || 'OK'

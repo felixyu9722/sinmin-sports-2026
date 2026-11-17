@@ -199,6 +199,9 @@
       <div style="display:flex; flex-direction:column; gap:14px;">
         <div style="padding:12px; border-radius:12px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.28);">
           <div style="font-weight:800; font-size:0.88rem; color:#7dd3fc; margin-bottom:8px;">方案 A：GitHub Pages 直推同步（供全校师生手机浏览）</div>
+          <div id="local-git-banner" style="display:none; padding:8px 10px; margin-bottom:8px; border-radius:8px; background:rgba(16,185,129,0.16); border:1px solid rgba(16,185,129,0.45); color:#6ee7b7; font-size:0.78rem; font-weight:700; line-height:1.5;">
+            ✓ 本机免 Token 自动同步已启用：直接调用本电脑已登录的 Git 账号推送到 GitHub，无需填写下方 Token！
+          </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <label style="font-size:0.8rem; color:var(--text-secondary);">
               GitHub 仓库 (格式：用户名/仓库名)：
@@ -830,9 +833,27 @@
         renderWorkspace();
       });
 
+      var localSyncAvailable = false;
+      if (S.isLocalSyncHost()) {
+        fetch('./api/local-sync-status?_t=' + Date.now(), { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (d && d.ok) {
+              localSyncAvailable = true;
+              if (state.meta && state.meta.githubAutoPush === undefined) {
+                state.meta.githubAutoPush = true;
+              }
+            }
+          })
+          .catch(function () {});
+      }
+
       function maybeAutoPushGitHub() {
-        if (state.meta && state.meta.githubAutoPush && S.getSavedGithubToken()) {
-          S.pushStateToGitHub(state.meta.githubRepo, S.getSavedGithubToken(), state)
+        var token = S.getSavedGithubToken();
+        var canLocal = localSyncAvailable && S.isLocalSyncHost();
+        var shouldAuto = state.meta && (state.meta.githubAutoPush === true || (state.meta.githubAutoPush !== false && canLocal));
+        if (shouldAuto && (token || canLocal)) {
+          S.pushStateToGitHub(state.meta.githubRepo, token, state)
             .then(function () { S.showToast('☁️ 已同步推送至云端（第2电视与师生手机端将在约15秒内更新）'); })
             .catch(function (err) { S.showToast('GitHub 云端同步失败：' + err.message); });
         }
@@ -995,7 +1016,9 @@
       document.getElementById('btn-cloud-config').addEventListener('click', function () {
         document.getElementById('cloud-gh-repo').value = (state.meta && state.meta.githubRepo) || S.DEFAULT_GITHUB_REPO;
         document.getElementById('cloud-gh-token').value = S.getSavedGithubToken();
-        document.getElementById('cloud-gh-autopush').checked = !!(state.meta && state.meta.githubAutoPush);
+        var autoVal = state.meta && state.meta.githubAutoPush;
+        document.getElementById('cloud-gh-autopush').checked = autoVal === undefined ? localSyncAvailable : !!autoVal;
+        document.getElementById('local-git-banner').style.display = localSyncAvailable ? 'block' : 'none';
         document.getElementById('cloud-webhook-url').value = (state.meta && state.meta.googleAppsScriptUrl) || '';
         document.getElementById('cloud-csv-url').value = (state.meta && state.meta.googleSheetCsvUrl) || '';
         cloudModal.classList.add('open');
@@ -1015,9 +1038,13 @@
         var repo = document.getElementById('cloud-gh-repo').value.trim() || S.DEFAULT_GITHUB_REPO;
         var token = document.getElementById('cloud-gh-token').value.trim();
         S.saveGithubToken(token);
+        state.meta = state.meta || {};
         state.meta.githubRepo = repo;
+        state.meta.githubAutoPush = document.getElementById('cloud-gh-autopush').checked;
+        state.meta.remoteTvCommand = Object.assign({}, tvCmd);
+        persistAndSyncLocal(false);
         S.pushStateToGitHub(repo, token, state).then(function () {
-          S.showToast('☁️ 已成功推送最新成绩到 GitHub 手机端！');
+          S.showToast('☁️ 已成功推送最新成绩到 GitHub 手机端与第2电视！');
         }).catch(function (err) {
           S.showToast('推送失败：' + err.message);
         });

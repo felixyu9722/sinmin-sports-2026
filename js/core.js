@@ -5014,9 +5014,39 @@
     return tryUrl(0);
   }
 
+  function isLocalSyncHost() {
+    try {
+      var host = (global.location && global.location.hostname) || '';
+      var proto = (global.location && global.location.protocol) || '';
+      return proto.indexOf('http') === 0 && (host === 'localhost' || host === '127.0.0.1');
+    } catch (e) {
+      return false;
+    }
+  }
+
   function pushStateToGitHub(repoOwnerRepo, githubToken, state) {
     var repo = String(repoOwnerRepo || DEFAULT_GITHUB_REPO).trim();
     var token = String(githubToken || getSavedGithubToken()).trim();
+
+    if (isLocalSyncHost() && !token) {
+      var localPayload = JSON.parse(JSON.stringify(state));
+      localPayload.meta = localPayload.meta || {};
+      localPayload.meta.updatedAt = new Date().toISOString();
+      return fetch('./api/local-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localPayload)
+      }).then(function (res) {
+        if (!res.ok) {
+          throw new Error('请确认已通过 启动运动会系统.bat (local_server.py) 启动本机免 Token 同步服务');
+        }
+        return res.json().then(function (data) {
+          if (!data || !data.ok) throw new Error((data && data.error) || '本地免 Token 推送失败');
+          return data;
+        });
+      });
+    }
+
     if (!repo || !token) {
       return Promise.reject(new Error('请先配置 GitHub 仓库与 Personal Access Token'));
     }
@@ -5534,6 +5564,7 @@
     fetchFromGoogleSheetsCsv: fetchFromGoogleSheetsCsv,
     pushToGoogleAppsScript: pushToGoogleAppsScript,
     DEFAULT_GITHUB_REPO: DEFAULT_GITHUB_REPO,
+    isLocalSyncHost: isLocalSyncHost,
     getSavedGithubToken: getSavedGithubToken,
     saveGithubToken: saveGithubToken,
     fetchFromRemoteStateJson: fetchFromRemoteStateJson,

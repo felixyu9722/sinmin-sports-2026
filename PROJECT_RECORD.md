@@ -154,8 +154,9 @@
 - **成绩单拍照 / 微信 Ctrl+V 直接贴图录入与推屏**：
   - `js/core.js` 新增 `compressImageFile`（前端自动缩图至 `<= 1100px` JPEG 避免占满 `localStorage` 与云端 JSON）及共享照片展示助手 `renderEventPhotoHtml`。
   - `admin.html` 中栏新增「📷 拍照 / 上传成绩单或现场图片」与 `Ctrl+V` 快捷粘贴，可在上方对照纸质成绩单拍照图直接录入成绩，支持放大看图与勾选是否同步展示到大屏 (`tv-display.html`) 及师生查分页 (`live.html` / `index.html`)。
-- **Windows 一键启动本地服务（[`启动运动会系统.bat`](file:///c:/Downloads/运动会2026/启动运动会系统.bat)）**：
-  - 新增双击启动脚本自动启动 `py -m http.server 8080` 并打开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`，解决直接访问 `localhost:8080` 未启动服务出现 `ERR_CONNECTION_REFUSED` 的问题；梳理现场 3 种打开方式（双击 `.bat` 走 `localhost:8080`、联网直用 GitHub Pages 网址、直接双击 `.html` 备用）。
+- **Windows 一键启动本地服务与免 Token 云端自动同步（[`启动运动会系统.bat`](file:///c:/Downloads/运动会2026/启动运动会系统.bat) & [`local_server.py`](file:///c:/Downloads/运动会2026/local_server.py)）**：
+  - 新增本地服务器 `local_server.py`（监听 `8080` 端口）及 `/api/local-sync` 接口；在本机通过 `http://localhost:8080/admin.html` 推送大屏时，直接调用本机已登录的 Git 账号后台提交并推送 `data/live-state.json` 到 `origin/main`，**无需申请或填写 GitHub Token**。
+  - 双击 `启动运动会系统.bat` 自动运行 `local_server.py` 并打开 `admin.html` 与 `tv-display.html`。
 
 ---
 

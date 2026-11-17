@@ -145,24 +145,41 @@
 
 ---
 
-### 第五阶段：双电视同步、赛期筛选、成绩单拍照录入与临时公开头像
+### 第五阶段：双电视同步、赛期筛选、成绩单拍照录入、一键启动与临时公开头像
 - **第二台电视机（网页接入）完整支持**：
-  - `tv-display.html` 新增每 15 秒自动云端轮询，配合 `admin.html` 推送时随 `data/live-state.json` 一并写入的 `state.meta.remoteTvCommand`（含切换模式、当前项目、紧急横幅），实现第一台电脑 HDMI 直连与第二台网页大屏同步联动（`fetchFromRemoteStateJson` 同步优化为若 Pages 缓存未更新则继续检查 `raw.githubusercontent.com`）。
-  - 应运动会当天双大屏展示需要，暂将 `student-directory/` 从 `.gitignore` 移出并上传至 GitHub Pages，使网页打开的 `tv-display.html` 同样显示学生头像；**待运动会结束后按清单从 Git 历史/仓库移除**。
+  - `tv-display.html` 新增每 15 秒自动云端轮询，配合 `admin.html` 推送时随 `data/live-state.json` 一并写入的 `state.meta.remoteTvCommand`（含切换模式、当前项目、紧急横幅），实现第一台电脑 HDMI 直连与第二台网页大屏同步联动（`fetchFromRemoteStateJson` 同步优化为若 Pages 缓存未更新则继续检查 `raw.githubusercontent.com`，且 `saveState(..., preserveUpdatedAt)` 避免连推或时钟差异被忽略）。
+  - 应运动会当天双大屏展示需要，暂将 `student-directory/` 从 `.gitignore` 移出并上传至 GitHub Pages，使网页打开的 `tv-display.html` 同样显示学生头像；**待运动会结束后按清单从 Git 仓库移除**。
 - **控制台按比赛日筛选赛程（[`admin.html`](file:///c:/Downloads/运动会2026/admin.html)）**：
   - 左侧列表顶部新增 `#admin-day-tabs`：`全部赛期`（40 项）/ `🔥 02/12 正日`（23 项）/ `📅 18/11`（7 项）/ `✓ 15-16/11`（10 项），并显示每个项目的开赛日期场次。
 - **成绩单拍照 / 微信 Ctrl+V 直接贴图录入与推屏**：
   - `js/core.js` 新增 `compressImageFile`（前端自动缩图至 `<= 1100px` JPEG 避免占满 `localStorage` 与云端 JSON）及共享照片展示助手 `renderEventPhotoHtml`。
   - `admin.html` 中栏新增「📷 拍照 / 上传成绩单或现场图片」与 `Ctrl+V` 快捷粘贴，可在上方对照纸质成绩单拍照图直接录入成绩，支持放大看图与勾选是否同步展示到大屏 (`tv-display.html`) 及师生查分页 (`live.html` / `index.html`)。
+- **Windows 一键启动本地服务（[`启动运动会系统.bat`](file:///c:/Downloads/运动会2026/启动运动会系统.bat)）**：
+  - 新增双击启动脚本自动启动 `py -m http.server 8080` 并打开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`，解决直接访问 `localhost:8080` 未启动服务出现 `ERR_CONNECTION_REFUSED` 的问题；梳理现场 3 种打开方式（双击 `.bat` 走 `localhost:8080`、联网直用 GitHub Pages 网址、直接双击 `.html` 备用）。
 
 ---
 
 ## 五、比赛当天与赛后清理备忘录（Checklist）
 
 - [ ] **赛前海报打印**：打开 `admin.html` 点击顶部 **「📱 扫码海报」** 打印数张 A4 海报张贴于检录处、布告栏与太阳能停车场/羽球场/篮球场/宿舍前台阶集合点。
-- [ ] **第一台电视机（主机直连）**：在项目根目录运行 `py -m http.server 8080`，电脑开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`（拖到 HDMI 大屏按 `F11` 全屏）。
-- [ ] **第二台电视机（网页直开）**：第二台联网电视浏览器直接打开 `https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html` 按 `F11` 全屏，每 15 秒自动同步成绩、学生头像、大屏模式与照片。
+- [ ] **第一台电脑与 HDMI 电视（最推荐）**：双击文件夹里的 **[`启动运动会系统.bat`](file:///c:/Downloads/运动会2026/启动运动会系统.bat)**（启动后保持黑色窗口勿关），自动打开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`，将大屏页拖到 HDMI 电视按 `F11` 全屏。（若现场有稳定网络，也可直接使用 GitHub Pages 线上网址 `admin.html` 与 `tv-display.html`。）
+- [ ] **第二台电视机（网页直开）**：第二台联网电视浏览器直接打开 `https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html` 按 `F11` 全屏，每 15 秒自动同步成绩、学生头像、大屏模式与照片（如需固定某一画面例如积分榜，可打开 `?mode=standings`）。
 - [ ] **手机端与第二电视云同步配置**：在 `admin.html` →「☁️ 云端同步」填写 `felixyu9722/sinmin-sports-2026` 与本地 GitHub Token，并勾选「推送大屏时自动同步到 GitHub 手机端」。
 - [ ] **现场快捷录分与贴图**：按左侧 **「🔥 02/12 正日」** 筛选当天 23 个项目；收到纸质成绩单照片时可直接上传或按 `Ctrl+V` 贴图对照录分，或拖入 `.xlsx` 批量导入。
 - [ ] **赛后归档**：点击 **「⬇️ 一键导出 Excel」**，生成包含总积分榜、最佳运动员、决赛完整成绩、预赛晋级与实体奖牌核算表的 5 工作表归档文件。
 - [ ] **运动会结束后移除学生照片（重要隐私清理）**：赛后提醒助手或自行运行 `git rm -r --cached student-directory`，将 `student-directory/` 重新加入 `.gitignore` 并提交推送（如需彻底擦除历史中的照片记录可重写分支再强制推送）。
+
+---
+
+## 六、Git 关键提交记录留档
+
+| 提交哈希 | 主要内容 |
+| --- | --- |
+| `2b90e43` | `chore: 新增 Windows 一键启动脚本 启动运动会系统.bat` |
+| `683615b` | `feat: 支持双电视云端同步、赛期筛选、成绩单拍照贴图录入及临时公开student-directory` |
+| `25e1e78` | `docs: 完整留档项目对话决策记录、2026官方赛程积分快照与群发文案` |
+| `facfc85` | `feat: 对接2026官方运动会手册与竞赛检录表格完整40项赛程、实赛积分及手册速查弹窗` |
+| `ab3621f` | `chore: 全面移除所有页面的风速显示、录入项与示例风速字段` |
+| `943071c` | `style: 优化师生查分页 live.html 手机窄屏卡片与导航自适应排版` |
+| `a098a76` | `feat: 新增纯净师生查分版 live.html 与控制台一键生成打印 A4 扫码查分海报` |
+| `635556e` | `ui: 升级左侧满高队伍色块号码牌、中文晋级标识及移除精神奖评分` |

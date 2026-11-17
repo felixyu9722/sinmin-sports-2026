@@ -72,7 +72,7 @@
     <!-- 中栏：核心成绩录入与自动计算工作台 -->
     <section class="glass-panel" style="padding:16px;" id="admin-workspace"></section>
 
-    <!-- 右栏：大屏导播遥控与精神奖评分 -->
+    <!-- 右栏：大屏导播遥控与积分速览 -->
     <aside class="admin-director-col no-print" style="display:flex; flex-direction:column; gap:12px;">
       <div class="glass-panel" style="padding:14px;">
         <div class="section-header" style="margin-bottom:8px;">
@@ -121,9 +121,9 @@
         </div>
       </div>
 
-      <!-- 四队实时总分速览 & 精神奖评分（章程 9.5） -->
+      <!-- 四队实时总分与奖牌速览 -->
       <div class="glass-panel" style="padding:16px;">
-        <h3 class="section-title" style="font-size:0.95rem; margin-bottom:10px;">🔥 四队实时总分与精神奖评分</h3>
+        <h3 class="section-title" style="font-size:0.95rem; margin-bottom:10px;">🔥 四队实时总分与奖牌速览</h3>
         <div id="admin-mini-standings" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </aside>
@@ -329,9 +329,11 @@
                 '<strong>' + S.escapeHtml(t.name) + '</strong>' +
                 '<span style="font-family:var(--font-display); font-weight:800; color:' + t.color + ';">' + t.points + '分</span>' +
               '</div>' +
-              '<label style="font-size:0.74rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;">精神:' +
-                '<input type="number" min="0" max="200" class="input-control input-mono" style="width:62px; padding:4px 6px; font-size:0.8rem;" data-spirit-team="' + t.id + '" value="' + t.spiritScore + '" />' +
-              '</label>' +
+              '<div style="font-size:0.76rem; color:var(--text-secondary); display:flex; gap:6px; font-family:var(--font-mono);">' +
+                '<span style="color:var(--gold);">🥇' + t.gold + '</span>' +
+                '<span style="color:var(--silver);">🥈' + t.silver + '</span>' +
+                '<span style="color:var(--bronze);">🥉' + t.bronze + '</span>' +
+              '</div>' +
             '</div>'
           );
         }).join('');
@@ -380,7 +382,7 @@
           var previewBadge = '';
           if (activeStage === 'prelim') {
             previewBadge = (calc.heatRank ? ('组第' + calc.heatRank + ' ') : '') +
-              (calc.qualBadge === 'Q' ? '<span class="badge-q-big">Q</span>' : (calc.qualBadge === 'q' ? '<span class="badge-q-small">q</span>' : ''));
+              (calc.qualBadge ? '<span class="badge-q-big">✓ 晋级决赛</span>' : '');
           } else {
             if (calc.rank) {
               previewBadge += '<strong style="color:' + (calc.rank === 1 ? 'var(--gold)' : '#e2e8f0') + ';">第' + calc.rank + '名</strong> ';
@@ -704,16 +706,6 @@
         document.getElementById('input-urgent-notice').value = '';
         tvCmd = S.pushTvCommand({ urgentNotice: '' });
         S.showToast('已撤下电视紧急通知横幅');
-      });
-
-      // 精神奖评分实时修改
-      document.getElementById('admin-mini-standings').addEventListener('change', function (e) {
-        var tid = e.target.getAttribute('data-spirit-team');
-        if (!tid) return;
-        state.spiritScores = state.spiritScores || {};
-        state.spiritScores[tid] = Number(e.target.value) || 0;
-        persistAndSyncLocal(true);
-        S.showToast('已更新' + S.TEAMS[tid].name + '最佳精神奖评分');
       });
 
       // Excel 拖放导入

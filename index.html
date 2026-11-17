@@ -91,8 +91,9 @@
           <button class="btn btn-sm" id="btn-clear-search" style="display:none;">清除</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <span style="font-size:0.78rem; color:var(--text-secondary);">号码布样式：</span>
-          <span class="bib-badge bib-white"><span class="bib-dot team-dot-red"></span>白色号码布 (色点=红/黄/蓝/青队)</span>
+          <span style="font-size:0.78rem; color:var(--text-secondary);">号码布图例：</span>
+          <span class="bib-badge bib-white"><span class="bib-color-block team-dot-red"></span><span class="bib-num-text">1101</span></span>
+          <span style="font-size:0.76rem; color:var(--text-secondary);">左侧色块代表红/黄/蓝/青队</span>
         </div>
       </div>
 
@@ -221,7 +222,7 @@
               '</div>' +
               '<div style="display:flex; align-items:baseline; justify-content:space-between;">' +
                 '<div class="house-score-num" style="color:' + t.color + ';">' + t.points + '<span style="font-size:0.9rem; margin-left:4px; color:var(--text-secondary);">分</span></div>' +
-                '<div style="font-size:0.76rem; color:var(--text-secondary);">精神奖: <strong>' + t.spiritScore + '</strong></div>' +
+                '<div style="font-size:0.76rem; color:var(--text-secondary);">奖牌合计: <strong>' + (t.gold + t.silver + t.bronze) + '</strong> 项</div>' +
               '</div>' +
               '<div class="house-progress-track">' +
                 '<div class="house-progress-fill" style="width:' + pct + '%; background:linear-gradient(90deg, ' + t.color + ', #ffffff);"></div>' +
@@ -438,7 +439,7 @@
             stageSwitchHtml = (
               '<div style="display:flex; gap:6px;">' +
                 '<button class="chip-btn ' + (stageMode === 'final' ? 'active' : '') + '" data-stage-ev="' + ev.id + '" data-stage="final">决赛名单/成绩</button>' +
-                '<button class="chip-btn ' + (stageMode === 'prelim' ? 'active' : '') + '" data-stage-ev="' + ev.id + '" data-stage="prelim">预赛分组与晋级(Q/q)</button>' +
+                '<button class="chip-btn ' + (stageMode === 'prelim' ? 'active' : '') + '" data-stage-ev="' + ev.id + '" data-stage="prelim">预赛分组与晋级名单</button>' +
               '</div>'
             );
           }
@@ -454,9 +455,9 @@
                 '<thead><tr><th>分组</th><th>道次</th><th>号码布</th><th>选手 / 班级</th><th>色队</th><th>成绩</th><th>组内名次</th><th>晋级</th></tr></thead>' +
                 '<tbody>' +
                   pRows.map(function (entry) {
-                    var qBadge = entry.qualBadge === 'Q'
-                      ? '<span class="badge-q-big" title="小组第一直接晋级">Q</span>'
-                      : (entry.qualBadge === 'q' ? '<span class="badge-q-small" title="按成绩择优晋级">q</span>' : '<span style="color:var(--text-muted);">-</span>');
+                    var qBadge = entry.qualBadge
+                      ? '<span class="badge-q-big">✓ 晋级决赛</span>'
+                      : '<span style="color:var(--text-muted);">-</span>';
                     var dnsWarn = dnsMap[ev.id + '|' + entry.bib];
                     return (
                       '<tr>' +
@@ -505,8 +506,6 @@
                       var badges = [];
                       if (entry.isRecord) badges.push('<span class="badge-record">NEW RECORD</span>');
                       if (entry.windAssisted) badges.push('<span class="badge-wind" title="顺风超过+2.0m/s，成绩有效但不计破纪录">超风速 ' + S.escapeHtml(ev.wind) + 'w</span>');
-                      if (entry.qualBadge === 'Q') badges.push('<span class="badge-q-big">预赛Q</span>');
-                      if (entry.qualBadge === 'q') badges.push('<span class="badge-q-small">预赛q</span>');
                       var dnsWarn = dnsMap[ev.id + '|' + entry.bib];
                       if (dnsWarn) badges.push('<span class="badge-status-warn">' + S.escapeHtml(dnsWarn) + '</span>');
 

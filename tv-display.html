@@ -399,41 +399,31 @@
       function renderTrophiesMode(stage, fromPush) {
         var standings = S.computeStandings(state);
         var champion = standings.rankedTeams[0];
-        var spiritChamp = standings.spiritSorted[0];
-        var maxSpirit = Math.max.apply(null, standings.spiritSorted.map(function (s) { return s.score || 1; }));
 
         stage.innerHTML = (
           '<div class="tv-stage-header animate__animated animate__fadeInDown" style="margin-bottom:14px;">' +
           '<div>' +
-          '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TROPHIES & MEDALS CEREMONY · 章程第 9 & 10.5 条奖项详情</div>' +
-          '<h2 class="tv-event-title" style="font-size:2.3rem;">大会 6 座荣誉奖杯与实体奖牌颁发细则</h2>' +
+          '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:0.95rem;">TROPHIES & MEDALS CEREMONY · 大会奖项详情</div>' +
+          '<h2 class="tv-event-title" style="font-size:2.3rem;">大会荣誉奖杯与实体奖牌颁发细则</h2>' +
           '</div>' +
           '</div>' +
           '<div class="tv-trophy-grid">' +
-          // 左栏：6 座大会奖杯细节
+          // 左栏：全场总冠军杯 + 4座最佳运动员奖杯
           '<div style="display:flex; flex-direction:column; gap:12px;">' +
-          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">' +
-          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6);">' +
-          '<div style="font-size:0.86rem; color:var(--gold); font-weight:800;">🏆 全场总冠军杯 (1座)</div>' +
-          '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：以全场四队总积分为准</div>' +
-          '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
-          '<strong style="font-size:2rem; color:' + champion.color + ';">' + S.escapeHtml(champion.name) + '</strong>' +
-          '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--gold);">' + champion.points + '分</span>' +
+          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6); flex-direction:row; align-items:center; justify-content:space-between; gap:16px;">' +
+          '<div>' +
+          '<div style="font-size:0.9rem; color:var(--gold); font-weight:800;">🏆 全场总冠军杯 (1座)</div>' +
+          '<div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:6px;">颁发标准：以全场四队总积分为准</div>' +
+          '<div style="display:flex; align-items:baseline; gap:16px;">' +
+          '<strong style="font-size:2.2rem; color:' + champion.color + ';">' + S.escapeHtml(champion.name) + '</strong>' +
+          '<span style="font-family:var(--font-display); font-size:2.2rem; font-weight:900; color:var(--gold);">' + champion.points + '分</span>' +
           '</div>' +
-          '<div style="font-size:0.84rem; color:var(--text-secondary);">🥇' + champion.gold + ' 🥈' + champion.silver + ' 🥉' + champion.bronze + '</div>' +
+          '<div style="font-size:0.86rem; color:var(--text-secondary); margin-top:2px;">🥇' + champion.gold + ' 🥈' + champion.silver + ' 🥉' + champion.bronze + '</div>' +
           '</div>' +
-          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(56,189,248,0.5);">' +
-          '<div style="font-size:0.86rem; color:var(--accent-cyan); font-weight:800;">🔥 最佳精神奖杯 (1座)</div>' +
-          '<div style="font-size:0.76rem; color:var(--text-secondary);">颁发标准：各行政单位主任评分</div>' +
-          '<div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:4px;">' +
-          '<strong style="font-size:2rem; color:' + spiritChamp.color + ';">' + S.escapeHtml(spiritChamp.name) + '</strong>' +
-          '<span style="font-family:var(--font-display); font-size:2.1rem; font-weight:900; color:var(--accent-cyan);">' + spiritChamp.score + '分</span>' +
-          '</div>' +
-          '<div style="display:flex; gap:8px; font-size:0.76rem; color:var(--text-secondary);">' +
-          standings.spiritSorted.map(function (sp) {
-            return '<span style="color:' + sp.color + '; font-weight:700;">' + sp.name + ':' + sp.score + '</span>';
-          }).join('·') +
-          '</div>' +
+          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; min-width:240px;">' +
+          standings.rankedTeams.map(function (t) {
+            return '<div style="padding:6px 10px; border-radius:8px; background:rgba(7,12,24,0.72); border-left:3px solid ' + t.color + '; display:flex; justify-content:space-between; font-size:0.84rem;"><span>#' + t.rank + ' ' + S.escapeHtml(t.name) + '</span><strong style="color:' + t.color + ';">' + t.points + '分</strong></div>';
+          }).join('') +
           '</div>' +
           '</div>' +
 
@@ -598,9 +588,9 @@
             ? '<div style="text-align:center; font-size:1.8rem; color:var(--text-secondary);">该项目决赛名单尚未编排</div>'
             : entries.map(function (entry, idx) {
               var tid = S.normalizeTeamId(entry.team);
-              var qHtml = entry.qualBadge === 'Q'
-                ? '<span class="badge-q-big" style="font-size:1.1rem; padding:4px 10px;">Q 晋级</span>'
-                : (entry.qualBadge === 'q' ? '<span class="badge-q-small" style="font-size:1.1rem; padding:4px 10px;">q 晋级</span>' : '<span style="color:var(--text-muted); font-size:1.1rem;">直入决赛</span>');
+              var qHtml = (entry.prelimMark && entry.prelimMark !== '-')
+                ? '<span class="badge-q-big" style="font-size:1.05rem; padding:4px 12px;">✓ 晋级决赛</span>'
+                : '<span style="color:var(--text-muted); font-size:1.05rem;">直入决赛</span>';
               return (
                 '<div class="tv-lane-row team-border-' + tid + ' animate__animated animate__fadeInRight" style="animation-delay:' + (idx * 0.08) + 's;">' +
                 '<div class="tv-lane-num" style="color:var(--accent-cyan);">道 ' + (entry.lane || (idx + 1)) + '</div>' +
@@ -649,7 +639,7 @@
                 '</div>' +
                 '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
                 '<div class="tv-result-time" style="font-size:1.65rem;">预赛 ' + S.escapeHtml(q.prelimMark) + '</div>' +
-                '<div style="text-align:center;">' + (q.qualBadge === 'Q' ? '<span class="badge-q-big" style="font-size:1.2rem; padding:5px 14px;">Q 小组第一</span>' : '<span class="badge-q-small" style="font-size:1.2rem; padding:5px 14px;">q 择优晋级</span>') + '</div>' +
+                '<div style="text-align:center;"><span class="badge-q-big" style="font-size:1.15rem; padding:5px 14px;">✓ 晋级决赛</span></div>' +
                 '</div>'
               );
             }).join('')) +

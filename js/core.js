@@ -1191,13 +1191,13 @@
     var wb = XLSX.utils.book_new();
 
     // Sheet 1: 四色总积分与奖牌榜
-    var s1 = [['排名', '色队', '总积分', '金牌', '银牌', '铜牌', '实体奖牌总计', '精神奖评分']];
+    var s1 = [['排名', '色队', '总积分', '金牌', '银牌', '铜牌', '实体奖牌总计']];
     standings.rankedTeams.forEach(function (t) {
-      s1.push([t.rank, t.name, t.points, t.gold, t.silver, t.bronze, t.physicalMedals, t.spiritScore]);
+      s1.push([t.rank, t.name, t.points, t.gold, t.silver, t.bronze, t.physicalMedals]);
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1), '1_四色总积分与奖牌榜');
 
-    // Sheet 2: 最佳运动员与精神奖
+    // Sheet 2: 最佳运动员奖杯
     var s2 = [['组别', '最佳运动员(个人项目最多金牌)', '编号', '色队', '个人金牌数', '获奖项目', '是否并列共享']];
     GROUP_ORDER.forEach(function (grp) {
       var info = standings.bestAthletes[grp];
@@ -1209,12 +1209,7 @@
         });
       }
     });
-    s2.push([]);
-    s2.push(['最佳精神奖排名', '色队', '行政主任评分']);
-    standings.spiritSorted.forEach(function (sp, idx) {
-      s2.push([idx + 1, sp.name, sp.score]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2), '2_最佳运动员与精神奖');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2), '2_最佳运动员奖杯');
 
     // Sheet 3: 决赛完整成绩单
     var s3 = [['项目', '组别', '类型', '名次', '道次', '编号', '号码布', '姓名', '班级', '色队', '成绩', '风速', '得分', '破大会纪录', '状态']];
@@ -1262,7 +1257,7 @@
           TEAMS[tid].name,
           formatMarkDisplay(entry, ev),
           entry.heatRank || '-',
-          entry.qualBadge || '-',
+          entry.qualBadge ? '✓ 晋级决赛' : '-',
           entry.status || 'OK'
         ]);
       });
@@ -1491,14 +1486,14 @@
   // =========================================================================
   // 12. 通用渲染助手（号码布 HTML、Toast、Animate.css 工具）
   // =========================================================================
-  function renderBibHtml(bib, group) {
+  function renderBibHtml(bib, group, teamFallback) {
     var parsed = parseBib(bib);
     var grp = group || parsed.group;
     var divLabel = grp ? getDivisionLabel(grp) : '';
-    var teamDotClass = parsed.team ? ('team-dot-' + parsed.team) : '';
-    return '<span class="bib-badge bib-white" title="' + escapeHtml((divLabel ? divLabel + grp + ' · ' : '') + '白色号码布') + '">' +
-      (teamDotClass ? '<span class="bib-dot ' + teamDotClass + '"></span>' : '') +
-      escapeHtml(bib || '----') +
+    var teamId = parsed.team || (teamFallback ? normalizeTeamId(teamFallback) : '');
+    return '<span class="bib-badge bib-white" title="' + escapeHtml((divLabel ? divLabel + grp + ' · ' : '') + '号码布') + '">' +
+      (teamId ? '<span class="bib-color-block team-dot-' + teamId + '"></span>' : '') +
+      '<span class="bib-num-text">' + escapeHtml(bib || '----') + '</span>' +
       '</span>';
   }
 

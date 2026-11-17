@@ -136,36 +136,52 @@ html, body {
   object-fit: contain;
 }
 
-/* 仿真号码布（章程第13条：甲组白色、乙组黄色） */
+/* 仿真号码布（左侧饱满色块代表队伍 + 右侧白底黑字编号） */
 .bib-badge {
   display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 5px;
+  align-items: stretch;
+  padding: 0;
+  border-radius: 6px;
   font-family: var(--font-mono);
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   letter-spacing: 0.06em;
-  line-height: 1.2;
-  border: 2px solid rgba(15, 23, 42, 0.85);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  line-height: 1.25;
+  border: 1.5px solid rgba(15, 23, 42, 0.92);
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.3), 0 2px 6px rgba(0, 0, 0, 0.38);
+  overflow: hidden;
   position: relative;
   white-space: nowrap;
 }
 .bib-badge.bib-white {
-  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #e8edf5 100%);
   color: #0f172a;
 }
-.bib-badge.bib-yellow {
-  background: linear-gradient(180deg, #ffe033 0%, #f5b700 100%);
-  color: #0f172a;
+.bib-badge .bib-color-block {
+  width: 15px;
+  flex-shrink: 0;
+  display: inline-block;
 }
-.bib-badge .bib-dot {
+.bib-badge .bib-num-text {
+  padding: 3px 9px 3px 7px;
+  color: #0f172a;
+  background: transparent;
+}
+.tv-lane-row .bib-badge {
+  font-size: 1.05rem;
+}
+.tv-lane-row .bib-badge .bib-color-block {
+  width: 19px;
+}
+.tv-lane-row .bib-badge .bib-num-text {
+  padding: 4px 11px 4px 9px;
+}
+.bib-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: inline-block;
   border: 1px solid rgba(0, 0, 0, 0.3);
 }
 

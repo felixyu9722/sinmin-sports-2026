@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v1';
+  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v2';
   var STORAGE_TV_KEY = 'sinmin_sports_2026_tv_v1';
   var STORAGE_GH_TOKEN_KEY = 'sinmin_sports_2026_gh_token_local';
   var CHANNEL_NAME = 'sinmin_sports_2026';
@@ -592,7 +592,7 @@
       meta: {
         title: '新民独立中学 2026 年度运动会',
         subtitle: 'SIN MIN MIDDLE SCHOOL ANNUAL SPORTS MEET 2026',
-        updatedAt: '2026-11-17T04:00:00.000Z',
+        updatedAt: '2026-11-17T05:00:00.000Z',
         githubRepo: DEFAULT_GITHUB_REPO,
         googleSheetCsvUrl: '',
         googleAppsScriptUrl: '',
@@ -617,20 +617,20 @@
           scheduleTime: '09:00',
           status: 'finished',
           prelimEntries: [
-            { heat: 1, lane: 2, bib: '1101', name: '林宇轩', className: '高二理1', team: 'red', result: '11.42', status: 'OK' },
-            { heat: 1, lane: 3, bib: '3104', name: '陈冠希', className: '高二文2', team: 'blue', result: '11.68', status: 'OK' },
-            { heat: 1, lane: 4, bib: '2107', name: '黄俊铭', className: '高一理1', team: 'yellow', result: '11.95', status: 'OK' },
-            { heat: 1, lane: 1, bib: '4105', name: '郭子豪', className: '高二商1', team: 'green', result: '12.20', status: 'OK' },
-            { heat: 2, lane: 2, bib: '2102', name: '李浩然', className: '高三理1', team: 'yellow', result: '11.38', status: 'OK' },
-            { heat: 2, lane: 3, bib: '4108', name: '张振宇', className: '高三文1', team: 'green', result: '11.60', status: 'OK' },
-            { heat: 2, lane: 4, bib: '1109', name: '王凯文', className: '高一商2', team: 'red', result: '12.05', status: 'OK' },
-            { heat: 2, lane: 1, bib: '3112', name: '刘俊贤', className: '高二理2', team: 'blue', result: '12.14', status: 'OK' }
+            { heat: 1, lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', result: '11.42', status: 'OK' },
+            { heat: 1, lane: 3, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', result: '11.68', status: 'OK' },
+            { heat: 1, lane: 4, bib: '2107', name: '邹捷贺', className: '高三烘培', team: 'yellow', result: '11.95', status: 'OK' },
+            { heat: 1, lane: 1, bib: '4105', name: '蔡靖栐', className: '高一文商', team: 'green', result: '12.20', status: 'OK' },
+            { heat: 2, lane: 2, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', result: '11.38', status: 'OK' },
+            { heat: 2, lane: 3, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', result: '11.60', status: 'OK' },
+            { heat: 2, lane: 4, bib: '1109', name: '王奕诚', className: '高二文商', team: 'red', result: '12.05', status: 'OK' },
+            { heat: 2, lane: 1, bib: '3112', name: '刘俊宏', className: '高二餐饮', team: 'blue', result: '12.14', status: 'OK' }
           ],
           finalEntries: [
-            { lane: 3, bib: '2102', name: '李浩然', className: '高三理1', team: 'yellow', prelimMark: '11.38s', qualBadge: 'Q', result: '11.18', status: 'OK' },
-            { lane: 2, bib: '1101', name: '林宇轩', className: '高二理1', team: 'red', prelimMark: '11.42s', qualBadge: 'Q', result: '11.39', status: 'OK' },
-            { lane: 1, bib: '4108', name: '张振宇', className: '高三文1', team: 'green', prelimMark: '11.60s', qualBadge: 'q', result: '11.58', status: 'OK' },
-            { lane: 4, bib: '3104', name: '陈冠希', className: '高二文2', team: 'blue', prelimMark: '11.68s', qualBadge: 'q', result: '11.74', status: 'OK' }
+            { lane: 3, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', prelimMark: '11.38s', qualBadge: 'Q', result: '11.18', status: 'OK' },
+            { lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', prelimMark: '11.42s', qualBadge: 'Q', result: '11.39', status: 'OK' },
+            { lane: 1, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', prelimMark: '11.60s', qualBadge: 'q', result: '11.58', status: 'OK' },
+            { lane: 4, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', prelimMark: '11.68s', qualBadge: 'q', result: '11.74', status: 'OK' }
           ]
         },
         {
@@ -651,11 +651,11 @@
           status: 'finished',
           prelimEntries: [],
           finalEntries: [
-            { lane: 1, bib: '1402', name: '杨思琪', className: '高三理1', team: 'red', attempt1: '5.04', attempt2: '5.21', attempt3: '5.15', result: '5.21', status: 'OK' },
-            { lane: 2, bib: '3406', name: '周欣怡', className: '高二文1', team: 'blue', attempt1: '4.88', attempt2: '4.92', attempt3: '4.75', result: '4.92', status: 'OK' },
-            { lane: 3, bib: '2403', name: '蔡佳颖', className: '高二理2', team: 'yellow', attempt1: '4.92', attempt2: 'X', attempt3: '4.81', result: '4.92', status: 'OK' },
-            { lane: 4, bib: '4401', name: '吴雨彤', className: '高一理1', team: 'green', attempt1: '4.60', attempt2: '4.70', attempt3: '4.66', result: '4.70', status: 'OK' },
-            { lane: 5, bib: '1410', name: '谢芷晴', className: '高一商1', team: 'red', attempt1: '4.45', attempt2: '4.52', attempt3: '4.49', result: '4.52', status: 'OK' }
+            { lane: 1, bib: '1402', name: '洪宜君', className: '高三文商', team: 'red', attempt1: '5.04', attempt2: '5.21', attempt3: '5.15', result: '5.21', status: 'OK' },
+            { lane: 2, bib: '3406', name: '李舒庈', className: '高二文商', team: 'blue', attempt1: '4.88', attempt2: '4.92', attempt3: '4.75', result: '4.92', status: 'OK' },
+            { lane: 3, bib: '2403', name: '胡巧微', className: '高三烘培', team: 'yellow', attempt1: '4.92', attempt2: 'X', attempt3: '4.81', result: '4.92', status: 'OK' },
+            { lane: 4, bib: '4401', name: '杨迦淇', className: '高二餐饮', team: 'green', attempt1: '4.60', attempt2: '4.70', attempt3: '4.66', result: '4.70', status: 'OK' },
+            { lane: 5, bib: '1410', name: '吴家润', className: '高一文商', team: 'red', attempt1: '4.45', attempt2: '4.52', attempt3: '4.49', result: '4.52', status: 'OK' }
           ]
         },
         {
@@ -676,10 +676,10 @@
           status: 'finished',
           prelimEntries: [],
           finalEntries: [
-            { lane: 3, bib: '2102', name: '李浩然', className: '高三理1', team: 'yellow', prelimMark: '23.15s', qualBadge: 'Q', result: '22.98', status: 'OK' },
-            { lane: 2, bib: '1101', name: '林宇轩', className: '高二理1', team: 'red', prelimMark: '23.28s', qualBadge: 'Q', result: '23.20', status: 'OK' },
-            { lane: 1, bib: '4108', name: '张振宇', className: '高三文1', team: 'green', prelimMark: '23.54s', qualBadge: 'q', result: '23.55', status: 'OK' },
-            { lane: 4, bib: '3104', name: '陈冠希', className: '高二文2', team: 'blue', prelimMark: '23.70s', qualBadge: 'q', result: '23.82', status: 'OK' }
+            { lane: 3, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', prelimMark: '23.15s', qualBadge: 'Q', result: '22.98', status: 'OK' },
+            { lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', prelimMark: '23.28s', qualBadge: 'Q', result: '23.20', status: 'OK' },
+            { lane: 1, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', prelimMark: '23.54s', qualBadge: 'q', result: '23.55', status: 'OK' },
+            { lane: 4, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', prelimMark: '23.70s', qualBadge: 'q', result: '23.82', status: 'OK' }
           ]
         },
         {
@@ -699,22 +699,22 @@
           scheduleTime: '10:25',
           status: 'finished',
           prelimEntries: [
-            { heat: 1, lane: 2, bib: '3201', name: '郑子轩', className: '初三忠', team: 'blue', result: '7.55', status: 'OK' },
-            { heat: 1, lane: 3, bib: '1203', name: '何俊辉', className: '初二孝', team: 'red', result: '7.62', status: 'OK' },
-            { heat: 1, lane: 4, bib: '2205', name: '萧伟明', className: '初三仁', team: 'yellow', result: '7.79', status: 'OK' },
-            { heat: 1, lane: 5, bib: '4204', name: '潘锦豪', className: '初一信', team: 'green', result: '7.98', status: 'OK' },
-            { heat: 2, lane: 2, bib: '4202', name: '苏宇航', className: '初三爱', team: 'green', result: '7.50', status: 'OK' },
-            { heat: 2, lane: 3, bib: '1207', name: '钟志豪', className: '初三忠', team: 'red', result: '7.70', status: 'OK' },
-            { heat: 2, lane: 4, bib: '2209', name: '曾家乐', className: '初二仁', team: 'yellow', result: '7.85', status: 'OK' },
-            { heat: 2, lane: 5, bib: '3211', name: '廖伟杰', className: '初二爱', team: 'blue', result: '8.04', status: 'OK' }
+            { heat: 1, lane: 2, bib: '3201', name: '张嘉杰', className: '初三忠', team: 'blue', result: '7.55', status: 'OK' },
+            { heat: 1, lane: 3, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', result: '7.62', status: 'OK' },
+            { heat: 1, lane: 4, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', result: '7.79', status: 'OK' },
+            { heat: 1, lane: 5, bib: '4204', name: '许俊超', className: '初一孝', team: 'green', result: '7.98', status: 'OK' },
+            { heat: 2, lane: 2, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', result: '7.50', status: 'OK' },
+            { heat: 2, lane: 3, bib: '1207', name: '廖文杰', className: '初三忠', team: 'red', result: '7.70', status: 'OK' },
+            { heat: 2, lane: 4, bib: '2209', name: '黄宣晸', className: '初二孝', team: 'yellow', result: '7.85', status: 'OK' },
+            { heat: 2, lane: 5, bib: '3211', name: '封胜阳', className: '初一孝', team: 'blue', result: '8.04', status: 'OK' }
           ],
           finalEntries: [
-            { lane: 4, bib: '4202', name: '苏宇航', className: '初三爱', team: 'green', prelimMark: '7.50s', qualBadge: 'Q', result: '7.41', status: 'OK' },
-            { lane: 3, bib: '3201', name: '郑子轩', className: '初三忠', team: 'blue', prelimMark: '7.55s', qualBadge: 'Q', result: '7.53', status: 'OK' },
-            { lane: 2, bib: '1203', name: '何俊辉', className: '初二孝', team: 'red', prelimMark: '7.62s', qualBadge: 'q', result: '7.60', status: 'OK' },
-            { lane: 5, bib: '1207', name: '钟志豪', className: '初三忠', team: 'red', prelimMark: '7.70s', qualBadge: 'q', result: '7.60', status: 'OK' },
-            { lane: 1, bib: '2205', name: '萧伟明', className: '初三仁', team: 'yellow', prelimMark: '7.79s', qualBadge: 'q', result: '7.75', status: 'OK' },
-            { lane: 6, bib: '2209', name: '曾家乐', className: '初二仁', team: 'yellow', prelimMark: '7.85s', qualBadge: 'q', result: '7.89', status: 'OK' }
+            { lane: 4, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', prelimMark: '7.50s', qualBadge: 'Q', result: '7.41', status: 'OK' },
+            { lane: 3, bib: '3201', name: '张嘉杰', className: '初三忠', team: 'blue', prelimMark: '7.55s', qualBadge: 'Q', result: '7.53', status: 'OK' },
+            { lane: 2, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', prelimMark: '7.62s', qualBadge: 'q', result: '7.60', status: 'OK' },
+            { lane: 5, bib: '1207', name: '廖文杰', className: '初三忠', team: 'red', prelimMark: '7.70s', qualBadge: 'q', result: '7.60', status: 'OK' },
+            { lane: 1, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', prelimMark: '7.79s', qualBadge: 'q', result: '7.75', status: 'OK' },
+            { lane: 6, bib: '2209', name: '黄宣晸', className: '初二孝', team: 'yellow', prelimMark: '7.85s', qualBadge: 'q', result: '7.89', status: 'OK' }
           ]
         },
         {
@@ -734,14 +734,14 @@
           scheduleTime: '10:45',
           status: 'prelims_done',
           prelimEntries: [
-            { heat: 1, lane: 1, bib: '1501', name: '叶心怡', className: '初三忠', team: 'red', result: '13.45', status: 'OK' },
-            { heat: 1, lane: 2, bib: '2504', name: '温嘉慧', className: '初二孝', team: 'yellow', result: '13.62', status: 'OK' },
-            { heat: 1, lane: 3, bib: '3503', name: '马思敏', className: '初三仁', team: 'blue', result: '13.90', status: 'OK' },
-            { heat: 1, lane: 4, bib: '4506', name: '刘佩珊', className: '初一爱', team: 'green', result: '14.18', status: 'OK' },
-            { heat: 2, lane: 1, bib: '3502', name: '陈靖雯', className: '初三爱', team: 'blue', result: '13.38', status: 'OK' },
-            { heat: 2, lane: 2, bib: '4501', name: '许欣儿', className: '初二忠', team: 'green', result: '13.55', status: 'OK' },
-            { heat: 2, lane: 3, bib: '1508', name: '颜诗琪', className: '初二仁', team: 'red', result: '13.85', status: 'OK' },
-            { heat: 2, lane: 4, bib: '2509', name: '庄惠雯', className: '初一孝', team: 'yellow', result: 'DNS', status: 'DNS' }
+            { heat: 1, lane: 1, bib: '1501', name: '陈宣彤', className: '初三孝', team: 'red', result: '13.45', status: 'OK' },
+            { heat: 1, lane: 2, bib: '2504', name: '苏倩瑶', className: '初二孝', team: 'yellow', result: '13.62', status: 'OK' },
+            { heat: 1, lane: 3, bib: '3503', name: '张妤轩', className: '初三忠', team: 'blue', result: '13.90', status: 'OK' },
+            { heat: 1, lane: 4, bib: '4506', name: '冯佳喜', className: '初二孝', team: 'green', result: '14.18', status: 'OK' },
+            { heat: 2, lane: 1, bib: '3502', name: '林珂伊', className: '初三忠', team: 'blue', result: '13.38', status: 'OK' },
+            { heat: 2, lane: 2, bib: '4501', name: '林芷宇', className: '初三孝', team: 'green', result: '13.55', status: 'OK' },
+            { heat: 2, lane: 3, bib: '1508', name: '蔡碧恬', className: '初二忠', team: 'red', result: '13.85', status: 'OK' },
+            { heat: 2, lane: 4, bib: '2509', name: '娜丽莎', className: '初一孝', team: 'yellow', result: 'DNS', status: 'DNS' }
           ],
           finalEntries: []
         },
@@ -763,10 +763,10 @@
           status: 'finished',
           prelimEntries: [],
           finalEntries: [
-            { lane: 1, bib: '4202', name: '苏宇航', className: '初三爱', team: 'green', attempt1: '1.60', attempt2: '1.65', attempt3: '1.68', result: '1.68', status: 'OK' },
-            { lane: 2, bib: '1203', name: '何俊辉', className: '初二孝', team: 'red', attempt1: '1.58', attempt2: '1.62', attempt3: 'X', result: '1.62', status: 'OK' },
-            { lane: 3, bib: '3206', name: '徐铭泽', className: '初三仁', team: 'blue', attempt1: '1.55', attempt2: '1.60', attempt3: 'X', result: '1.60', status: 'OK' },
-            { lane: 4, bib: '2205', name: '萧伟明', className: '初三仁', team: 'yellow', attempt1: '1.50', attempt2: '1.55', attempt3: 'X', result: '1.55', status: 'OK' }
+            { lane: 1, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', attempt1: '1.60', attempt2: '1.65', attempt3: '1.68', result: '1.68', status: 'OK' },
+            { lane: 2, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', attempt1: '1.58', attempt2: '1.62', attempt3: 'X', result: '1.62', status: 'OK' },
+            { lane: 3, bib: '3206', name: '周鼎森', className: '初二忠', team: 'blue', attempt1: '1.55', attempt2: '1.60', attempt3: 'X', result: '1.60', status: 'OK' },
+            { lane: 4, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', attempt1: '1.50', attempt2: '1.55', attempt3: 'X', result: '1.55', status: 'OK' }
           ]
         },
         {
@@ -787,10 +787,10 @@
           status: 'finished',
           prelimEntries: [],
           finalEntries: [
-            { lane: 1, bib: '1402', name: '杨思琪', className: '高三理1', team: 'red', attempt1: '9.35', attempt2: '9.68', attempt3: '9.50', result: '9.68', status: 'OK' },
-            { lane: 2, bib: '4405', name: '赖美玲', className: '高二商1', team: 'green', attempt1: '8.90', attempt2: '9.12', attempt3: '9.05', result: '9.12', status: 'OK' },
-            { lane: 3, bib: '2408', name: '方敏仪', className: '高三文2', team: 'yellow', attempt1: '8.75', attempt2: '8.80', attempt3: '8.60', result: '8.80', status: 'OK' },
-            { lane: 4, bib: '3409', name: '洪嘉敏', className: '高一理2', team: 'blue', attempt1: '8.20', attempt2: '8.44', attempt3: '8.31', result: '8.44', status: 'OK' }
+            { lane: 1, bib: '1402', name: '洪宜君', className: '高三文商', team: 'red', attempt1: '9.35', attempt2: '9.68', attempt3: '9.50', result: '9.68', status: 'OK' },
+            { lane: 2, bib: '4405', name: '许柔恩', className: '高三文商', team: 'green', attempt1: '8.90', attempt2: '9.12', attempt3: '9.05', result: '9.12', status: 'OK' },
+            { lane: 3, bib: '2408', name: '邱天心', className: '高二餐饮', team: 'yellow', attempt1: '8.75', attempt2: '8.80', attempt3: '8.60', result: '8.80', status: 'OK' },
+            { lane: 4, bib: '3409', name: '陈慧文', className: '高一文商', team: 'blue', attempt1: '8.20', attempt2: '8.44', attempt3: '8.31', result: '8.44', status: 'OK' }
           ]
         },
         {
@@ -811,10 +811,10 @@
           status: 'startlist',
           prelimEntries: [],
           finalEntries: [
-            { lane: 1, bib: '3502', name: '陈靖雯', className: '初三爱', team: 'blue', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 2, bib: '1501', name: '叶心怡', className: '初三忠', team: 'red', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 3, bib: '2509', name: '庄惠雯', className: '初一孝', team: 'yellow', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 4, bib: '4501', name: '许欣儿', className: '初二忠', team: 'green', prelimMark: '-', qualBadge: '', result: '', status: 'OK' }
+            { lane: 1, bib: '3502', name: '林珂伊', className: '初三忠', team: 'blue', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
+            { lane: 2, bib: '1501', name: '陈宣彤', className: '初三孝', team: 'red', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
+            { lane: 3, bib: '2509', name: '娜丽莎', className: '初一孝', team: 'yellow', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
+            { lane: 4, bib: '4501', name: '林芷宇', className: '初三孝', team: 'green', prelimMark: '-', qualBadge: '', result: '', status: 'OK' }
           ]
         },
         {
@@ -1503,6 +1503,67 @@
     return '<span class="team-pill team-' + tid + '"><span class="bib-dot team-dot-' + tid + '"></span>' + escapeHtml(t.name) + '</span>';
   }
 
+  // 本地学生名册与电视大屏肖像渲染（仅加载本机 gitignored 的 student-directory）
+  function getLocalStudents() {
+    return Array.isArray(global.SINMIN_LOCAL_STUDENTS) ? global.SINMIN_LOCAL_STUDENTS : [];
+  }
+
+  function findLocalStudent(nameOrId, className) {
+    var q = String(nameOrId || '').trim();
+    if (!q) return null;
+    var list = getLocalStudents();
+    var cls = String(className || '').trim();
+    var match = list.find(function (s) {
+      return (s.name === q || s.id === q) && (!cls || s.className === cls);
+    });
+    if (!match) {
+      match = list.find(function (s) { return s.name === q || s.id === q; });
+    }
+    return match || null;
+  }
+
+  function getStudentPhoto(entry) {
+    if (!entry) return '';
+    if (entry.photo) return entry.photo;
+    var st = findLocalStudent(entry.name, entry.className);
+    return (st && st.photo) ? st.photo : '';
+  }
+
+  function renderTvAvatarHtml(entry, ev, sizeClass, rank) {
+    var size = sizeClass || 'md';
+    var tid = normalizeTeamId(entry && entry.team);
+    var t = TEAMS[tid];
+    var rankCls = rank === 1 ? ' tv-avatar-rank-1' : (rank === 2 ? ' tv-avatar-rank-2' : (rank === 3 ? ' tv-avatar-rank-3' : ''));
+    var isTeam = !!(ev && ev.isTeam);
+    var nameStr = String((entry && entry.name) || '?').trim();
+    var initial = nameStr ? nameStr.charAt(0) : '?';
+    var photoUrl = isTeam ? '' : getStudentPhoto(entry);
+
+    if (isTeam) {
+      return (
+        '<span class="tv-avatar-wrap tv-avatar-' + size + rankCls + '" style="border-color:' + t.color + '; background:#ffffff; padding:3px;">' +
+          '<img src="./Sin Min Logo.png" alt="校徽" style="object-fit:contain;" />' +
+        '</span>'
+      );
+    }
+
+    var fallbackStyle = 'background:linear-gradient(135deg, ' + t.color + ', #0f172a);';
+    if (photoUrl) {
+      return (
+        '<span class="tv-avatar-wrap tv-avatar-' + size + rankCls + '">' +
+          '<img src="' + escapeHtml(photoUrl) + '" alt="' + escapeHtml(nameStr) + '" onerror="this.style.display=\'none\'; if(this.nextElementSibling) this.nextElementSibling.style.display=\'flex\';" />' +
+          '<span class="tv-avatar-fallback" style="display:none; ' + fallbackStyle + '">' + escapeHtml(initial) + '</span>' +
+        '</span>'
+      );
+    }
+
+    return (
+      '<span class="tv-avatar-wrap tv-avatar-' + size + rankCls + '">' +
+        '<span class="tv-avatar-fallback" style="' + fallbackStyle + '">' + escapeHtml(initial) + '</span>' +
+      '</span>'
+    );
+  }
+
   function escapeHtml(str) {
     return String(str === null || str === undefined ? '' : str)
       .replace(/&/g, '&amp;')
@@ -1608,6 +1669,10 @@
     speakAnnouncement: speakAnnouncement,
     renderBibHtml: renderBibHtml,
     renderTeamPillHtml: renderTeamPillHtml,
+    getLocalStudents: getLocalStudents,
+    findLocalStudent: findLocalStudent,
+    getStudentPhoto: getStudentPhoto,
+    renderTvAvatarHtml: renderTvAvatarHtml,
     escapeHtml: escapeHtml,
     animateOnce: animateOnce,
     showToast: showToast,

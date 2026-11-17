@@ -229,6 +229,8 @@
     </div>
   </div>
 
+  <datalist id="sinmin-student-datalist"></datalist>
+  <script src="./student-directory/students-map.js"></script>
   <script src="./js/core.js"></script>
   <script>
     (function () {
@@ -237,6 +239,16 @@
       var tvCmd = S.loadTvCommand(state);
       var selectedEventId = (state.events[0] && state.events[0].id) || '';
       var activeStage = 'final'; // 'final' | 'prelim'
+
+      // 加载本地学生名册自动联想（若存在于本机 student-directory）
+      (function populateStudentDatalist() {
+        var dl = document.getElementById('sinmin-student-datalist');
+        var list = S.getLocalStudents();
+        if (!dl || list.length === 0) return;
+        dl.innerHTML = list.map(function (st) {
+          return '<option value="' + S.escapeHtml(st.name) + '" label="' + S.escapeHtml(st.className + ' · ' + (st.gender === 'F' ? '女' : '男') + ' · ' + st.id) + '"></option>';
+        }).join('');
+      })();
 
       function getSelectedEvent() {
         var ev = (state.events || []).find(function (e) { return e.id === selectedEventId; });
@@ -389,7 +401,7 @@
               '</td>' +
               '<td>' +
                 '<div style="display:flex; gap:4px;">' +
-                  '<input type="text" class="input-control" style="width:84px; padding:4px 6px; font-size:0.8rem;" data-field="name" data-idx="' + idx + '" value="' + S.escapeHtml(entry.name || '') + '" placeholder="姓名" />' +
+                  '<input type="text" list="sinmin-student-datalist" class="input-control" style="width:84px; padding:4px 6px; font-size:0.8rem;" data-field="name" data-idx="' + idx + '" value="' + S.escapeHtml(entry.name || '') + '" placeholder="姓名" />' +
                   '<input type="text" class="input-control" style="width:66px; padding:4px 6px; font-size:0.8rem;" data-field="className" data-idx="' + idx + '" value="' + S.escapeHtml(entry.className || '') + '" placeholder="班级" />' +
                 '</div>' +
                 (dnsWarn ? '<div class="badge-status-warn" style="margin-top:4px;">' + S.escapeHtml(dnsWarn) + '</div>' : '') +
@@ -512,6 +524,12 @@
           return;
         } else {
           entry[field] = val;
+          if (field === 'name') {
+            var matchedStudent = S.findLocalStudent(val);
+            if (matchedStudent && matchedStudent.className && !entry.className) {
+              entry.className = matchedStudent.className;
+            }
+          }
         }
 
         if (activeStage === 'final' && (field === 'result' || field.indexOf('attempt') === 0) && val.trim()) {

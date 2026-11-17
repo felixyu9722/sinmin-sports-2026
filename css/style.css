@@ -1149,6 +1149,55 @@ body.tv-body {
   gap: 10px;
 }
 
+/* 电视大屏：获奖选手圆形发光肖像 */
+.tv-avatar-wrap {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid rgba(148, 163, 184, 0.55);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+.tv-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  display: block;
+}
+.tv-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: #ffffff;
+}
+.tv-avatar-sm { width: 36px; height: 36px; font-size: 0.95rem; }
+.tv-avatar-md { width: 52px; height: 52px; font-size: 1.25rem; border-width: 2.5px; }
+.tv-avatar-lg { width: 64px; height: 64px; font-size: 1.5rem; border-width: 3px; }
+.tv-avatar-xl { width: 92px; height: 92px; font-size: 2.2rem; border-width: 3.5px; }
+.tv-avatar-xxl { width: 114px; height: 114px; font-size: 2.7rem; border-width: 4px; }
+
+.tv-avatar-rank-1 {
+  border-color: var(--gold);
+  box-shadow: 0 0 22px rgba(255, 215, 0, 0.65);
+}
+.tv-avatar-rank-2 {
+  border-color: var(--silver);
+  box-shadow: 0 0 16px rgba(226, 232, 240, 0.45);
+}
+.tv-avatar-rank-3 {
+  border-color: var(--bronze);
+  box-shadow: 0 0 16px rgba(251, 146, 60, 0.45);
+}
+
 /* ==========================================================================
    ADMIN.HTML：现场检录与导播控制台
    ========================================================================== */

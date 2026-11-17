@@ -110,6 +110,7 @@
     </div>
   </footer>
 
+  <script src="./student-directory/students-map.js"></script>
   <script src="./js/core.js"></script>
   <script>
     (function () {
@@ -117,6 +118,10 @@
       var state = S.loadState();
       var tvCmd = S.loadTvCommand(state);
       if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+      try {
+        var qsMode = new URLSearchParams(window.location.search).get('mode');
+        if (qsMode && S.TV_MODES[qsMode]) tvCmd.mode = qsMode;
+      } catch (e) {}
 
       var soundEnabled = true;
       var lastFanfareTs = tvCmd.playFanfareAt || 0;
@@ -175,6 +180,7 @@
         var overlay = document.getElementById('tv-record-overlay');
         document.getElementById('overlay-rec-event').textContent = ev.group + ' ' + ev.name;
         document.getElementById('overlay-rec-athlete').innerHTML =
+          S.renderTvAvatarHtml(recordEntry, ev, 'xxl', 1) +
           S.renderBibHtml(recordEntry.bib, recordEntry.group || ev.group) +
           '<span style="font-size:2.2rem; font-weight:800;">' + S.escapeHtml(recordEntry.name) + '</span>' +
           S.renderTeamPillHtml(recordEntry.team);
@@ -345,6 +351,7 @@
                     '<div class="tv-final-podium-row" style="border-left-color:' + teamObj.color + ';">' +
                     '<div style="display:flex; align-items:center; gap:7px; min-width:0;">' +
                     '<span style="font-size:1.2rem;">' + medal + '</span>' +
+                    S.renderTvAvatarHtml(r, ev, 'sm', r.rank) +
                     S.renderBibHtml(r.bib, r.group || ev.group) +
                     '<strong style="font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + S.escapeHtml(r.name) + '</strong>' +
                     '</div>' +
@@ -428,13 +435,16 @@
                 ? '<div style="color:var(--text-muted); font-size:0.9rem;">暂无个人金牌</div>'
                 : info.leaders.map(function (l) {
                   return (
-                    '<div style="margin-bottom:4px;">' +
+                    '<div style="margin-bottom:6px; display:flex; align-items:center; gap:10px;">' +
+                    S.renderTvAvatarHtml(l, { isTeam: false }, 'lg', 1) +
+                    '<div style="min-width:0;">' +
                     '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
                     S.renderBibHtml(l.bib, grp) +
-                    '<strong style="font-size:1.1rem;">' + S.escapeHtml(l.name) + '</strong>' +
+                    '<strong style="font-size:1.15rem;">' + S.escapeHtml(l.name) + '</strong>' +
                     S.renderTeamPillHtml(l.team) +
                     '</div>' +
-                    '<div style="font-size:0.74rem; color:var(--text-secondary); margin-top:2px;">金牌项目：' + S.escapeHtml(l.events.join('、')) + '</div>' +
+                    '<div style="font-size:0.74rem; color:var(--text-secondary); margin-top:3px;">金牌项目：' + S.escapeHtml(l.events.join('、')) + '</div>' +
+                    '</div>' +
                     '</div>'
                   );
                 }).join('')) +
@@ -511,17 +521,23 @@
             var rankColor = entry.rank === 1 ? 'var(--gold)' : (entry.rank === 2 ? 'var(--silver)' : (entry.rank === 3 ? 'var(--bronze)' : '#94a3b8'));
             var markText = S.formatMarkDisplay(entry, ev);
 
+            var isTop3 = !!(entry.rank && entry.rank >= 1 && entry.rank <= 3);
+            var avatarHtml = isTop3 ? S.renderTvAvatarHtml(entry, ev, 'md', entry.rank) : '';
+
             return (
               '<div class="tv-lane-row team-border-' + tid + ' ' + (entry.isRecord ? 'is-record' : '') + ' animate__animated animate__backInRight" style="animation-delay:' + (idx * 0.1) + 's;">' +
               '<div class="tv-lane-num" style="color:' + rankColor + '; font-size:2.1rem;">' + medal + '</div>' +
               '<div>' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
-              '<div>' +
-              '<div class="tv-athlete-name" style="display:flex; align-items:center; gap:10px;">' +
+              '<div style="display:flex; align-items:center; gap:12px; min-width:0;">' +
+              avatarHtml +
+              '<div style="min-width:0;">' +
+              '<div class="tv-athlete-name" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
               '<span>' + S.escapeHtml(entry.name) + '</span>' +
               (entry.isRecord ? '<span class="badge-record" style="font-size:0.9rem; padding:4px 10px;">★ 破大会纪录</span>' : '') +
               (entry.windAssisted ? '<span class="badge-wind" style="font-size:0.85rem;">超风速</span>' : '') +
               '</div>' +
               '<div style="font-size:0.95rem; color:var(--text-secondary);">' + S.escapeHtml(entry.className || '') + ' · 第 ' + (entry.lane || '-') + ' 道' + (entry.isTied ? ' · 并列名次' : '') + '</div>' +
+              '</div>' +
               '</div>' +
               '<div>' + S.renderTeamPillHtml(tid) + '</div>' +
               '<div class="tv-result-time" style="color:' + (entry.isRecord ? 'var(--gold)' : '#ffffff') + ';">' + S.escapeHtml(markText) + '</div>' +
@@ -636,13 +652,17 @@
           var tid = S.normalizeTeamId(entry.team);
           return (
             '<div class="podium-block ' + cls + ' animate__animated animate__bounceInUp">' +
-            '<div style="font-size:3.4rem; line-height:1;">' + medalEmoji + '</div>' +
-            '<div style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--text-secondary); margin:6px 0 10px;">第 ' + place + ' 名</div>' +
-            '<div style="margin-bottom:8px;">' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
-            '<div style="font-size:2rem; font-weight:900; margin-bottom:6px;">' + S.escapeHtml(entry.name) + '</div>' +
-            '<div style="margin-bottom:10px;">' + S.renderTeamPillHtml(tid) + '</div>' +
+            '<div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">' +
+            '<span style="font-size:2.6rem; line-height:1;">' + medalEmoji + '</span>' +
+            '<span style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:var(--text-secondary);">第 ' + place + ' 名</span>' +
+            '</div>' +
+            '<div style="margin-bottom:10px;">' + S.renderTvAvatarHtml(entry, ev, place === 1 ? 'xxl' : 'xl', place) + '</div>' +
+            '<div style="margin-bottom:6px;">' + S.renderBibHtml(entry.bib, entry.group || ev.group) + '</div>' +
+            '<div style="font-size:2rem; font-weight:900; margin-bottom:4px;">' + S.escapeHtml(entry.name) + '</div>' +
+            (entry.className ? '<div style="font-size:0.92rem; color:var(--text-secondary); margin-bottom:8px;">' + S.escapeHtml(entry.className) + '</div>' : '') +
+            '<div style="margin-bottom:8px;">' + S.renderTeamPillHtml(tid) + '</div>' +
             '<div style="font-family:var(--font-display); font-size:2.2rem; font-weight:900; color:#ffffff;">' + S.escapeHtml(S.formatMarkDisplay(entry, ev)) + '</div>' +
-            '<div style="margin-top:8px; color:#34d399; font-weight:800; font-size:1.1rem;">+' + (entry.points || 0) + ' 分 · 实领奖牌 ' + (ev.physicalMedalCount || 1) + ' 面</div>' +
+            '<div style="margin-top:6px; color:#34d399; font-weight:800; font-size:1.05rem;">+' + (entry.points || 0) + ' 分 · 实领奖牌 ' + (ev.physicalMedalCount || 1) + ' 面</div>' +
             '</div>'
           );
         }

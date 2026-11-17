@@ -145,10 +145,24 @@
 
 ---
 
-## 五、比赛当天记录台操作备忘录（Checklist）
+### 第五阶段：双电视同步、赛期筛选、成绩单拍照录入与临时公开头像
+- **第二台电视机（网页接入）完整支持**：
+  - `tv-display.html` 新增每 15 秒自动云端轮询，配合 `admin.html` 推送时随 `data/live-state.json` 一并写入的 `state.meta.remoteTvCommand`（含切换模式、当前项目、紧急横幅），实现第一台电脑 HDMI 直连与第二台网页大屏同步联动（`fetchFromRemoteStateJson` 同步优化为若 Pages 缓存未更新则继续检查 `raw.githubusercontent.com`）。
+  - 应运动会当天双大屏展示需要，暂将 `student-directory/` 从 `.gitignore` 移出并上传至 GitHub Pages，使网页打开的 `tv-display.html` 同样显示学生头像；**待运动会结束后按清单从 Git 历史/仓库移除**。
+- **控制台按比赛日筛选赛程（[`admin.html`](file:///c:/Downloads/运动会2026/admin.html)）**：
+  - 左侧列表顶部新增 `#admin-day-tabs`：`全部赛期`（40 项）/ `🔥 02/12 正日`（23 项）/ `📅 18/11`（7 项）/ `✓ 15-16/11`（10 项），并显示每个项目的开赛日期场次。
+- **成绩单拍照 / 微信 Ctrl+V 直接贴图录入与推屏**：
+  - `js/core.js` 新增 `compressImageFile`（前端自动缩图至 `<= 1100px` JPEG 避免占满 `localStorage` 与云端 JSON）及共享照片展示助手 `renderEventPhotoHtml`。
+  - `admin.html` 中栏新增「📷 拍照 / 上传成绩单或现场图片」与 `Ctrl+V` 快捷粘贴，可在上方对照纸质成绩单拍照图直接录入成绩，支持放大看图与勾选是否同步展示到大屏 (`tv-display.html`) 及师生查分页 (`live.html` / `index.html`)。
+
+---
+
+## 五、比赛当天与赛后清理备忘录（Checklist）
 
 - [ ] **赛前海报打印**：打开 `admin.html` 点击顶部 **「📱 扫码海报」** 打印数张 A4 海报张贴于检录处、布告栏与太阳能停车场/羽球场/篮球场/宿舍前台阶集合点。
-- [ ] **现场本地启动（确保大屏显示学生肖像且断网可用）**：在项目根目录终端运行静态服务（如 `py -m http.server 8080`），浏览器分别打开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`（按 `F11` 全屏投影至电视/LED大屏）。
-- [ ] **手机端云同步配置**：在 `admin.html` →「☁️ 云端同步」确认填写 `felixyu9722/sinmin-sports-2026` 与本地 GitHub Token，并勾选「推送大屏时自动同步到 GitHub 手机端」。
-- [ ] **直接导入后续 Excel 表格**：有新赛果工作簿时，直接把 `.xlsx` 拖入 `admin.html` 左侧导入区核对无误后点击推送大屏；若在网页手动录分，铅球/标枪支持录入 6 次试掷，跳高可直接填最佳高度（m）与跃高记录。
+- [ ] **第一台电视机（主机直连）**：在项目根目录运行 `py -m http.server 8080`，电脑开 `http://localhost:8080/admin.html` 与 `http://localhost:8080/tv-display.html`（拖到 HDMI 大屏按 `F11` 全屏）。
+- [ ] **第二台电视机（网页直开）**：第二台联网电视浏览器直接打开 `https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html` 按 `F11` 全屏，每 15 秒自动同步成绩、学生头像、大屏模式与照片。
+- [ ] **手机端与第二电视云同步配置**：在 `admin.html` →「☁️ 云端同步」填写 `felixyu9722/sinmin-sports-2026` 与本地 GitHub Token，并勾选「推送大屏时自动同步到 GitHub 手机端」。
+- [ ] **现场快捷录分与贴图**：按左侧 **「🔥 02/12 正日」** 筛选当天 23 个项目；收到纸质成绩单照片时可直接上传或按 `Ctrl+V` 贴图对照录分，或拖入 `.xlsx` 批量导入。
 - [ ] **赛后归档**：点击 **「⬇️ 一键导出 Excel」**，生成包含总积分榜、最佳运动员、决赛完整成绩、预赛晋级与实体奖牌核算表的 5 工作表归档文件。
+- [ ] **运动会结束后移除学生照片（重要隐私清理）**：赛后提醒助手或自行运行 `git rm -r --cached student-directory`，将 `student-directory/` 重新加入 `.gitignore` 并提交推送（如需彻底擦除历史中的照片记录可重写分支再强制推送）。

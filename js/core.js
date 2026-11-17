@@ -611,7 +611,7 @@
         "schoolName": "亚罗士打新民独立中学",
         "meetTitle": "2026年校内运动会",
         "meetDate": "2026-12-02",
-        "updatedAt": "2026-11-17T14:30:00.000Z",
+        "updatedAt": "2026-11-17T06:30:00.000Z",
         "githubRepo": "felixyu9722/sinmin-sports-2026",
         "googleSheetCsvUrl": "",
         "googleAppsScriptUrl": "",
@@ -4278,13 +4278,15 @@
       }
     } catch (e) { /* ignore */ }
     var def = createDefaultState();
-    saveState(def, false);
+    saveState(def, false, true);
     return def;
   }
 
-  function saveState(state, shouldBroadcast) {
+  function saveState(state, shouldBroadcast, preserveUpdatedAt) {
     state.meta = state.meta || {};
-    state.meta.updatedAt = new Date().toISOString();
+    if (!preserveUpdatedAt || !state.meta.updatedAt) {
+      state.meta.updatedAt = new Date().toISOString();
+    }
     try {
       localStorage.setItem(STORAGE_STATE_KEY, JSON.stringify(state));
     } catch (e) { /* ignore */ }
@@ -5000,6 +5002,9 @@
           if (force || remoteTs > localTs) {
             return { updated: true, state: remote };
           }
+          if (idx + 1 < urls.length) {
+            return tryUrl(idx + 1);
+          }
           return { updated: false };
         })
         .catch(function () {
@@ -5367,6 +5372,57 @@
     return '<div style="font-size:0.72rem; color:var(--text-secondary); line-height:1.45;">' + parts.join('<br/>') + '</div>';
   }
 
+  function compressImageFile(file, maxWidth, quality) {
+    return new Promise(function (resolve, reject) {
+      if (!file) {
+        reject(new Error('未选择图片文件'));
+        return;
+      }
+      var maxW = maxWidth || 1100;
+      var q = quality || 0.78;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var w = img.width || maxW;
+            var h = img.height || maxW;
+            if (w > maxW) {
+              h = Math.round(h * (maxW / w));
+              w = maxW;
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', q));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.onerror = function () { reject(new Error('无法解析该图片文件')); };
+        img.src = ev.target.result;
+      };
+      reader.onerror = function () { reject(new Error('读取图片失败')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderEventPhotoHtml(ev) {
+    if (!ev || !ev.eventPhoto || ev.showPhotoPublic === false) return '';
+    return (
+      '<details style="margin-top:10px; padding:10px 12px; border-radius:10px; background:rgba(15,23,42,0.55); border:1px solid rgba(56,189,248,0.25);">' +
+        '<summary style="cursor:pointer; font-size:0.82rem; font-weight:700; color:#7dd3fc;">📸 查看本项目现场实拍 / 官方成绩单照片（点击展开或收起）</summary>' +
+        '<div style="margin-top:10px; text-align:center;">' +
+          '<img src="' + ev.eventPhoto + '" alt="' + escapeHtml((ev.group || '') + ' ' + (ev.name || '') + ' 成绩单图片') + '" style="max-width:100%; max-height:480px; border-radius:8px; border:1px solid rgba(148,163,184,0.3); object-fit:contain;" />' +
+        '</div>' +
+      '</details>'
+    );
+  }
+
   function renderHandbookHtml() {
     var h = HANDBOOK_INFO;
     var scheduleRows = h.daySchedule.map(function (row) {
@@ -5446,6 +5502,8 @@
     GROUP_ORDER: GROUP_ORDER,
     HANDBOOK_INFO: HANDBOOK_INFO,
     renderFieldDetailsHtml: renderFieldDetailsHtml,
+    compressImageFile: compressImageFile,
+    renderEventPhotoHtml: renderEventPhotoHtml,
     renderHandbookHtml: renderHandbookHtml,
     TV_MODES: TV_MODES,
     LANES_4: LANES_4,

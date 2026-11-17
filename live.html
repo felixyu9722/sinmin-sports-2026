@@ -494,6 +494,7 @@
                 '</div>' +
               '</div>' +
               '<div class="data-table-wrap">' + tableHtml + '</div>' +
+              S.renderEventPhotoHtml(ev) +
             '</article>'
           );
         }).join('');
@@ -551,7 +552,7 @@
         S.fetchFromRemoteStateJson('', state, !silent).then(function (res) {
           if (res && res.updated && res.state) {
             state = res.state;
-            S.saveState(state, false);
+            S.saveState(state, false, true);
             renderAll(true);
             if (!silent) S.showToast('✓ 已同步最新赛事成绩');
           } else if (!silent) {

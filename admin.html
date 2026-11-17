@@ -63,6 +63,12 @@
           <h2 class="section-title" style="font-size:0.95rem;">📋 赛事项目列表</h2>
           <button class="btn btn-sm btn-primary" id="btn-open-new-event">+ 新建</button>
         </div>
+        <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;" id="admin-day-tabs">
+          <button class="chip-btn active" style="flex:1 1 46%; padding:4px 5px; font-size:0.72rem;" data-admin-day="all">全部赛期</button>
+          <button class="chip-btn" style="flex:1 1 46%; padding:4px 5px; font-size:0.72rem;" data-admin-day="02/12">🔥 02/12 正日</button>
+          <button class="chip-btn" style="flex:1 1 46%; padding:4px 5px; font-size:0.72rem;" data-admin-day="18/11">📅 18/11</button>
+          <button class="chip-btn" style="flex:1 1 46%; padding:4px 5px; font-size:0.72rem;" data-admin-day="early">✓ 15-16/11</button>
+        </div>
         <div style="display:flex; gap:4px; margin-bottom:10px;" id="admin-div-tabs">
           <button class="chip-btn active" style="flex:1; padding:4px 6px; font-size:0.74rem;" data-admin-div="all">全部</button>
           <button class="chip-btn" style="flex:1; padding:4px 6px; font-size:0.74rem;" data-admin-div="senior">高中甲组</button>
@@ -279,6 +285,19 @@
     </div>
   </div>
 
+  <!-- 成绩单 / 现场图片放大对照弹窗 -->
+  <div class="modal-backdrop" id="photo-zoom-modal">
+    <div class="glass-panel modal-card" style="max-width:960px;">
+      <div class="section-header" style="margin-bottom:10px;">
+        <h3 class="section-title" id="photo-zoom-title">📷 成绩单 / 现场图片放大对照</h3>
+        <button class="btn btn-sm" id="btn-close-photo-zoom">✕ 关闭</button>
+      </div>
+      <div style="text-align:center; background:rgba(9,14,28,0.8); padding:10px; border-radius:12px;">
+        <img id="photo-zoom-img" src="" alt="放大图片" style="max-width:100%; max-height:76vh; border-radius:8px; object-fit:contain;" />
+      </div>
+    </div>
+  </div>
+
   <datalist id="sinmin-student-datalist"></datalist>
   <script src="./student-directory/students-map.js"></script>
   <script src="./js/core.js"></script>
@@ -289,6 +308,7 @@
       var tvCmd = S.loadTvCommand(state);
       var selectedEventId = (state.events[0] && state.events[0].id) || '';
       var activeStage = 'final'; // 'final' | 'prelim'
+      var sidebarDayFilter = 'all'; // 'all' | '02/12' | '18/11' | 'early'
       var sidebarDivFilter = 'all'; // 'all' | 'senior' | 'junior'
 
       // 加载本地学生名册自动联想（若存在于本机 student-directory）
@@ -313,10 +333,18 @@
       function renderEventsSidebar() {
         var listEl = document.getElementById('admin-events-list');
         var list = (state.events || []).filter(function (ev) {
+          var sch = String(ev.scheduleTime || '');
+          if (sidebarDayFilter === '02/12' && sch.indexOf('02/12') === -1) return false;
+          if (sidebarDayFilter === '18/11' && sch.indexOf('18/11') === -1) return false;
+          if (sidebarDayFilter === 'early' && sch.indexOf('15/11') === -1 && sch.indexOf('16/11') === -1) return false;
           if (sidebarDivFilter === 'senior') return ev.group === '男甲' || ev.group === '女甲';
           if (sidebarDivFilter === 'junior') return ev.group === '男乙' || ev.group === '女乙';
           return true;
         });
+        if (list.length === 0) {
+          listEl.innerHTML = '<div style="padding:16px; text-align:center; font-size:0.8rem; color:var(--text-secondary);">该赛期与学部筛选下暂无项目</div>';
+          return;
+        }
         listEl.innerHTML = list.map(function (ev) {
           var isSelected = ev.id === selectedEventId;
           var divLabel = S.getDivisionLabel(ev.group);
@@ -335,8 +363,9 @@
                 '<span class="skew-tag" style="' + divStyle + ' padding:2px 7px; font-size:0.72rem;"><span>' + divText + '</span></span>' +
                 badge +
               '</div>' +
-              '<div style="font-weight:700; font-size:0.92rem;">' + S.escapeHtml(ev.name) + '</div>' +
+              '<div style="font-weight:700; font-size:0.92rem;">' + S.escapeHtml(ev.name) + (ev.eventPhoto ? ' <span title="已附照片">📸</span>' : '') + '</div>' +
               '<div style="font-size:0.72rem; color:var(--text-secondary); margin-top:2px;">' +
+                (ev.scheduleTime ? '<span style="color:#cbd5e1;">🕒 ' + S.escapeHtml(ev.scheduleTime) + '</span><br/>' : '') +
                 '决赛 ' + (ev.finalEntries ? ev.finalEntries.length : 0) + ' 人' +
                 (ev.prelimEntries && ev.prelimEntries.length ? ' · 预赛 ' + ev.prelimEntries.length + ' 人' : '') +
               '</div>' +
@@ -344,6 +373,15 @@
           );
         }).join('');
       }
+
+      document.getElementById('admin-day-tabs').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-admin-day]');
+        if (!btn) return;
+        sidebarDayFilter = btn.getAttribute('data-admin-day');
+        document.querySelectorAll('#admin-day-tabs .chip-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderEventsSidebar();
+      });
 
       document.getElementById('admin-div-tabs').addEventListener('click', function (e) {
         var btn = e.target.closest('button[data-admin-div]');
@@ -539,6 +577,36 @@
             '</label>' +
           '</div>' +
 
+          '<div class="no-print" style="margin-bottom:14px; padding:10px 12px; border-radius:12px; background:rgba(15,23,42,0.72); border:1px dashed rgba(56,189,248,0.32);">' +
+            '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">' +
+              '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+                '<label class="btn btn-sm" style="cursor:pointer;">' +
+                  '📷 拍照 / 上传成绩单或现场图片' +
+                  '<input type="file" id="ev-photo-input" accept="image/*" capture="environment" hidden />' +
+                '</label>' +
+                '<span style="font-size:0.74rem; color:var(--text-secondary);">支持按 Ctrl+V 直接粘贴 WhatsApp/微信图片（可边看照片边录分数）</span>' +
+              '</div>' +
+              '<label style="display:flex; align-items:center; gap:6px; font-size:0.76rem; color:var(--text-secondary); cursor:pointer;">' +
+                '<input type="checkbox" id="ev-photo-public" ' + (ev.showPhotoPublic !== false ? 'checked' : '') + ' />' +
+                '<span>同步展示在电视大屏与查分页</span>' +
+              '</label>' +
+            '</div>' +
+            (ev.eventPhoto
+              ? '<div style="margin-top:10px; padding:8px; border-radius:10px; background:rgba(6,9,19,0.85); border:1px solid rgba(148,163,184,0.2);">' +
+                  '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px;">' +
+                    '<span style="font-size:0.75rem; color:#7dd3fc; font-weight:700;">📸 已附加图片参考（录分时对照使用）：</span>' +
+                    '<div style="display:flex; gap:6px;">' +
+                      '<button class="btn btn-sm" id="btn-zoom-ev-photo">🔍 放大看图</button>' +
+                      '<button class="btn btn-sm" style="color:#fca5a5;" id="btn-del-ev-photo">🗑️ 移除图片</button>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div style="max-height:260px; overflow:auto; text-align:center;">' +
+                    '<img src="' + ev.eventPhoto + '" alt="现场图片" style="max-width:100%; border-radius:6px; object-fit:contain;" />' +
+                  '</div>' +
+                '</div>'
+              : '') +
+          '</div>' +
+
           '<div class="no-print" style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">' +
             '<div style="display:flex; gap:8px;">' +
               '<button class="chip-btn ' + (activeStage === 'final' ? 'active' : '') + '" id="tab-stage-final">🏁 决赛录入与预演 (' + (ev.finalEntries ? ev.finalEntries.length : 0) + ')</button>' +
@@ -631,9 +699,58 @@
           renderWorkspace();
           return;
         }
+        if (e.target.id === 'ev-photo-public') {
+          ev.showPhotoPublic = e.target.checked;
+          persistAndSyncLocal(true);
+          S.showToast(ev.showPhotoPublic ? '已开启在电视大屏与查分页展示该项目照片' : '已设为仅控制台对照（不公开展示）');
+          return;
+        }
+        if (e.target.id === 'ev-photo-input' && e.target.files && e.target.files[0]) {
+          applyEventPhotoFile(e.target.files[0]);
+          e.target.value = '';
+          return;
+        }
         if (e.target.getAttribute('data-field')) {
           renderWorkspace();
         }
+      });
+
+      function applyEventPhotoFile(file) {
+        var ev = getSelectedEvent();
+        if (!ev || !file) return;
+        S.compressImageFile(file, 1100, 0.78).then(function (dataUrl) {
+          ev.eventPhoto = dataUrl;
+          if (ev.showPhotoPublic === undefined) ev.showPhotoPublic = true;
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          S.showToast('📸 已加载【' + ev.group + ' ' + ev.name + '】照片（可对照录入并同步推屏）');
+        }).catch(function (err) {
+          S.showToast('图片处理失败：' + err.message);
+        });
+      }
+
+      document.addEventListener('paste', function (e) {
+        var ev = getSelectedEvent();
+        if (!ev || !e.clipboardData || !e.clipboardData.items) return;
+        for (var i = 0; i < e.clipboardData.items.length; i++) {
+          var item = e.clipboardData.items[i];
+          if (item.type && item.type.indexOf('image/') === 0) {
+            var file = item.getAsFile();
+            if (file) {
+              e.preventDefault();
+              applyEventPhotoFile(file);
+              break;
+            }
+          }
+        }
+      });
+
+      var zoomModal = document.getElementById('photo-zoom-modal');
+      document.getElementById('btn-close-photo-zoom').addEventListener('click', function () {
+        zoomModal.classList.remove('open');
+      });
+      zoomModal.addEventListener('click', function (e) {
+        if (e.target === zoomModal) zoomModal.classList.remove('open');
       });
 
       document.getElementById('admin-workspace').addEventListener('click', function (e) {
@@ -643,6 +760,19 @@
         if (e.target.id === 'tab-stage-final') { activeStage = 'final'; renderWorkspace(); return; }
         if (e.target.id === 'tab-stage-prelim') { activeStage = 'prelim'; renderWorkspace(); return; }
         if (e.target.id === 'btn-print-sheet') { window.print(); return; }
+        if (e.target.id === 'btn-del-ev-photo') {
+          delete ev.eventPhoto;
+          persistAndSyncLocal(true);
+          renderWorkspace();
+          S.showToast('已移除该项目照片');
+          return;
+        }
+        if (e.target.id === 'btn-zoom-ev-photo' && ev.eventPhoto) {
+          document.getElementById('photo-zoom-title').textContent = '📷 ' + ev.group + ' ' + ev.name + ' 成绩单/实拍放大对照';
+          document.getElementById('photo-zoom-img').src = ev.eventPhoto;
+          zoomModal.classList.add('open');
+          return;
+        }
 
         if (e.target.id === 'btn-add-entry') {
           var targetArr = activeStage === 'prelim' ? ev.prelimEntries : ev.finalEntries;
@@ -700,6 +830,23 @@
         renderWorkspace();
       });
 
+      function maybeAutoPushGitHub() {
+        if (state.meta && state.meta.githubAutoPush && S.getSavedGithubToken()) {
+          S.pushStateToGitHub(state.meta.githubRepo, S.getSavedGithubToken(), state)
+            .then(function () { S.showToast('☁️ 已同步推送至云端（第2电视与师生手机端将在约15秒内更新）'); })
+            .catch(function (err) { S.showToast('GitHub 云端同步失败：' + err.message); });
+        }
+      }
+
+      function syncRemoteTvCommand(cmdPatch) {
+        tvCmd = S.pushTvCommand(cmdPatch);
+        state.meta = state.meta || {};
+        state.meta.remoteTvCommand = Object.assign({}, tvCmd);
+        persistAndSyncLocal(true);
+        renderDirectorPanel();
+        maybeAutoPushGitHub();
+      }
+
       // 导播遥控：推送成绩到大屏
       document.getElementById('btn-push-results-tv').addEventListener('click', function () {
         var ev = getSelectedEvent();
@@ -707,21 +854,13 @@
         if (activeStage === 'final' && ev.finalEntries.some(function (x) { return x.result || x.attempt1; })) {
           ev.status = 'finished';
         }
-        persistAndSyncLocal(true);
 
         var targetMode = activeStage === 'prelim' ? 'qualifiers' : 'live_results';
-        tvCmd = S.pushTvCommand({ mode: targetMode, eventId: ev.id });
-        renderDirectorPanel();
+        syncRemoteTvCommand({ mode: targetMode, eventId: ev.id });
 
         // 若配置了 Google Apps Script Webhook，则同步写入云端表格
         if (state.meta && state.meta.googleAppsScriptUrl) {
           S.pushToGoogleAppsScript(state.meta.googleAppsScriptUrl, state).catch(function () {});
-        }
-        // 若开启了 GitHub 自动同步且本地配置了 Token，则自动推送到 GitHub 供手机端查看
-        if (state.meta && state.meta.githubAutoPush && S.getSavedGithubToken()) {
-          S.pushStateToGitHub(state.meta.githubRepo, S.getSavedGithubToken(), state)
-            .then(function () { S.showToast('📱 已同步推送至 GitHub 手机端'); })
-            .catch(function (err) { S.showToast('GitHub 同步失败：' + err.message); });
         }
 
         // 自动语音播报
@@ -737,15 +876,13 @@
         S.showToast('🚀 已将【' + ev.group + ' ' + ev.name + '】推送至电视大屏幕！');
       });
 
-      // 六大电视模式切换
+      // 七大电视模式切换
       document.getElementById('director-mode-buttons').addEventListener('click', function (e) {
         var btn = e.target.closest('button[data-tv-mode]');
         if (!btn) return;
         var mode = btn.getAttribute('data-tv-mode');
         var ev = getSelectedEvent();
-        persistAndSyncLocal(true);
-        tvCmd = S.pushTvCommand({ mode: mode, eventId: ev ? ev.id : '' });
-        renderDirectorPanel();
+        syncRemoteTvCommand({ mode: mode, eventId: ev ? ev.id : '' });
         S.showToast('📺 电视大屏已切换至：' + S.TV_MODES[mode].label);
       });
 
@@ -758,12 +895,12 @@
       // 紧急检录通知
       document.getElementById('btn-push-notice').addEventListener('click', function () {
         var text = document.getElementById('input-urgent-notice').value.trim();
-        tvCmd = S.pushTvCommand({ urgentNotice: text });
+        syncRemoteTvCommand({ urgentNotice: text });
         S.showToast(text ? '📢 紧急通知已推送至电视大屏顶部' : '请输入通知内容');
       });
       document.getElementById('btn-clear-notice').addEventListener('click', function () {
         document.getElementById('input-urgent-notice').value = '';
-        tvCmd = S.pushTvCommand({ urgentNotice: '' });
+        syncRemoteTvCommand({ urgentNotice: '' });
         S.showToast('已撤下电视紧急通知横幅');
       });
 

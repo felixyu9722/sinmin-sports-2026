@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>学生资料搜寻系统</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body {
+            background-color: #f3f4f6;
+            -webkit-font-smoothing: antialiased;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen Modal Overlay -->
+    <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-white/95 w-full max-w-xs sm:max-w-sm rounded-2xl p-5 sm:p-6 shadow-xl border border-white/50 text-center my-auto">
+            <!-- School Crest Logo -->
+            <div class="flex justify-center mb-2.5">
+                <img src="logo.png" alt="亚罗士打新民独立中学" class="h-14 sm:h-16 object-contain drop-shadow-sm" />
+            </div>
+
+            <!-- Title -->
+            <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">亚罗士打新民独立中学</h2>
+            <p class="text-[11px] text-blue-600 font-bold tracking-wider uppercase mt-0.5 mb-3">学生资料查询系统</p>
+            
+            <!-- Authorization Notice Card -->
+            <div class="bg-blue-50/70 border border-blue-100/80 rounded-lg p-2.5 mb-4 text-[11px] text-slate-600 leading-relaxed text-left">
+                <p class="font-semibold text-slate-700">🔒 系统访问提示：</p>
+                <p class="mt-0.5">本系统只限亚罗士打新民独立中学教职员使用。未经授权人员请勿尝试登入。</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="return false;" class="space-y-3">
+                <div>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        class="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 text-center text-base tracking-widest focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-xs placeholder:tracking-normal placeholder:text-slate-400"
+                        placeholder="请输入访问密码" 
+                        required 
+                    />
+                </div>
+
+                <div id="login-error" class="hidden text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 rounded-lg py-1.5">
+                    密码错误，请重新输入！
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="login-btn" 
+                    class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5"
+                >
+                    <span>安全登入系统</span>
+                </button>
+            </form>
+
+            <!-- Footer info -->
+            <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 font-medium space-y-0.5">
+                <p>2026年8月更新</p>
+                <p>资讯处 2026 Copyright © 版权所有</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Zoom Lightbox Modal Overlay -->
+    <div id="image-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
+        <div class="relative bg-white/95 rounded-2xl p-4 max-w-sm w-full shadow-2xl border border-white/40 text-center animate-in fade-in zoom-in-95">
+            <button 
+                id="close-image-modal" 
+                class="absolute -top-3 -right-3 w-8 h-8 bg-slate-800 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-slate-700 transition-colors"
+                title="关闭"
+            >
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="overflow-hidden rounded-xl bg-slate-100 border border-slate-100 mb-3 shadow-inner">
+                <img id="modal-img" src="" alt="学生照片大图" class="w-full h-80 object-cover rounded-xl" />
+            </div>
+            <div class="space-y-1">
+                <h3 id="modal-name-zh" class="text-lg font-bold text-slate-900"></h3>
+                <p id="modal-name-en" class="text-xs text-slate-500 font-semibold"></p>
+                <div class="flex justify-center gap-2 pt-1">
+                    <span id="modal-class-badge" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-50 text-purple-700"></span>
+                    <span id="modal-id-badge" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Statistics Overview Modal Overlay -->
+    <div id="stats-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all">
+        <div class="relative bg-white rounded-3xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-white/40">
+            <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">全校班级人数与宿舍生统计分析</h3>
+                        <p class="text-xs text-slate-400">亚罗士打新民独立中学 资讯处数据分析</p>
+                    </div>
+                </div>
+                <button id="close-stats-modal" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="stats-content" class="space-y-4">
+                <!-- Statistics Cards populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+            body { background: white !important; }
+            #login-overlay, .sticky, #logout-btn, #search-box, select, #fav-filter-btn, #show-stats-btn, #print-btn, #image-modal, #stats-modal, .group-hover\/avatar\:opacity-100 {
+                display: none !important;
+            }
+            .grid { display: grid !important; grid-template-cols: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+            .shadow-sm, .shadow-md, .shadow-2xl { box-shadow: none !important; }
+            .border { border: 1px solid #e2e8f0 !important; }
+            .max-w-4xl { max-w-full !important; padding: 0 !important; }
+            .print-header { display: block !important; margin-bottom: 20px; text-align: center; }
+        }
+        .print-header { display: none; }
+    </style>
+
+    <div id="app" class="min-h-screen pb-10 hidden">
+        <!-- Print Header Only visible when printing -->
+        <div class="print-header">
+            <h1 class="text-xl font-bold text-gray-900">亚罗士打新民独立中学 学生名单</h1>
+            <p class="text-xs text-gray-500 mt-1" id="print-subtitle"></p>
+        </div>
+
+        <!-- Header & Filters (Static Layout) -->
+        <div class="glass-panel sticky top-0 z-10 px-4 py-3 shadow-sm mb-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-3">
+                        <img src="logo.png" alt="校徽" class="h-10 w-auto object-contain drop-shadow-sm" />
+                        <div>
+                            <h1 class="text-base sm:text-lg font-bold text-gray-800 leading-tight">亚罗士打新民独立中学</h1>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <p class="text-[11px] text-blue-600 font-bold">学生资料查询系统</p>
+                                <span class="text-gray-300 text-[10px]">|</span>
+                                <p id="live-datetime" class="text-[11px] text-slate-500 font-medium"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        id="logout-btn" 
+                        class="text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium flex items-center gap-1.5 shadow-sm"
+                    >
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span class="hidden sm:inline">退出登录</span>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-3">
+                    <!-- Search Input -->
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                        <input
+                            id="search-box"
+                            type="text"
+                            class="search-input w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-white shadow-sm text-gray-700 placeholder-gray-400 transition-all text-base"
+                            placeholder="输入姓名 (e.g. 陈, tan) 或 学号搜索..."
+                        />
+                        <button 
+                            id="clear-search"
+                            class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        >
+                            <i data-lucide="x-circle" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <!-- Class Filter -->
+                        <div class="relative flex-1 md:w-[150px]">
+                            <select
+                                id="class-filter"
+                                class="search-input w-full appearance-none pl-3 pr-8 py-3 rounded-xl border border-gray-200 bg-white shadow-sm text-gray-700 text-sm font-medium cursor-pointer"
+                            >
+                                <option value="全部">全部班级</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+                            </div>
+                        </div>
+
+                        <!-- Hostel Filter -->
+                        <div class="relative flex-1 md:w-[120px]">
+                            <select
+                                id="hostel-filter"
+                                class="search-input w-full appearance-none pl-3 pr-8 py-3 rounded-xl border border-gray-200 bg-white shadow-sm text-gray-700 text-sm font-medium cursor-pointer"
+                            >
+                                <option value="全部">全部住宿</option>
+                                <option value="宿舍生">宿舍生</option>
+                                <option value="走读生">走读生</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons: Favorites, Stats, Print -->
+                        <div class="flex gap-1.5">
+                            <button
+                                id="fav-filter-btn"
+                                class="p-3 rounded-xl border border-gray-200 bg-white hover:bg-amber-50 text-gray-400 hover:text-amber-500 transition-all shadow-sm flex items-center justify-center"
+                                title="仅看已收藏学生"
+                            >
+                                <i data-lucide="star" class="w-5 h-5"></i>
+                            </button>
+
+                            <button
+                                id="show-stats-btn"
+                                class="p-3 rounded-xl border border-gray-200 bg-white hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-all shadow-sm flex items-center justify-center"
+                                title="全校班级统计图表"
+                            >
+                                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                            </button>
+
+                            <button
+                                id="print-btn"
+                                class="p-3 rounded-xl border border-blue-200 bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm flex items-center justify-center"
+                                title="打印 / 导出当前名单"
+                            >
+                                <i data-lucide="printer" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Counter - 显示男女比例 (带颜色) -->
+        <div class="max-w-4xl mx-auto px-4 mb-4 flex justify-between items-center text-sm font-semibold text-gray-500">
+            <p class="flex items-center gap-2">
+                <span id="results-count">找到 0 名学生</span>
+                <span class="text-xs font-normal bg-white border border-gray-200 px-3 py-1 rounded-full flex gap-2 shadow-sm">
+                    <span class="text-blue-600 font-semibold" id="male-count">男: 0</span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-pink-600 font-semibold" id="female-count">女: 0</span>
+                </span>
+            </p>
+            <div class="flex gap-4">
+                <span class="flex items-center gap-1.5 text-xs text-blue-600 font-medium"><span class="w-2 h-2 rounded-full bg-blue-500"></span>男生</span>
+                <span class="flex items-center gap-1.5 text-xs text-pink-600 font-medium"><span class="w-2 h-2 rounded-full bg-pink-500"></span>女生</span>
+            </div>
+        </div>
+
+        <!-- Student List Container -->
+        <div id="student-list" class="max-w-4xl mx-auto px-4">
+            <!-- Dynamic Cards Go Here -->
+        </div>
+    </div>
+
+    <script>
+        // 真实学生数据 (包含宿舍生和班导师字段)
+        const RAW_STUDENTS = [{"id":"25018","name_zh":"许俊超","name_en":"KHOH CHUN CAO","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/25018-SBE5.jpg"},{"id":"26033","name_zh":"封胜阳","name_en":"KINGSLEY FONG SHENG YANG","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26033-FX89.jpg"},{"id":"26004","name_zh":"娜丽莎","name_en":"NALISSA ISANDRA BT MUHAMAD NAS","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26004-H1HX.jpg"},{"id":"26035","name_zh":"黄业祥","name_en":"NG YE XIANG","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26035-B60W.jpg"},{"id":"26041","name_zh":"翁宇正","name_en":"ONG YEE ZHEN","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26041-M9QJ.jpg"},{"id":"26024","name_zh":"陈渲潓","name_en":"RENAE TANG XUEN HUEY","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26024-3XLC.jpg"},{"id":"26039","name_zh":"郑智喆","name_en":"TEH ZHI ZHE","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26039-X0ZY.jpg"},{"id":"26030","name_zh":"马萱","name_en":"MISS PIMCHADAPORN WUMAE","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26030-ZNPV.jpg"},{"id":"26028","name_zh":"潘安琪","name_en":"ANGELINA PHON ANG CHEE","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26028-1C00.jpg"},{"id":"26020","name_zh":"陈恩慈","name_en":"CHAN ANGEL","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26020-MS02.jpg"},{"id":"26027","name_zh":"黄语森","name_en":"KEITH NG YO SEAN","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26027-JAPB.jpg"},{"id":"26025","name_zh":"龚勇腾","name_en":"KONG YONG TENG","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26025-KJMV.jpg"},{"id":"26029","name_zh":"温丘健","name_en":"OON QIU JIAN","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":true,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26029-W41S.jpg"},{"id":"26031","name_zh":"戴于胜","name_en":"THAI YU SHENG","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26031-J9HT.jpg"},{"id":"26047","name_zh":"温宇豪","name_en":"IDEN WAN YU HAO","class_code":"J1X","class_zh":"初一孝","gender":"M","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26047-8GYV.jpg"},{"id":"26032","name_zh":"林佳恩","name_en":"LIM JIA EN","class_code":"J1X","class_zh":"初一孝","gender":"F","is_hostel":false,"teacher":"洪雅芝","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26032-GJCV.jpg"},{"id":"26005","name_zh":"黄榀喆","name_en":"ALDRICH NG BING ZHE","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26005-RY21.jpg"},{"id":"26009","name_zh":"陈伟扬","name_en":"CHAN WEI YANG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26009-M1X0.jpg"},{"id":"26008","name_zh":"曾钰昕","name_en":"CHAN YEE SHIN","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26008-QQD5.jpg"},{"id":"26023","name_zh":"张宇翔","name_en":"EASON TEOH YI XIANG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26023-6HY3.jpg"},{"id":"25016","name_zh":"王凯翔","name_en":"HENG KAI XIANG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/25016-ZT4K.jpg"},{"id":"26017","name_zh":"梁洁晟","name_en":"LEONG JACKSON","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26017-XHN6.jpg"},{"id":"26018","name_zh":"林慧萱","name_en":"LIM HUI SHIEN","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26018-Q3EL.jpg"},{"id":"26002","name_zh":"林心茹","name_en":"LIM XIN RU","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26002-9U1V.jpg"},{"id":"26019","name_zh":"陈俊","name_en":"TAN JUN","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26019-SHL1.jpg"},{"id":"26012","name_zh":"陈施谕","name_en":"TAN SHI YEE","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26012-MPHQ.jpg"},{"id":"26043","name_zh":"黄键程","name_en":"NG JIAN CHENG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26043-HXG1.jpg"},{"id":"26026","name_zh":"吴雪恩","name_en":"GOH XUE EN","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26026-PMAM.jpg"},{"id":"26045","name_zh":"潘浩然","name_en":"PUN HOE YIEN","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26045-3EUY.jpg"},{"id":"26051","name_zh":"马浩哲","name_en":"MA HAO ZHE","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26051-LX5Y.jpg"},{"id":"26053","name_zh":"陈国俊","name_en":"CHAN KOK JUN","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26053-JJLB.jpg"},{"id":"26001","name_zh":"方梓恒","name_en":"BRYAN PHONG JI HENG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26001-J85J.jpg"},{"id":"26006","name_zh":"曾紫琳","name_en":"CHAN ZHI LING","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26006-2BRE.jpg"},{"id":"26015","name_zh":"陈慨曜","name_en":"JAYDEN TAN KHAI YAOW","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26015-1M7A.jpg"},{"id":"26007","name_zh":"朱振宇","name_en":"JAYVEN CHEW ZHEN YI","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26007-US6X.jpg"},{"id":"26021","name_zh":"冯凯健","name_en":"JEFF PANG KAI JIAN","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26021-4F32.jpg"},{"id":"25006","name_zh":"郭柔雯","name_en":"KOAY ROU WEN","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/25006-UD0A.jpg"},{"id":"26022","name_zh":"李欣芮","name_en":"LEE SHIN REI","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26022-5J92.jpg"},{"id":"26011","name_zh":"林颜竜","name_en":"LIM LYENN LONG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26011-FU56.jpg"},{"id":"26014","name_zh":"林思涵","name_en":"LIM SHI HAN","class_code":"J1Z","class_zh":"初一忠","gender":"F","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26014-8NYN.jpg"},{"id":"26013","name_zh":"郑顺以","name_en":"TEE SHUN YI","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":false,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26013-FRJ0.jpg"},{"id":"26003","name_zh":"黄聪明","name_en":"WONG CONG BENG","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26003-242Q.jpg"},{"id":"26049","name_zh":"林艺座","name_en":"LIM EE ZUO","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"photo/%E5%88%9D%E4%B8%80%E5%BF%A0%20%E5%AD%9D/26049-JD2Z.jpg"},{"id":"26055","name_zh":"张山太","name_en":"TEOW SHAN TAI","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"data:image/svg+xml;utf8,\u003csvg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 24 24\u0027 fill=\u0027%23d1d5db\u0027\u003e\u003cpath d=\u0027M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\u0027/\u003e\u003c/svg\u003e"},{"id":"26057","name_zh":"张嘉哲","name_en":"CHONG JIA ZAC","class_code":"J1Z","class_zh":"初一忠","gender":"M","is_hostel":true,"teacher":"王韵麒","photo":"data:image/svg+xml;utf8,\u003csvg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 24 24\u0027 fill=\u0027%23d1d5db\u0027\u003e\u003cpath d=\u0027M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\u0027/\u003e\u003c/svg\u003e"},{"id":"25002","name_zh":"林子恒","name_en":"CARLSON LIM ZI HENG","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25002-GEZZ.jpg"},{"id":"25021","name_zh":"苏倩瑶","name_en":"DESIREE SOH","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25021-JT97.jpg"},{"id":"25026","name_zh":"冯佳喜","name_en":"FONG JIA XI","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25026-FFBC.jpg"},{"id":"24031","name_zh":"方翎恩","name_en":"HONG LING EN","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/24031-48H5.jpg"},{"id":"25032","name_zh":"黄宣晸","name_en":"HOWARD WONG XUAN ZHENG","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25032-HJEK.jpg"},{"id":"25033","name_zh":"蓝骏腾","name_en":"LAM JUN TENG","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25033-P6TS.jpg"},{"id":"25014","name_zh":"李芮祯","name_en":"LEE RUI CHEN","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25014-NQVP.jpg"},{"id":"25009","name_zh":"卢锦丰","name_en":"LOH KIM HONG","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25009-LVZQ.jpg"},{"id":"25008","name_zh":"吕浚晖","name_en":"LOO JUN HOOI","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25008-ENUS.jpg"},{"id":"25007","name_zh":"林玉美","name_en":"MISS KANOKPON SENSAENYA","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25007-EBCG.jpg"},{"id":"24022","name_zh":"许安安","name_en":"MISS PACHAREEPORN YAEMPAN","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/24022-U994.jpg"},{"id":"25034","name_zh":"黄柏杰","name_en":"NG NICKSON","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25034-CN8A.jpg"},{"id":"25911","name_zh":"谭善瑜","name_en":"THUM SHAAN YU","class_code":"J2X","class_zh":"初二孝","gender":"M","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25911-SHVD.jpg"},{"id":"25011","name_zh":"曾炜焮","name_en":"VANESSA CHAN WEI XIN","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":false,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25011-R9D8.jpg"},{"id":"25015","name_zh":"王愉珺","name_en":"WONG EE JIN","class_code":"J2X","class_zh":"初二孝","gender":"F","is_hostel":true,"teacher":"王盈盈","photo":"photo/%E5%88%9D%E4%BA%8C%E5%AD%9D/25015-VT93.jpg"},{"id":"25001","name_zh":"周鼎森","name_en":"CHEW TING SERN","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25001-N800.jpg"},{"id":"25030","name_zh":"钟廉盛","name_en":"CHOONG LEAN SHEN","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25030-4825.jpg"},{"id":"25017","name_zh":"蔡碧恬","name_en":"CHUAH BI TIAN","class_code":"J2Z","class_zh":"初二忠","gender":"F","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25017-Y4YP.jpg"},{"id":"25004","name_zh":"蔡善渝","name_en":"CHUAH SHAN YEE","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25004-F67A.jpg"},{"id":"24037","name_zh":"全德泉","name_en":"CHUAN TEIK QUAN","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/24037-A0X8.jpg"},{"id":"25028","name_zh":"叶俊文","name_en":"DESMOND YIP CHUN MUN","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25028-E4ZQ.jpg"},{"id":"25019","name_zh":"冯佳伟","name_en":"FONG JIA WEI","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25019-WQ6S.jpg"},{"id":"24032","name_zh":"郭凯杰","name_en":"KU KAI JIE","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/24032-ABYM.jpg"},{"id":"25003","name_zh":"李浩哲","name_en":"LEE HAO ZHE","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25003-B94Y.jpg"},{"id":"25022","name_zh":"梁子康","name_en":"LEONG ZI KANG","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25022-TFF4.jpg"},{"id":"25024","name_zh":"林恩佩","name_en":"LIM EN PEI","class_code":"J2Z","class_zh":"初二忠","gender":"F","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25024-G66J.jpg"},{"id":"25005","name_zh":"林杏恩","name_en":"LIM XING EN","class_code":"J2Z","class_zh":"初二忠","gender":"F","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25005-5CU0.jpg"},{"id":"25031","name_zh":"林昱宏","name_en":"LIM YU HONG","class_code":"J2Z","class_zh":"初二忠","gender":"M","is_hostel":false,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25031-FQ72.jpg"},{"id":"25027","name_zh":"胡巧瑄","name_en":"OH QIAO XUAN","class_code":"J2Z","class_zh":"初二忠","gender":"F","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25027-T2SA.jpg"},{"id":"25010","name_zh":"黄颖糅","name_en":"OOI YIN ROU","class_code":"J2Z","class_zh":"初二忠","gender":"F","is_hostel":true,"teacher":"吴立阳","photo":"photo/%E5%88%9D%E4%BA%8C%E5%BF%A0/25010-FJ01.jpg"},{"id":"24009","name_zh":"陈宣彤","name_en":"CHIN XUAN DON","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24009-WGT4.jpg"},{"id":"24044","name_zh":"葛子乐","name_en":"JENDEN KUA ZI LE","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24044-F3XJ.jpg"},{"id":"24004","name_zh":"刘家泓","name_en":"LAU JIA HONG","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24004-85ME.jpg"},{"id":"24046","name_zh":"李陈莱","name_en":"LEE CHING LOY","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24046-TVNA.jpg"},{"id":"24011","name_zh":"林芷宇","name_en":"LIM ZHI YU","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24011-5H50.jpg"},{"id":"24034","name_zh":"卢劲全","name_en":"LOO CHIN QUAN","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24034-EH9X.jpg"},{"id":"23003","name_zh":"卢诗婕","name_en":"LOO SHI JIE","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/23003-2MFN.jpg"},{"id":"25029","name_zh":"罗琳琳","name_en":"LOOI LIN LIN","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/25029-3A72.jpg"},{"id":"24003","name_zh":"李宗轩","name_en":"MAX LEE CHONG HINZ","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24003-X8E1.jpg"},{"id":"24008","name_zh":"黄冠云","name_en":"OOI GUAN YUN","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24008-4RL4.jpg"},{"id":"24050","name_zh":"黄滢颖","name_en":"OOI YING YING","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24050-3J08.jpg"},{"id":"23032","name_zh":"张观乐","name_en":"TEOH GUAN LE","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/23032-7NS7.jpg"},{"id":"23033","name_zh":"张溢泯","name_en":"TEOH YIK MIN","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/23033-7PYY.jpg"},{"id":"23012","name_zh":"陈天佑","name_en":"TAN TIAN YOU","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/23012-ZHL7.jpg"},{"id":"23028","name_zh":"梁惠淇","name_en":"VIKKY LEONG WAI KEI","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":false,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/23028-7DNC.jpg"},{"id":"24040","name_zh":"黄湘恩","name_en":"WONG SHARON","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/24040-U2B4.jpg"},{"id":"26905","name_zh":"达南吉","name_en":"MASTER THANANKRITH HONGRON","class_code":"J3X","class_zh":"初三孝","gender":"M","is_hostel":true,"teacher":"刘荠祥","photo":"photo/%E5%88%9D%E4%B8%89%E5%AD%9D/26905-6F1Q.jpg"},{"id":"26912","name_zh":"黄苡嵌","name_en":"OOI YEE QIAN","class_code":"J3X","class_zh":"初三孝","gender":"F","is_hostel":false,"teacher":"刘荠祥","photo":"data:image/svg+xml;utf8,\u003csvg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 24 24\u0027 fill=\u0027%23d1d5db\u0027\u003e\u003cpath d=\u0027M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\u0027/\u003e\u003c/svg\u003e"},{"id":"25901","name_zh":"林珂伊","name_en":"CHLOE LIM","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/25901-ZHPT.jpg"},{"id":"24051","name_zh":"张嘉杰","name_en":"CHONG KAR KIT","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24051-3LTS.jpg"},{"id":"24007","name_zh":"张妤轩","name_en":"CHONG YU XUAN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24007-L09P.jpg"},{"id":"24024","name_zh":"蔡宜桦","name_en":"CHUAH YI HWA","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24024-SCYQ.jpg"},{"id":"24043","name_zh":"廖文杰","name_en":"DANNY LIAN WEN JIE","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24043-1H0X.jpg"},{"id":"24019","name_zh":"杨诗淇","name_en":"GEANIE YEOH SZE QI","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24019-Y96E.jpg"},{"id":"24035","name_zh":"林纮宇","name_en":"JEFF LIM HONG YEE","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24035-N9Y1.jpg"},{"id":"24033","name_zh":"陈佳慧","name_en":"JOANNE TAN JIA HUI","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24033-MSST.jpg"},{"id":"24015","name_zh":"陈媃茵","name_en":"JOURWIN CHAN YAU YAN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24015-DD24.jpg"},{"id":"24041","name_zh":"林宇泽","name_en":"LAM YU ZE","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24041-6T1W.jpg"},{"id":"24042","name_zh":"李欣恩","name_en":"LEE SHIN ERN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24042-1HU0.jpg"},{"id":"24025","name_zh":"李汶翰","name_en":"LEE WEN HAN","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24025-1QGS.jpg"},{"id":"24013","name_zh":"林楷萱","name_en":"LIM KAI XUAN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24013-KU9A.jpg"},{"id":"24053","name_zh":"林凯泽","name_en":"LIM KAI ZHE","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24053-C51Y.jpg"},{"id":"24014","name_zh":"林楷志","name_en":"LIM KAI ZHI","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24014-KB2E.jpg"},{"id":"24005","name_zh":"林巧萱","name_en":"LIM QIAO XUAN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24005-ZSXH.jpg"},{"id":"24026","name_zh":"黄浩宇","name_en":"OOI HO YI","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24026-TMX8.jpg"},{"id":"24027","name_zh":"邓卉恩","name_en":"TEAN HUI EN","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24027-LEXS.jpg"},{"id":"24006","name_zh":"戴永有","name_en":"TEE YONG YOU","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24006-71NJ.jpg"},{"id":"26904","name_zh":"黄裔童","name_en":"WONG EE THONG","class_code":"J3Z","class_zh":"初三忠","gender":"F","is_hostel":false,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/26904-3JCG.jpg"},{"id":"24016","name_zh":"杨忠万","name_en":"YEOH ZHONG WAN","class_code":"J3Z","class_zh":"初三忠","gender":"M","is_hostel":true,"teacher":"李欣霓","photo":"photo/%E5%88%9D%E4%B8%89%E5%BF%A0/24016-961T.jpg"},{"id":"23020","name_zh":"吴家润","name_en":"ASHELY NG JIA RUN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23020-SLNK.jpg"},{"id":"23013","name_zh":"蔡靖栐","name_en":"BRYAN CHUA JING YONG","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23013-1GVB.jpg"},{"id":"23037","name_zh":"陈慧文","name_en":"CHIN HUI WEN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23037-HH5G.jpg"},{"id":"23048","name_zh":"林师宏","name_en":"EAVEN LIM SHI HONG","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23048-WVV7.jpg"},{"id":"26906","name_zh":"张唐㿦","name_en":"KAITLYN THEOH TANG NING","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/26906-1ZJ2.jpg"},{"id":"23031","name_zh":"李嘉萱","name_en":"LEE JIA XUAN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23031-NYN3.jpg"},{"id":"23022","name_zh":"李哲涵","name_en":"LEE ZHE HAN A/L HOCK SUN","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23022-JRTD.jpg"},{"id":"23011","name_zh":"林恩慧","name_en":"LIM EN HUI","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23011-XQ2X.jpg"},{"id":"23043","name_zh":"林婧","name_en":"LIM JING","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23043-CSVW.jpg"},{"id":"23035","name_zh":"罗弘富","name_en":"LOH HONG FU","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23035-7Z51.jpg"},{"id":"23008","name_zh":"黄勇","name_en":"NICHOLAS OOI YONG","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23008-U2X3.jpg"},{"id":"23030","name_zh":"陈靖涵","name_en":"TAN ZING HAN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23030-7JLK.jpg"},{"id":"26910","name_zh":"张瑜轩","name_en":"TEOH YU XUAN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/26910-V6FS.jpg"},{"id":"23005","name_zh":"洪丽凤","name_en":"ANG LI FONG","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23005-E0JC.jpg"},{"id":"23027","name_zh":"马峄琪","name_en":"BEH YI QI","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23027-3XPN.jpg"},{"id":"23036","name_zh":"杜泳利","name_en":"CHRIS TOO YONG LI","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23036-LFJY.jpg"},{"id":"23001","name_zh":"蔡恩渘","name_en":"CHUA ANGEL","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23001-CFP5.jpg"},{"id":"23017","name_zh":"蔡碧萱","name_en":"CHUAH BI XUAN","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23017-T6KG.jpg"},{"id":"23025","name_zh":"蔡子仪","name_en":"JOEY CHUA ZI YI","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23025-RC81.jpg"},{"id":"23007","name_zh":"陈姿岕","name_en":"KAREN TANG ZI JIE","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23007-62ZF.jpg"},{"id":"23044","name_zh":"林港卫","name_en":"KENN LIM KANG WEI","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23044-4K8E.jpg"},{"id":"23046","name_zh":"许浩泽","name_en":"KHAW HAO ZE","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"data:image/svg+xml;utf8,\u003csvg xmlns=\u0027http://www.w3.org/2000/svg\u0027 viewBox=\u00270 0 24 24\u0027 fill=\u0027%23d1d5db\u0027\u003e\u003cpath d=\u0027M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\u0027/\u003e\u003c/svg\u003e"},{"id":"23021","name_zh":"黄冠友","name_en":"OOI GUAN YOU","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23021-EM54.jpg"},{"id":"23034","name_zh":"黄渲捷","name_en":"OOI XUAN JYE","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":false,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23034-27Y8.jpg"},{"id":"25907","name_zh":"陈昱霆","name_en":"TAN YEE TENG","class_code":"S1AC","class_zh":"高一文商","gender":"M","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/25907-1JJ3.jpg"},{"id":"23029","name_zh":"杜紫微","name_en":"TOH ZI WEI","class_code":"S1AC","class_zh":"高一文商","gender":"F","is_hostel":true,"teacher":"吴淑仪","photo":"photo/%E9%AB%98%E4%B8%80%E6%96%87%E5%95%86/23029-GFVB.jpg"},{"id":"26908","name_zh":"林在佩","name_en":"LIM ZAI PEI（CHRISTINE)","class_code":"S1CA","class_zh":"高一餐饮","gender":"F","is_hostel":false,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/26908-MPZ3.jpg"},{"id":"23042","name_zh":"钟廉证","name_en":"CHOONG LEAN ZEN","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23042-VXTT.jpg"},{"id":"26901","name_zh":"黄俊铭","name_en":"HUANG JUN MING","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":false,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/26901-W7WS.jpg"},{"id":"23006","name_zh":"李爱琪","name_en":"LEE AN QI","class_code":"S1CA","class_zh":"高一餐饮","gender":"F","is_hostel":false,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23006-JUB9.jpg"},{"id":"23026","name_zh":"李文保","name_en":"LEE BOON POH","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23026-FGV3.jpg"},{"id":"23023","name_zh":"林俊辉","name_en":"LIM CHOON HUEI","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23023-DAZ2.jpg"},{"id":"22017","name_zh":"卢锦奕","name_en":"LOH KIM YI","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/22017-4YWB.jpg"},{"id":"23004","name_zh":"马廷毅","name_en":"MARCUS MAH THENG YIT","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23004-B3WH.jpg"},{"id":"26903","name_zh":"彭铭峰","name_en":"PHANG MENG FONG","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":false,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/26903-BFM3.jpg"},{"id":"23015","name_zh":"陈颂淮","name_en":"TAN SONG HUAI","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23015-EJMK.jpg"},{"id":"23002","name_zh":"王峄杰","name_en":"WONG YIT KIT","class_code":"S1CA","class_zh":"高一餐饮","gender":"M","is_hostel":true,"teacher":"林德政","photo":"photo/%E9%AB%98%E4%B8%80%E9%A4%90%E9%A5%AE/23002-KNR7.jpg"},{"id":"22019","name_zh":"李宗泽","name_en":"DESMOND LEE ZONG ZE","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22019-0NX4.jpg"},{"id":"22039","name_zh":"吴科潣","name_en":"GOH CALVIN","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22039-F2UA.jpg"},{"id":"22024","name_zh":"王奕诚","name_en":"HENG YIK CHENG","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22024-JC1P.jpg"},{"id":"22001","name_zh":"李舒庈","name_en":"LEE SUE QIN","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22001-Z0PM.jpg"},{"id":"22030","name_zh":"黄宇升","name_en":"NG EESON","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22030-HZ3C.jpg"},{"id":"21010","name_zh":"王晟祺","name_en":"ONG SIN ZEE","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/21010-EY0K.jpg"},{"id":"22003","name_zh":"优雯","name_en":"YU WEN A/P KOK TIN","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22003-3BNM.jpg"},{"id":"26907","name_zh":"李屹森","name_en":"LEE EE SEN","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/26907-A8BZ.jpg"},{"id":"26911","name_zh":"戴捷盛","name_en":"TEY JAY SHENG","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/26911-ULHP.jpg"},{"id":"22044","name_zh":"刘恩萱","name_en":"LAW EN XUAN","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22044-1S02.jpg"},{"id":"22036","name_zh":"林可芯","name_en":"LIM KHE XING","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22036-K587.jpg"},{"id":"22023","name_zh":"林彤恩","name_en":"LIM TONG EN","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22023-68EW.jpg"},{"id":"22041","name_zh":"黄嘉欣","name_en":"OOI JIA XIN","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22041-ZK6X.jpg"},{"id":"22042","name_zh":"沈文轩","name_en":"SIM WUN XIAN","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22042-WAHH.jpg"},{"id":"22013","name_zh":"张紫微","name_en":"TEOW ZI WEI","class_code":"S2AC","class_zh":"高二文商","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/22013-E03C.jpg"},{"id":"26909","name_zh":"梁奕谦","name_en":"JERRY NEOH YI JIAN","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/26909-KPME.jpg"},{"id":"26913","name_zh":"陈启昂","name_en":"TAN QI ANN","class_code":"S2AC","class_zh":"高二文商","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E6%96%87%E5%95%86/26913-AZLG.jpg"},{"id":"21033","name_zh":"刘俊宏","name_en":"ANDRE LOW JUN HUNG","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/21033-C0P9.jpg"},{"id":"22047","name_zh":"王翔哲","name_en":"IVAN ONG XIANG ZHE","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22047-GJD4.jpg"},{"id":"22015","name_zh":"杨迦淇","name_en":"JESSIE YEOH CHIA QI","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22015-VYLC.jpg"},{"id":"22028","name_zh":"陈劲证","name_en":"KELVIN TANG JIN ZENG","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22028-RPX0.jpg"},{"id":"22021","name_zh":"邱天立","name_en":"KHU THIAN LIK","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22021-AXM9.jpg"},{"id":"22020","name_zh":"邱天心","name_en":"KHU THIAN XIN","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22020-FELM.jpg"},{"id":"22040","name_zh":"郭佳义","name_en":"KOK JIA YI","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22040-0JEJ.jpg"},{"id":"21016","name_zh":"刘会翔","name_en":"LAU HUI XIANG","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/21016-7JGT.jpg"},{"id":"22026","name_zh":"林可珺","name_en":"LIM KHER JUIN","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22026-9RLY.jpg"},{"id":"22012","name_zh":"林韦仁","name_en":"LIM WEI JEN","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22012-EU17.jpg"},{"id":"22016","name_zh":"卢锦康","name_en":"LOH KIM KHONG","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22016-KGLC.jpg"},{"id":"22035","name_zh":"刘谆宏","name_en":"LOW ZHUN HONG","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22035-8DVS.jpg"},{"id":"22018","name_zh":"曾薇颖","name_en":"NICOLE CHAN WEI YING","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22018-ZSFX.jpg"},{"id":"22033","name_zh":"王芷乐","name_en":"ONG ZI LE","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22033-J2ML.jpg"},{"id":"24915","name_zh":"苏正义","name_en":"SAW CHEN YI","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/24915-AVQ7.jpg"},{"id":"22004","name_zh":"陈芊卉","name_en":"TAN CHIAN HOOI","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22004-JQ8F.jpg"},{"id":"22005","name_zh":"陈奕汶","name_en":"TAN YI WENN","class_code":"S2CA","class_zh":"高二餐饮","gender":"F","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/22005-YYQU.jpg"},{"id":"21020","name_zh":"戴秋顺","name_en":"TAY CHIEW SOON","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":true,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/21020-2M9X.jpg"},{"id":"21041","name_zh":"马靖权","name_en":"THOMAS MA JING QUAN","class_code":"S2CA","class_zh":"高二餐饮","gender":"M","is_hostel":false,"teacher":"李佩珊","photo":"photo/%E9%AB%98%E4%BA%8C%E9%A4%90%E9%A5%AE/21041-YHAB.jpg"},{"id":"21052","name_zh":"洪宜君","name_en":"ANG YEE CHIN","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21052-Y3WM.jpg"},{"id":"21029","name_zh":"马有友","name_en":"BEH YO YOU","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21029-QMRP.jpg"},{"id":"21054","name_zh":"朱俊亿","name_en":"CHOO CHUN YIH","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21054-TFY2.jpg"},{"id":"21032","name_zh":"许凯竣","name_en":"DYLAN KU KAI JUN","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21032-JSU2.jpg"},{"id":"21045","name_zh":"伍祥豪","name_en":"GOH XIANG HAO","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21045-W0JN.jpg"},{"id":"21025","name_zh":"许柔恩","name_en":"KHOH JO EN","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21025-Z1QC.jpg"},{"id":"21047","name_zh":"林靖翔","name_en":"LIM JING XIANG","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21047-5D7L.jpg"},{"id":"21001","name_zh":"林浚韦","name_en":"LIM JUN WEI","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21001-01L8.jpg"},{"id":"21026","name_zh":"林楷宏","name_en":"LIM KAI HONG","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21026-9SVH.jpg"},{"id":"21027","name_zh":"卢锦原","name_en":"LOH KIM GUAN","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21027-28ZG.jpg"},{"id":"21003","name_zh":"傅卉杉","name_en":"POH HUI SHAN","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21003-AJK0.jpg"},{"id":"21042","name_zh":"杜姿颖","name_en":"TOH ZI YING","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21042-T1Y6.jpg"},{"id":"24916","name_zh":"杨絖喆","name_en":"CHRISTOPHER YONG KWAN ZHE","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/24916-BWRC.jpg"},{"id":"21030","name_zh":"陈柱玮","name_en":"IVAN CHIN ZOE WEI","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21030-LLSP.jpg"},{"id":"21028","name_zh":"林宥捷","name_en":"JACK LIM YOU JIE","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21028-01J1.jpg"},{"id":"26902","name_zh":"邱渝蒽","name_en":"KHOO YU EN","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/26902-1ZBT.jpg"},{"id":"21017","name_zh":"黄静诗","name_en":"NG JING SZE","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21017-D8XX.jpg"},{"id":"21014","name_zh":"黄子添","name_en":"OOI ZHI THIAN","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/21014-KEX5.jpg"},{"id":"24918","name_zh":"刘子庆","name_en":"OSCAR LIEW ZI QING","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/24918-SJ7L.jpg"},{"id":"24901","name_zh":"黄宇洁","name_en":"WONG VIN JAYE","class_code":"S2AC","class_zh":"高三文商","gender":"F","is_hostel":false,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/24901-BYHE.jpg"},{"id":"22910","name_zh":"杨忠卫","name_en":"YEOH ZHONG WEI","class_code":"S2AC","class_zh":"高三文商","gender":"M","is_hostel":true,"teacher":"杨汉顺","photo":"photo/%E9%AB%98%E4%B8%89%E6%96%87%E5%95%86/22910-T6RC.jpg"},{"id":"21013","name_zh":"邹捷贺","name_en":"CHIEW JIE HE","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21013-5468.jpg"},{"id":"21037","name_zh":"吴维豪","name_en":"GOH WEI HAU","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21037-8V9R.jpg"},{"id":"21018","name_zh":"方棨建","name_en":"HING QI JIAN","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21018-074N.jpg"},{"id":"21004","name_zh":"邱嘉旭","name_en":"KHOO JIA XU","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21004-E3VH.jpg"},{"id":"21005","name_zh":"黄种喻","name_en":"NG ZHONG YI","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":false,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21005-7HNU.jpg"},{"id":"21021","name_zh":"胡巧微","name_en":"OH QIAO WEI","class_code":"S3B","class_zh":"高三烘培","gender":"F","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21021-PZ4E.jpg"},{"id":"20006","name_zh":"陈泳锭","name_en":"TAN YONG TING","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/20006-NYH9.jpg"},{"id":"20009","name_zh":"张玮轩","name_en":"TEOH WEI XIAN","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/20009-M14D.jpg"},{"id":"24903","name_zh":"朱宇章","name_en":"TOE YUZHANG","class_code":"S3B","class_zh":"高三烘培","gender":"M","is_hostel":true,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/24903-QFRV.jpg"},{"id":"21006","name_zh":"雪晶","name_en":"XUE JING A/P HOCK SUN","class_code":"S3B","class_zh":"高三烘培","gender":"F","is_hostel":false,"teacher":"张展瑜","photo":"photo/%E9%AB%98%E4%B8%89%E7%83%98%E5%9F%B9/21006-CPF8.jpg"}];
+
+        // 格式化并映射数据
+        const MOCK_STUDENTS = RAW_STUDENTS.map(s => ({
+            ...s,
+            gender: s.gender === 'M' ? '男' : '女',
+            class_zh: s.class_zh,
+            class_en: s.class_code,
+            hostel_status: s.is_hostel ? '宿舍生' : '走读生'
+        }));
+
+        // 动态提取班级列表
+        const CLASSES = ["全部", ...Array.from(new Set(MOCK_STUDENTS.map(s => s.class_zh)))];
+
+        // 状态变量与收藏持久化
+        let searchQuery = "";
+        let selectedClass = "全部";
+        let hostelFilter = "全部";
+        let onlyFavoritesFilter = false;
+
+        const FAV_STORAGE_KEY = "sinmin_favorite_students";
+        let favoriteIds = new Set(JSON.parse(localStorage.getItem(FAV_STORAGE_KEY) || "[]"));
+
+        // DOM 元素引用
+        const searchBox = document.getElementById("search-box");
+        const clearBtn = document.getElementById("clear-search");
+        const classFilter = document.getElementById("class-filter");
+        const hostelFilterSelect = document.getElementById("hostel-filter");
+        const resultsCountEl = document.getElementById("results-count");
+        const maleCountEl = document.getElementById("male-count");
+        const femaleCountEl = document.getElementById("female-count");
+        const studentListEl = document.getElementById("student-list");
+        const favFilterBtn = document.getElementById("fav-filter-btn");
+        const showStatsBtn = document.getElementById("show-stats-btn");
+        const printBtn = document.getElementById("print-btn");
+
+        // 收藏夹 Toggle 函数
+        window.toggleFavorite = function(studentId) {
+            if (favoriteIds.has(studentId)) {
+                favoriteIds.delete(studentId);
+            } else {
+                favoriteIds.add(studentId);
+            }
+            localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(Array.from(favoriteIds)));
+            updateResults();
+        };
+
+        // 一键复制函数 (带有 Toast 提示)
+        window.copyToClipboard = function(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已成功复制 ${label}`);
+            }).catch(() => {
+                showToast(`复制失败，请重试`);
+            });
+        };
+
+        function showToast(msg) {
+            let toast = document.getElementById("toast-msg");
+            if (!toast) {
+                toast = document.createElement("div");
+                toast.id = "toast-msg";
+                toast.className = "fixed bottom-5 right-5 z-50 bg-slate-900/90 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold backdrop-blur-sm transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-none";
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.classList.remove("opacity-0", "translate-y-2");
+            toast.classList.add("opacity-100", "translate-y-0");
+            setTimeout(() => {
+                toast.classList.remove("opacity-100", "translate-y-0");
+                toast.classList.add("opacity-0", "translate-y-2");
+            }, 2000);
+        }
+
+        // 初始化班级下拉框
+        classFilter.innerHTML = CLASSES.map(cls => 
+            `<option value="${cls}">${cls === '全部' ? '全部班级' : cls}</option>`
+        ).join('');
+
+        // 过滤与渲染主函数
+        function updateResults() {
+            // 联合过滤
+            const filtered = MOCK_STUDENTS.filter(student => {
+                // 仅看收藏过滤
+                if (onlyFavoritesFilter && !favoriteIds.has(student.id)) {
+                    return false;
+                }
+
+                // 班级过滤
+                if (selectedClass !== "全部" && student.class_zh !== selectedClass) {
+                    return false;
+                }
+                
+                // 宿舍生过滤
+                if (hostelFilter === "宿舍生" && !student.is_hostel) return false;
+                if (hostelFilter === "走读生" && student.is_hostel) return false;
+                
+                // 关键词过滤 (支持中文名、英文名、学号，忽略大小写)
+                const query = searchQuery.toLowerCase().trim();
+                if (!query) return true;
+
+                return (
+                    student.name_zh.includes(query) ||
+                    student.name_en.toLowerCase().includes(query) ||
+                    student.id.includes(query)
+                );
+            });
+
+            // 计算男女数量
+            const maleCount = filtered.filter(s => s.gender === '男').length;
+            const femaleCount = filtered.filter(s => s.gender === '女').length;
+
+            // 更新计数器 DOM
+            resultsCountEl.textContent = `找到 ${filtered.length} 名学生`;
+            maleCountEl.textContent = `男: ${maleCount}`;
+            femaleCountEl.textContent = `女: ${femaleCount}`;
+
+            // 显示/隐藏清除按钮
+            if (searchQuery) {
+                clearBtn.classList.remove("hidden");
+            } else {
+                clearBtn.classList.add("hidden");
+            }
+
+            // 渲染学生列表
+            if (filtered.length > 0) {
+                studentListEl.innerHTML = `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${filtered.map(student => {
+                            const isBoy = student.gender === '男';
+                            const genderBadgeBg = isBoy ? 'bg-blue-500' : 'bg-pink-500';
+                            
+                            // 修正：男生学号蓝色，女生学号红色
+                            const idBadgeClass = isBoy 
+                                ? 'bg-blue-50 text-blue-600 border-blue-100' 
+                                : 'bg-rose-50 text-red-600 border-rose-100'; // 红色字体用 text-red-600
+                            
+                            const hostelBadgeHtml = student.is_hostel 
+                                ? `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">宿舍</span>`
+                                : `<span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200">走读</span>`;
+
+                            const isFav = favoriteIds.has(student.id);
+                            const favIconColor = isFav ? 'text-amber-400 fill-amber-400' : 'text-gray-300 hover:text-amber-400';
+
+                            return `
+                                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer group relative overflow-hidden">
+                                    <!-- Favorite Star Button -->
+                                    <button 
+                                        onclick="toggleFavorite('${student.id}')" 
+                                        class="absolute top-3 right-3 p-1 rounded-full hover:bg-slate-50 transition-colors z-10"
+                                        title="${isFav ? '取消收藏' : '收藏此学生'}"
+                                    >
+                                        <i data-lucide="star" class="w-4 h-4 ${favIconColor}"></i>
+                                    </button>
+
+                                    <!-- Card Top: Avatar and Name -->
+                                    <div class="flex gap-4 items-start mb-3 pr-6">
+                                        <div class="relative flex-shrink-0 cursor-pointer group/avatar" onclick="openImageModal('${student.photo}', '${student.name_zh.replace(/'/g, "\\'")}', '${student.name_en.replace(/'/g, "\\'")}', '${student.class_zh} (${student.class_code})', '${student.id}', '${student.gender}')" title="点击放大照片">
+                                            <img 
+                                                src="${student.photo}" 
+                                                alt="${student.name_zh}"
+                                                class="w-16 h-16 rounded-xl object-cover border border-gray-100 shadow-sm group-hover/avatar:scale-105 transition-transform"
+                                            />
+                                            <div class="absolute inset-0 bg-slate-900/30 rounded-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                <i data-lucide="zoom-in" class="w-5 h-5 drop-shadow"></i>
+                                            </div>
+                                            <!-- Gender Indicator Badge -->
+                                            <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white border-2 border-white text-[9px] font-bold ${genderBadgeBg}">
+                                                ${student.gender}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <h3 class="text-base font-bold text-gray-900 truncate">${student.name_zh}</h3>
+                                                ${hostelBadgeHtml}
+                                            </div>
+                                            <p class="text-xs text-slate-600 font-semibold truncate mb-1.5 mt-0.5">${student.name_en}</p>
+                                            <div class="mt-1 flex items-center gap-1">
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${idBadgeClass}">
+                                                    学号: ${student.id}
+                                                </span>
+                                                <button 
+                                                    onclick="copyToClipboard('${student.id}', '学号 ${student.id}')" 
+                                                    class="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                                                    title="一键复制学号"
+                                                >
+                                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card Bottom: Class and Teacher -->
+                                    <div class="border-t border-gray-50 pt-3 mt-1 flex justify-between items-center text-xs">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700">
+                                            ${student.class_zh} (${student.class_en})
+                                        </span>
+                                        
+                                        <span class="text-[11px] text-gray-500 font-medium">
+                                            班导师: <span class="text-gray-700 font-semibold">${student.teacher}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } else {
+                studentListEl.innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                            <i data-lucide="search-x" class="w-8 h-8 text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">未找到匹配的学生</h3>
+                        <p class="text-gray-500">请尝试更换搜索词或筛选条件</p>
+                    </div>
+                `;
+            }
+
+            // 重新解析 Lucide 图标
+            lucide.createIcons();
+        }
+
+        // 绑定事件监听器
+        searchBox.addEventListener("input", (e) => {
+            searchQuery = e.target.value;
+            updateResults();
+        });
+
+        clearBtn.addEventListener("click", () => {
+            searchQuery = "";
+            searchBox.value = "";
+            updateResults();
+            searchBox.focus();
+        });
+
+        classFilter.addEventListener("change", (e) => {
+            selectedClass = e.target.value;
+            updateResults();
+        });
+
+        hostelFilterSelect.addEventListener("change", (e) => {
+            hostelFilter = e.target.value;
+            updateResults();
+        });
+
+        favFilterBtn.addEventListener("click", () => {
+            onlyFavoritesFilter = !onlyFavoritesFilter;
+            if (onlyFavoritesFilter) {
+                favFilterBtn.classList.remove("text-gray-400", "bg-white");
+                favFilterBtn.classList.add("text-amber-500", "bg-amber-50", "border-amber-200");
+            } else {
+                favFilterBtn.classList.remove("text-amber-500", "bg-amber-50", "border-amber-200");
+                favFilterBtn.classList.add("text-gray-400", "bg-white");
+            }
+            updateResults();
+        });
+
+        // 打印与导出当前名单
+        printBtn.addEventListener("click", () => {
+            const printSubtitle = document.getElementById("print-subtitle");
+            const classText = selectedClass === "全部" ? "全校" : selectedClass;
+            const hostelText = hostelFilter === "全部" ? "" : ` (${hostelFilter})`;
+            printSubtitle.textContent = `打印筛选范围：${classText}${hostelText} | 生成时间：${new Date().toLocaleDateString('zh-CN')}`;
+            window.print();
+        });
+
+        // 班级统计分析图表 Modal 逻辑
+        const statsModal = document.getElementById("stats-modal");
+        const closeStatsModalBtn = document.getElementById("close-stats-modal");
+        const statsContent = document.getElementById("stats-content");
+
+        showStatsBtn.addEventListener("click", () => {
+            renderStatsOverview();
+            statsModal.classList.remove("hidden");
+            statsModal.classList.add("flex");
+            lucide.createIcons();
+        });
+
+        function closeStatsModal() {
+            statsModal.classList.add("hidden");
+            statsModal.classList.remove("flex");
+        }
+
+        if (closeStatsModalBtn) {
+            closeStatsModalBtn.addEventListener("click", closeStatsModal);
+        }
+
+        if (statsModal) {
+            statsModal.addEventListener("click", (e) => {
+                if (e.target === statsModal) {
+                    closeStatsModal();
+                }
+            });
+        }
+
+        function renderStatsOverview() {
+            const classStatsMap = {};
+            let totalStudentsCount = MOCK_STUDENTS.length;
+            let totalHostelCount = 0;
+            let totalDayCount = 0;
+            let totalMaleCount = 0;
+            let totalFemaleCount = 0;
+
+            CLASSES.filter(c => c !== "全部").forEach(c => {
+                classStatsMap[c] = { total: 0, male: 0, female: 0, hostel: 0, day: 0, teacher: "" };
+            });
+
+            MOCK_STUDENTS.forEach(s => {
+                if (!classStatsMap[s.class_zh]) return;
+                const stat = classStatsMap[s.class_zh];
+                stat.total++;
+                stat.teacher = s.teacher;
+                if (s.gender === '男') { stat.male++; totalMaleCount++; }
+                else { stat.female++; totalFemaleCount++; }
+                if (s.is_hostel) { stat.hostel++; totalHostelCount++; }
+                else { stat.day++; totalDayCount++; }
+            });
+
+            const overallHostelPercent = Math.round((totalHostelCount / totalStudentsCount) * 100);
+
+            statsContent.innerHTML = `
+                <!-- Total Summary Bar -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center">
+                        <p class="text-[11px] text-slate-400 font-medium">全校总人数</p>
+                        <p class="text-xl font-extrabold text-slate-800 mt-0.5">${totalStudentsCount} <span class="text-xs font-normal">名</span></p>
+                    </div>
+                    <div class="bg-blue-50/70 p-3 rounded-2xl border border-blue-100 text-center">
+                        <p class="text-[11px] text-blue-500 font-medium">男生总计</p>
+                        <p class="text-xl font-extrabold text-blue-600 mt-0.5">${totalMaleCount} <span class="text-xs font-normal">名</span></p>
+                    </div>
+                    <div class="bg-pink-50/70 p-3 rounded-2xl border border-pink-100 text-center">
+                        <p class="text-[11px] text-pink-500 font-medium">女生总计</p>
+                        <p class="text-xl font-extrabold text-pink-600 mt-0.5">${totalFemaleCount} <span class="text-xs font-normal">名</span></p>
+                    </div>
+                    <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-100 text-center">
+                        <p class="text-[11px] text-amber-600 font-medium">宿舍生总数</p>
+                        <p class="text-xl font-extrabold text-amber-700 mt-0.5">${totalHostelCount} <span class="text-xs font-normal">(${overallHostelPercent}%)</span></p>
+                    </div>
+                </div>
+
+                <!-- Class Breakdown Grid -->
+                <div class="pt-2">
+                    <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">各班级人数明细表 (12个班级)</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        ${Object.keys(classStatsMap).map(clsName => {
+                            const st = classStatsMap[clsName];
+                            const hostelRatio = st.total > 0 ? Math.round((st.hostel / st.total) * 100) : 0;
+                            return `
+                                <div class="p-3 rounded-xl border border-slate-100 bg-white shadow-sm flex flex-col justify-between">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-bold text-slate-800 text-sm">${clsName}</span>
+                                            <span class="text-[10px] text-slate-400 font-normal">(班导师: ${st.teacher})</span>
+                                        </div>
+                                        <span class="text-xs font-extrabold text-blue-600">${st.total} 名</span>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden flex">
+                                            <div class="bg-blue-500 h-full" style="width: ${st.total > 0 ? (st.male/st.total)*100 : 0}%" title="男生 ${st.male}人"></div>
+                                            <div class="bg-pink-500 h-full" style="width: ${st.total > 0 ? (st.female/st.total)*100 : 0}%" title="女生 ${st.female}人"></div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-[10px] text-slate-500 font-medium">
+                                            <span>男: ${st.male} | 女: ${st.female}</span>
+                                            <span class="text-amber-600 font-semibold">宿舍生: ${st.hostel}名 (${hostelRatio}%)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 登录验证逻辑
+        const AUTH_KEY = "sinmin_auth_token";
+        const PASSWORD_CORRECT = "sinmin888";
+
+        const loginOverlay = document.getElementById("login-overlay");
+        const loginForm = document.getElementById("login-form");
+        const loginPasswordInput = document.getElementById("login-password");
+        const loginErrorEl = document.getElementById("login-error");
+        const appContainer = document.getElementById("app");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        function checkAuthStatus() {
+            const isAuth = sessionStorage.getItem(AUTH_KEY) === "true";
+            if (isAuth) {
+                loginOverlay.classList.add("hidden");
+                appContainer.classList.remove("hidden");
+                updateResults();
+            } else {
+                loginOverlay.classList.remove("hidden");
+                appContainer.classList.add("hidden");
+            }
+        }
+
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const val = loginPasswordInput.value.trim();
+            if (val === PASSWORD_CORRECT) {
+                sessionStorage.setItem(AUTH_KEY, "true");
+                loginErrorEl.classList.add("hidden");
+                loginPasswordInput.value = "";
+                checkAuthStatus();
+            } else {
+                loginErrorEl.classList.remove("hidden");
+                loginPasswordInput.focus();
+            }
+        });
+
+        logoutBtn.addEventListener("click", () => {
+            sessionStorage.removeItem(AUTH_KEY);
+            checkAuthStatus();
+        });
+
+        // 实时日期与时间更新 (格式: YYYY年M月D日 星期X hh:mm am/pm，不含秒数)
+        const liveDateTimeEl = document.getElementById("live-datetime");
+        
+        function updateLiveDateTime() {
+            if (!liveDateTimeEl) return;
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const days = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+            const dayName = days[now.getDay()];
+            
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // 12小时制转换
+            
+            liveDateTimeEl.textContent = `${year}年${month}月${date}日 ${dayName} ${hours}:${minutes} ${ampm}`;
+        }
+
+        setInterval(updateLiveDateTime, 10000);
+        updateLiveDateTime();
+
+        // 照片放大 Modal 逻辑
+        const imageModal = document.getElementById("image-modal");
+        const modalImg = document.getElementById("modal-img");
+        const modalNameZh = document.getElementById("modal-name-zh");
+        const modalNameEn = document.getElementById("modal-name-en");
+        const modalClassBadge = document.getElementById("modal-class-badge");
+        const modalIdBadge = document.getElementById("modal-id-badge");
+        const closeImageModalBtn = document.getElementById("close-image-modal");
+
+        window.openImageModal = function(photoUrl, nameZh, nameEn, classStr, studentId, gender) {
+            modalImg.src = photoUrl;
+            modalNameZh.textContent = nameZh;
+            modalNameEn.textContent = nameEn;
+            modalClassBadge.textContent = classStr;
+            modalIdBadge.textContent = `学号: ${studentId}`;
+            
+            const isBoy = gender === '男';
+            modalIdBadge.className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${
+                isBoy ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-rose-50 text-red-600 border-rose-100'
+            }`;
+
+            imageModal.classList.remove("hidden");
+            imageModal.classList.add("flex");
+            lucide.createIcons();
+        };
+
+        function closeImageModal() {
+            imageModal.classList.add("hidden");
+            imageModal.classList.remove("flex");
+        }
+
+        if (closeImageModalBtn) {
+            closeImageModalBtn.addEventListener("click", closeImageModal);
+        }
+
+        if (imageModal) {
+            imageModal.addEventListener("click", (e) => {
+                if (e.target === imageModal) {
+                    closeImageModal();
+                }
+            });
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !imageModal.classList.contains("hidden")) {
+                closeImageModal();
+            }
+        });
+
+        // 首次加载渲染
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAuthStatus();
+        });
+    </script>
+</body>
+</html>

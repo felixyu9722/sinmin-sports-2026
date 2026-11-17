@@ -121,8 +121,9 @@
       var state = S.loadState();
       var tvCmd = S.loadTvCommand(state);
       if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+      var qsMode = '';
       try {
-        var qsMode = new URLSearchParams(window.location.search).get('mode');
+        qsMode = new URLSearchParams(window.location.search).get('mode') || '';
         if (qsMode && S.TV_MODES[qsMode]) tvCmd.mode = qsMode;
       } catch (e) {}
 
@@ -518,17 +519,7 @@
         var computed = S.calculateEntries(ev.finalEntries || [], ev, true);
         var recordWinner = computed.find(function (x) { return x.isRecord; });
 
-        stage.innerHTML = (
-          '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
-          '<div>' +
-          '<div style="color:#00e676; font-weight:800; letter-spacing:0.15em; font-size:1rem;">OFFICIAL LIVE RESULTS · 决赛成绩正式揭晓</div>' +
-          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
-          '</div>' +
-          '<div class="tv-record-pill">' +
-          '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录</div>' +
-          '<div style="font-family:var(--font-display); font-size:1.75rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '无') + '</div>' +
-          '</div>' +
-          '</div>' +
+        var lanesHtml = (
           '<div class="tv-lanes-list">' +
           computed.slice(0, 8).map(function (entry, idx) {
             var tid = S.normalizeTeamId(entry.team);
@@ -560,6 +551,30 @@
             );
           }).join('') +
           '</div>'
+        );
+
+        var bodyContentHtml = (ev.eventPhoto && ev.showPhotoPublic !== false)
+          ? '<div style="display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:18px; align-items:stretch; flex:1; min-height:0;">' +
+              lanesHtml +
+              '<div style="display:flex; flex-direction:column; padding:12px; border-radius:16px; background:rgba(13,20,36,0.88); border:1px solid rgba(56,189,248,0.35); overflow:hidden;">' +
+                '<div style="font-size:0.86rem; font-weight:800; color:#7dd3fc; margin-bottom:8px; text-align:center;">📸 现场实拍 / 成绩单对照</div>' +
+                '<img src="' + ev.eventPhoto + '" alt="现场成绩单照片" style="width:100%; height:100%; max-height:540px; object-fit:contain; border-radius:10px;" />' +
+              '</div>' +
+            '</div>'
+          : lanesHtml;
+
+        stage.innerHTML = (
+          '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
+          '<div>' +
+          '<div style="color:#00e676; font-weight:800; letter-spacing:0.15em; font-size:1rem;">OFFICIAL LIVE RESULTS · 决赛成绩正式揭晓</div>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
+          '</div>' +
+          '<div class="tv-record-pill">' +
+          '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录</div>' +
+          '<div style="font-family:var(--font-display); font-size:1.75rem; font-weight:800;">' + S.escapeHtml(ev.recordMark || '无') + '</div>' +
+          '</div>' +
+          '</div>' +
+          bodyContentHtml
         );
 
         if (fromPush) {
@@ -818,8 +833,27 @@
         }
       });
 
+      // 第二电视机云端自动同步（网页访问时每 15 秒拉取最新成绩与远程切屏指令）
+      function checkRemoteTvSync() {
+        S.fetchFromRemoteStateJson('', state, false).then(function (res) {
+          if (res && res.updated && res.state) {
+            state = res.state;
+            S.saveState(state, false, true);
+            var remoteCmd = state.meta && state.meta.remoteTvCommand;
+            if (!qsMode && remoteCmd && remoteCmd.pushedAt && remoteCmd.pushedAt !== tvCmd.pushedAt) {
+              tvCmd = Object.assign({}, tvCmd, remoteCmd);
+              if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+            }
+            renderTickerAndNotice();
+            renderStage(false);
+          }
+        }).catch(function () {});
+      }
+
       renderTickerAndNotice();
       renderStage(false);
+      checkRemoteTvSync();
+      setInterval(checkRemoteTvSync, 15000);
     })();
   </script>
 </body>

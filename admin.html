@@ -56,9 +56,14 @@
       </div>
 
       <div class="glass-panel" style="padding:14px;">
-        <div class="section-header" style="margin-bottom:10px;">
+        <div class="section-header" style="margin-bottom:8px;">
           <h2 class="section-title" style="font-size:0.95rem;">📋 赛事项目列表</h2>
           <button class="btn btn-sm btn-primary" id="btn-open-new-event">+ 新建</button>
+        </div>
+        <div style="display:flex; gap:4px; margin-bottom:10px;" id="admin-div-tabs">
+          <button class="chip-btn active" style="flex:1; padding:4px 6px; font-size:0.74rem;" data-admin-div="all">全部</button>
+          <button class="chip-btn" style="flex:1; padding:4px 6px; font-size:0.74rem;" data-admin-div="senior">高中甲组</button>
+          <button class="chip-btn" style="flex:1; padding:4px 6px; font-size:0.74rem;" data-admin-div="junior">初中乙组</button>
         </div>
         <div class="admin-sidebar-events" id="admin-events-list"></div>
       </div>
@@ -137,10 +142,10 @@
         </label>
         <label style="font-size:0.82rem; color:var(--text-secondary);">组别
           <select id="new-ev-group" class="select-control" style="width:100%; margin-top:4px;">
-            <option value="男甲">男甲 (高中 · 白号码布)</option>
-            <option value="女甲">女甲 (高中 · 白号码布)</option>
-            <option value="男乙">男乙 (初中 · 黄号码布)</option>
-            <option value="女乙">女乙 (初中 · 黄号码布)</option>
+            <option value="男甲">男甲 (高中)</option>
+            <option value="女甲">女甲 (高中)</option>
+            <option value="男乙">男乙 (初中)</option>
+            <option value="女乙">女乙 (初中)</option>
           </select>
         </label>
         <label style="font-size:0.82rem; color:var(--text-secondary);">项目类型
@@ -239,6 +244,7 @@
       var tvCmd = S.loadTvCommand(state);
       var selectedEventId = (state.events[0] && state.events[0].id) || '';
       var activeStage = 'final'; // 'final' | 'prelim'
+      var sidebarDivFilter = 'all'; // 'all' | 'senior' | 'junior'
 
       // 加载本地学生名册自动联想（若存在于本机 student-directory）
       (function populateStudentDatalist() {
@@ -261,8 +267,15 @@
 
       function renderEventsSidebar() {
         var listEl = document.getElementById('admin-events-list');
-        listEl.innerHTML = (state.events || []).map(function (ev) {
+        var list = (state.events || []).filter(function (ev) {
+          if (sidebarDivFilter === 'senior') return ev.group === '男甲' || ev.group === '女甲';
+          if (sidebarDivFilter === 'junior') return ev.group === '男乙' || ev.group === '女乙';
+          return true;
+        });
+        listEl.innerHTML = list.map(function (ev) {
           var isSelected = ev.id === selectedEventId;
+          var divLabel = S.getDivisionLabel(ev.group);
+          var divStyle = divLabel === '高中' ? 'background:rgba(56,189,248,0.16); color:#7dd3fc;' : 'background:rgba(16,185,129,0.16); color:#34d399;';
           var badge = ev.status === 'finished'
             ? '<span style="color:#34d399; font-size:0.72rem;">✓ 已完赛</span>'
             : (ev.status === 'prelims_done'
@@ -271,7 +284,7 @@
           return (
             '<button class="event-selector-item ' + (isSelected ? 'active' : '') + '" data-ev-id="' + ev.id + '">' +
               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                '<span class="skew-tag" style="background:rgba(56,189,248,0.16); color:#7dd3fc; padding:2px 7px; font-size:0.72rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+                '<span class="skew-tag" style="' + divStyle + ' padding:2px 7px; font-size:0.72rem;"><span>' + divLabel + ' · ' + S.escapeHtml(ev.group) + '</span></span>' +
                 badge +
               '</div>' +
               '<div style="font-weight:700; font-size:0.92rem;">' + S.escapeHtml(ev.name) + '</div>' +
@@ -283,6 +296,15 @@
           );
         }).join('');
       }
+
+      document.getElementById('admin-div-tabs').addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-admin-div]');
+        if (!btn) return;
+        sidebarDivFilter = btn.getAttribute('data-admin-div');
+        document.querySelectorAll('#admin-div-tabs .chip-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderEventsSidebar();
+      });
 
       function renderDirectorPanel() {
         var resolvedMode = tvCmd.mode === 'mvp' ? 'trophies' : tvCmd.mode;

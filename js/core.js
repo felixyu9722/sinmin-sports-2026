@@ -20,13 +20,17 @@
 
   var TEAM_ORDER = ['red', 'yellow', 'blue', 'green'];
 
-  // 章程第 13 & 14 条：组别代码与号码布颜色
+  // 章程第 13 & 14 条：组别代码与统一白底号码布（内含队伍色点）
   var GROUPS = {
-    '男甲': { code: '1', label: '男甲', fullName: '男子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
-    '男乙': { code: '2', label: '男乙', fullName: '男子乙组 (初中)', bibColor: 'yellow', bibLabel: '黄布' },
-    '女甲': { code: '4', label: '女甲', fullName: '女子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
-    '女乙': { code: '5', label: '女乙', fullName: '女子乙组 (初中)', bibColor: 'yellow', bibLabel: '黄布' }
+    '男甲': { code: '1', label: '男甲', division: '高中', fullName: '男子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
+    '男乙': { code: '2', label: '男乙', division: '初中', fullName: '男子乙组 (初中)', bibColor: 'white', bibLabel: '白布' },
+    '女甲': { code: '4', label: '女甲', division: '高中', fullName: '女子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
+    '女乙': { code: '5', label: '女乙', division: '初中', fullName: '女子乙组 (初中)', bibColor: 'white', bibLabel: '白布' }
   };
+
+  function getDivisionLabel(group) {
+    return (GROUPS[group] && GROUPS[group].division) || ((group === '男甲' || group === '女甲') ? '高中' : '初中');
+  }
 
   var GROUP_ORDER = ['男甲', '女甲', '男乙', '女乙'];
 
@@ -77,8 +81,8 @@
     };
   }
 
-  function getGroupBibColor(group) {
-    return (GROUPS[group] && GROUPS[group].bibColor) || 'white';
+  function getGroupBibColor() {
+    return 'white';
   }
 
   function normalizeTeamId(val) {
@@ -1218,7 +1222,7 @@
       var computed = calculateEntries(ev.finalEntries || [], ev, true);
       computed.forEach(function (entry) {
         var tid = normalizeTeamId(entry.team);
-        var bibCol = getGroupBibColor(entry.group || ev.group) === 'yellow' ? '黄色(乙组)' : '白色(甲组)';
+        var bibCol = '白色(' + getDivisionLabel(entry.group || ev.group) + ')';
         s3.push([
           ev.name,
           ev.group,
@@ -1488,10 +1492,11 @@
   // 12. 通用渲染助手（号码布 HTML、Toast、Animate.css 工具）
   // =========================================================================
   function renderBibHtml(bib, group) {
-    var color = getGroupBibColor(group || parseBib(bib).group);
     var parsed = parseBib(bib);
+    var grp = group || parsed.group;
+    var divLabel = grp ? getDivisionLabel(grp) : '';
     var teamDotClass = parsed.team ? ('team-dot-' + parsed.team) : '';
-    return '<span class="bib-badge bib-' + color + '" title="' + (color === 'yellow' ? '乙组黄色号码布' : '甲组白色号码布') + '">' +
+    return '<span class="bib-badge bib-white" title="' + escapeHtml((divLabel ? divLabel + grp + ' · ' : '') + '白色号码布') + '">' +
       (teamDotClass ? '<span class="bib-dot ' + teamDotClass + '"></span>' : '') +
       escapeHtml(bib || '----') +
       '</span>';
@@ -1637,6 +1642,7 @@
     LANES_60M: LANES_60M,
     parseBib: parseBib,
     getGroupBibColor: getGroupBibColor,
+    getDivisionLabel: getDivisionLabel,
     normalizeTeamId: normalizeTeamId,
     parseTrackTimeToSeconds: parseTrackTimeToSeconds,
     parseFieldMark: parseFieldMark,

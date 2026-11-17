@@ -91,16 +91,17 @@
           <button class="btn btn-sm" id="btn-clear-search" style="display:none;">清除</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <span style="font-size:0.78rem; color:var(--text-secondary);">号码布图例：</span>
-          <span class="bib-badge bib-white">甲组(高中)白布</span>
-          <span class="bib-badge bib-yellow">乙组(初中)黄布</span>
+          <span style="font-size:0.78rem; color:var(--text-secondary);">号码布样式：</span>
+          <span class="bib-badge bib-white"><span class="bib-dot team-dot-red"></span>白色号码布 (色点=红/黄/蓝/青队)</span>
         </div>
       </div>
 
       <div class="filter-row">
-        <span style="font-size:0.78rem; color:var(--text-secondary); min-width:52px;">组别：</span>
+        <span style="font-size:0.78rem; color:var(--text-secondary); min-width:52px;">学部/组别：</span>
         <div class="filter-chips" id="filter-group">
           <button class="chip-btn active" data-val="all">全部组别</button>
+          <button class="chip-btn" data-val="senior">🎓 高中 (全部甲组)</button>
+          <button class="chip-btn" data-val="junior">📘 初中 (全部乙组)</button>
           <button class="chip-btn" data-val="男甲">男甲 (高中)</button>
           <button class="chip-btn" data-val="女甲">女甲 (高中)</button>
           <button class="chip-btn" data-val="男乙">男乙 (初中)</button>
@@ -389,7 +390,11 @@
         var q = filters.query.trim().toLowerCase();
 
         var filteredEvents = (state.events || []).filter(function (ev) {
-          if (filters.group !== 'all' && ev.group !== filters.group) return false;
+          if (filters.group !== 'all') {
+            if (filters.group === 'senior' && ev.group !== '男甲' && ev.group !== '女甲') return false;
+            else if (filters.group === 'junior' && ev.group !== '男乙' && ev.group !== '女乙') return false;
+            else if (filters.group !== 'senior' && filters.group !== 'junior' && ev.group !== filters.group) return false;
+          }
           if (filters.type !== 'all') {
             if (filters.type === 'team' && !ev.isTeam) return false;
             if (filters.type === 'track' && (ev.type !== 'track' || ev.isTeam)) return false;
@@ -528,7 +533,7 @@
             '<article class="event-card animate__animated animate__fadeIn">' +
               '<div class="event-card-head">' +
                 '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
-                  '<span class="skew-tag" style="background:rgba(56,189,248,0.18); color:#7dd3fc; padding:4px 10px; font-size:0.8rem;"><span>' + S.escapeHtml(ev.group) + '</span></span>' +
+                  '<span class="skew-tag" style="background:' + (S.getDivisionLabel(ev.group) === '高中' ? 'rgba(56,189,248,0.18); color:#7dd3fc;' : 'rgba(16,185,129,0.18); color:#34d399;') + ' padding:4px 10px; font-size:0.8rem;"><span>' + S.getDivisionLabel(ev.group) + ' · ' + S.escapeHtml(ev.group) + '</span></span>' +
                   '<h3 style="margin:0; font-size:1.15rem; font-weight:800;">' + S.escapeHtml(ev.name) + '</h3>' +
                   '<span style="font-size:0.76rem; color:var(--text-secondary);">' + (ev.isTeam ? '团体赛 (10-7-5-3-1)' : '个人赛 (7-5-3-2-1)') + '</span>' +
                   (ev.scheduleTime ? '<span style="font-size:0.76rem; color:var(--text-muted);">🕒 ' + S.escapeHtml(ev.scheduleTime) + '</span>' : '') +

@@ -115,6 +115,9 @@
   <script>
     (function () {
       var S = window.SinMinSports;
+      function fmtGrp(grp) {
+        return grp === '公开' ? '全校公开' : (S.getDivisionLabel(grp) + ' · ' + grp);
+      }
       var state = S.loadState();
       var tvCmd = S.loadTvCommand(state);
       if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
@@ -342,12 +345,14 @@
               var top3 = S.calculateEntries(ev.finalEntries, ev, true).filter(function (x) { return x.rank && x.rank <= 3; });
               var hasNR = top3.some(function (x) { return x.isRecord; });
               var divLabel = S.getDivisionLabel(ev.group);
-              var divStyle = divLabel === '高中' ? 'background:rgba(56,189,248,0.2); color:#7dd3fc;' : 'background:rgba(16,185,129,0.2); color:#34d399;';
+              var divStyle = divLabel === '高中'
+                ? 'background:rgba(56,189,248,0.2); color:#7dd3fc;'
+                : (divLabel === '全校公开' ? 'background:rgba(168,85,247,0.2); color:#d8b4fe;' : 'background:rgba(16,185,129,0.2); color:#34d399;');
               return (
                 '<div class="tv-final-summary-card animate__animated animate__fadeInUp" style="animation-delay:' + (idx * 0.07) + 's;">' +
                 '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(148,163,184,0.16); padding-bottom:8px;">' +
                 '<div style="display:flex; align-items:center; gap:8px;">' +
-                '<span class="skew-tag" style="' + divStyle + ' padding:3px 9px; font-size:0.8rem;"><span>' + divLabel + ' · ' + S.escapeHtml(ev.group) + '</span></span>' +
+                '<span class="skew-tag" style="' + divStyle + ' padding:3px 9px; font-size:0.8rem;"><span>' + S.escapeHtml(fmtGrp(ev.group)) + '</span></span>' +
                 '<strong style="font-size:1.25rem;">' + S.escapeHtml(ev.name) + '</strong>' +
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:6px;">' +
@@ -517,7 +522,7 @@
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
           '<div>' +
           '<div style="color:#00e676; font-weight:800; letter-spacing:0.15em; font-size:1rem;">OFFICIAL LIVE RESULTS · 决赛成绩正式揭晓</div>' +
-          '<h2 class="tv-event-title">' + S.escapeHtml(S.getDivisionLabel(ev.group) + ' · ' + ev.group + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:#34d399;">赛果</span></h2>' +
           '</div>' +
           '<div class="tv-record-pill">' +
           '<div style="font-size:0.85rem; color:#fcd34d;">原大会纪录</div>' +
@@ -575,7 +580,7 @@
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
           '<div>' +
           '<div style="color:#38bdf8; font-weight:800; letter-spacing:0.15em; font-size:1rem;">START LIST · 决赛检录道次名单</div>' +
-          '<h2 class="tv-event-title">' + S.escapeHtml(S.getDivisionLabel(ev.group) + ' · ' + ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">决赛</span></h2>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:#fbbf24;">决赛</span></h2>' +
           '</div>' +
           '<div class="tv-record-pill">' +
           '<div style="font-size:0.85rem; color:#fcd34d;">大会纪录 MEET RECORD</div>' +
@@ -616,7 +621,7 @@
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
           '<div>' +
           '<div style="color:#fbbf24; font-weight:800; letter-spacing:0.15em; font-size:1rem;">QUALIFIERS & FINAL LANE ASSIGNMENT · 依章程自动编排决赛道次</div>' +
-          '<h2 class="tv-event-title">' + S.escapeHtml(S.getDivisionLabel(ev.group) + ' · ' + ev.group + ' ' + ev.name) + ' <span style="color:#fbbf24;">晋级决赛名单</span></h2>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:#fbbf24;">晋级决赛名单</span></h2>' +
           '</div>' +
           '<div class="tv-record-pill">' +
           '<div style="font-size:0.85rem; color:#7dd3fc;">道次分配规则</div>' +
@@ -680,7 +685,7 @@
           '<div class="tv-stage-header animate__animated animate__fadeInDown">' +
           '<div>' +
           '<div style="color:var(--gold); font-weight:800; letter-spacing:0.15em; font-size:1rem;">VICTORY CEREMONY · 颁奖典礼荣誉时刻</div>' +
-          '<h2 class="tv-event-title">' + S.escapeHtml(S.getDivisionLabel(ev.group) + ' · ' + ev.group + ' ' + ev.name) + ' <span style="color:var(--gold);">前三名领奖台</span></h2>' +
+          '<h2 class="tv-event-title">' + S.escapeHtml(fmtGrp(ev.group) + ' ' + ev.name) + ' <span style="color:var(--gold);">前三名领奖台</span></h2>' +
           '</div>' +
           '</div>' +
           '<div class="tv-podium-stage">' +

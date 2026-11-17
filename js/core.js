@@ -5,8 +5,8 @@
 (function (global) {
   'use strict';
 
-  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v2';
-  var STORAGE_TV_KEY = 'sinmin_sports_2026_tv_v1';
+  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v3';
+  var STORAGE_TV_KEY = 'sinmin_sports_2026_tv_v2';
   var STORAGE_GH_TOKEN_KEY = 'sinmin_sports_2026_gh_token_local';
   var CHANNEL_NAME = 'sinmin_sports_2026';
   var DEFAULT_GITHUB_REPO = 'felixyu9722/sinmin-sports-2026';
@@ -25,10 +25,12 @@
     '男甲': { code: '1', label: '男甲', division: '高中', fullName: '男子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
     '男乙': { code: '2', label: '男乙', division: '初中', fullName: '男子乙组 (初中)', bibColor: 'white', bibLabel: '白布' },
     '女甲': { code: '4', label: '女甲', division: '高中', fullName: '女子甲组 (高中)', bibColor: 'white', bibLabel: '白布' },
-    '女乙': { code: '5', label: '女乙', division: '初中', fullName: '女子乙组 (初中)', bibColor: 'white', bibLabel: '白布' }
+    '女乙': { code: '5', label: '女乙', division: '初中', fullName: '女子乙组 (初中)', bibColor: 'white', bibLabel: '白布' },
+    '公开': { code: '0', label: '公开', division: '全校公开', fullName: '全校公开组 (4男4女)', bibColor: 'white', bibLabel: '白布' }
   };
 
   function getDivisionLabel(group) {
+    if (group === '公开') return '全校公开';
     return (GROUPS[group] && GROUPS[group].division) || ((group === '男甲' || group === '女甲') ? '高中' : '初中');
   }
 
@@ -65,7 +67,7 @@
     var seq = raw.slice(2);
 
     var teamMap = { '1': 'red', '2': 'yellow', '3': 'blue', '4': 'green' };
-    var groupMap = { '1': '男甲', '2': '男乙', '4': '女甲', '5': '女乙' };
+    var groupMap = { '0': '公开', '1': '男甲', '2': '男乙', '4': '女甲', '5': '女乙' };
 
     var team = teamMap[teamDigit] || null;
     var group = groupMap[groupDigit] || null;
@@ -100,9 +102,10 @@
   function parseTrackTimeToSeconds(val) {
     if (val === null || val === undefined) return null;
     var s = String(val).trim();
-    if (!s || /^(DNS|DNF|DQ|NM|X|-)$/i.test(s)) return null;
-    // 支持 2:14.50 或 2'14"50
-    var cleaned = s.replace(/[′']/g, ':').replace(/[″"]/g, '.').replace(/s$/i, '').trim();
+    if (!s || /^(DNS|DNF|DQ|NM|WD|X|-|—)$/i.test(s)) return null;
+    // 兼容 Excel 全角引号写法（如 9‘03.39“、10’42.97"、12.86"、50.29'）
+    s = s.replace(/[“”"″′'’\s]+$/g, '').replace(/s$/i, '').trim();
+    var cleaned = s.replace(/[′'‘’]/g, ':').replace(/[″“”"]/g, '.').trim();
     if (cleaned.indexOf(':') !== -1) {
       var parts = cleaned.split(':');
       if (parts.length === 2) {
@@ -124,7 +127,11 @@
   function parseFieldMark(val) {
     if (val === null || val === undefined) return null;
     var s = String(val).trim();
-    if (!s || /^(DNS|DNF|DQ|NM|X|-|FOUL)$/i.test(s)) return null;
+    if (!s || /^(DNS|DNF|DQ|NM|WD|X|-|—|FOUL)$/i.test(s)) return null;
+    if (/cm$/i.test(s)) {
+      var cm = parseFloat(s.replace(/cm$/i, '').trim());
+      return isNaN(cm) ? null : (cm / 100);
+    }
     var num = parseFloat(s.replace(/m$/i, '').trim());
     return isNaN(num) ? null : num;
   }
@@ -164,7 +171,7 @@
   }
 
   function getFieldSortedMarks(entry) {
-    var raw = [entry.attempt1, entry.attempt2, entry.attempt3];
+    var raw = [entry.attempt1, entry.attempt2, entry.attempt3, entry.attempt4, entry.attempt5, entry.attempt6];
     var nums = [];
     for (var i = 0; i < raw.length; i++) {
       var n = parseFieldMark(raw[i]);
@@ -251,6 +258,9 @@
           var vb = b._sortMarks[i] !== undefined ? b._sortMarks[i] : -1;
           if (Math.abs(vb - va) > 1e-6) return vb - va;
         }
+        if (typeof a.tieBreakVal === 'number' && typeof b.tieBreakVal === 'number' && a.tieBreakVal !== b.tieBreakVal) {
+          return a.tieBreakVal - b.tieBreakVal;
+        }
         return (a.lane || 0) - (b.lane || 0);
       }
       // 径赛 & 拔河默认小值优（拔河若直接填名次 1,2,3,4 则第1名最小）
@@ -265,6 +275,9 @@
         if (a._sortMarks.length !== b._sortMarks.length) return false;
         for (var i = 0; i < a._sortMarks.length; i++) {
           if (Math.abs(a._sortMarks[i] - b._sortMarks[i]) > 1e-6) return false;
+        }
+        if (typeof a.tieBreakVal === 'number' && typeof b.tieBreakVal === 'number' && a.tieBreakVal !== b.tieBreakVal) {
+          return false;
         }
         return true;
       }
@@ -592,304 +605,3648 @@
   // =========================================================================
   function createDefaultState() {
     return {
-      meta: {
-        title: '新民独立中学 2026 年度运动会',
-        subtitle: 'SIN MIN MIDDLE SCHOOL ANNUAL SPORTS MEET 2026',
-        updatedAt: '2026-11-17T05:00:00.000Z',
-        githubRepo: DEFAULT_GITHUB_REPO,
-        googleSheetCsvUrl: '',
-        googleAppsScriptUrl: '',
-        tickerOverride: ''
+      "meta": {
+        "title": "亚罗士打新民独立中学 2026 年度运动会",
+        "subtitle": "SIN MIN MIDDLE SCHOOL ANNUAL SPORTS MEET 2026",
+        "schoolName": "亚罗士打新民独立中学",
+        "meetTitle": "2026年校内运动会",
+        "meetDate": "2026-12-02",
+        "updatedAt": "2026-11-17T14:30:00.000Z",
+        "githubRepo": "felixyu9722/sinmin-sports-2026",
+        "googleSheetCsvUrl": "",
+        "googleAppsScriptUrl": "",
+        "tickerOverride": ""
       },
-      spiritScores: { red: 88, yellow: 92, blue: 90, green: 89 },
-      events: [
+      "spiritScores": {
+        "red": 0,
+        "yellow": 0,
+        "blue": 0,
+        "green": 0
+      },
+      "events": [
         {
-          id: 'ev_100m_sb',
-          order: 1,
-          name: '100米',
-          group: '男甲',
-          type: 'track',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '11.35',
-          recordHolder: '陈伟杰 (2023)',
-          scheduleTime: '09:00',
-          status: 'finished',
-          prelimEntries: [
-            { heat: 1, lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', result: '11.42', status: 'OK' },
-            { heat: 1, lane: 3, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', result: '11.68', status: 'OK' },
-            { heat: 1, lane: 4, bib: '2107', name: '邹捷贺', className: '高三烘培', team: 'yellow', result: '11.95', status: 'OK' },
-            { heat: 1, lane: 1, bib: '4105', name: '蔡靖栐', className: '高一文商', team: 'green', result: '12.20', status: 'OK' },
-            { heat: 2, lane: 2, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', result: '11.38', status: 'OK' },
-            { heat: 2, lane: 3, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', result: '11.60', status: 'OK' },
-            { heat: 2, lane: 4, bib: '1109', name: '王奕诚', className: '高二文商', team: 'red', result: '12.05', status: 'OK' },
-            { heat: 2, lane: 1, bib: '3112', name: '刘俊宏', className: '高二餐饮', team: 'blue', result: '12.14', status: 'OK' }
+          "id": "ev_sp_jb",
+          "order": 1,
+          "name": "铅球 (4kg)",
+          "group": "男乙",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "15/11 · 场次1",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "3203",
+              "name": "林楷志",
+              "className": "初三忠",
+              "team": "blue",
+              "attempt1": "5.37",
+              "attempt2": "5.69",
+              "attempt3": "5.83",
+              "attempt4": "5.82",
+              "attempt5": "5.61",
+              "attempt6": "5.73",
+              "result": "5.83",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2208",
+              "name": "冯佳伟",
+              "className": "初二忠",
+              "team": "yellow",
+              "attempt1": "2.67",
+              "attempt2": "2.70",
+              "attempt3": "2.63",
+              "attempt4": "3.67",
+              "attempt5": "4.48",
+              "attempt6": "3.95",
+              "result": "4.48",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1203",
+              "name": "黄宣晸",
+              "className": "初二孝",
+              "team": "red",
+              "attempt1": "4.53",
+              "attempt2": "4.75",
+              "attempt3": "4.47",
+              "attempt4": "4.97",
+              "attempt5": "4.65",
+              "attempt6": "5.07",
+              "result": "5.07",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4208",
+              "name": "黄浩宇",
+              "className": "初三忠",
+              "team": "green",
+              "attempt1": "X",
+              "attempt2": "X",
+              "attempt3": "X",
+              "attempt4": "3.22",
+              "attempt5": "X",
+              "attempt6": "3.10",
+              "result": "3.22",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4207",
+              "name": "黄语森",
+              "className": "初一孝",
+              "team": "green",
+              "attempt1": "X",
+              "attempt2": "3.34",
+              "attempt3": "X",
+              "attempt4": "3.34",
+              "attempt5": "3.20",
+              "attempt6": "3.20",
+              "result": "3.34",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "2201",
+              "name": "林凯泽",
+              "className": "初三忠",
+              "team": "yellow",
+              "attempt1": "5.83",
+              "attempt2": "6.95",
+              "attempt3": "7.73",
+              "attempt4": "X",
+              "attempt5": "7.25",
+              "attempt6": "7.73",
+              "result": "",
+              "status": "DQ",
+              "note": "犯规"
+            },
+            {
+              "lane": 7,
+              "bib": "3201",
+              "name": "林子恒",
+              "className": "初二孝",
+              "team": "blue",
+              "attempt1": "6.10",
+              "attempt2": "6.70",
+              "attempt3": "6.18",
+              "attempt4": "6.42",
+              "attempt5": "5.96",
+              "attempt6": "6.08",
+              "result": "6.70",
+              "status": "OK"
+            },
+            {
+              "lane": 8,
+              "bib": "1202",
+              "name": "林颜竜",
+              "className": "初一忠",
+              "team": "red",
+              "attempt1": "X",
+              "attempt2": "5.25",
+              "attempt3": "5.60",
+              "attempt4": "5.67",
+              "attempt5": "5.74",
+              "attempt6": "5.96",
+              "result": "5.96",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_sp_sb",
+          "order": 2,
+          "name": "铅球 (5kg)",
+          "group": "男甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "15/11 · 场次11",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4108",
+              "name": "王奕诚",
+              "className": "高二文商",
+              "team": "green",
+              "attempt1": "X",
+              "attempt2": "5.10",
+              "attempt3": "X",
+              "attempt4": "X",
+              "attempt5": "X",
+              "attempt6": "4.62",
+              "result": "5.10",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "1104",
+              "name": "杨絖喆",
+              "className": "高三文商",
+              "team": "red",
+              "attempt1": "7.92",
+              "attempt2": "8.60",
+              "attempt3": "7.95",
+              "attempt4": "7.85",
+              "attempt5": "X",
+              "attempt6": "8.04",
+              "result": "8.60",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3104",
+              "name": "马有友",
+              "className": "高三文商",
+              "team": "blue",
+              "attempt1": "6.42",
+              "attempt2": "6.60",
+              "attempt3": "",
+              "attempt4": "X",
+              "attempt5": "5.72",
+              "attempt6": "5.83",
+              "result": "6.60",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1109",
+              "name": "杜泳利",
+              "className": "高一文商",
+              "team": "red",
+              "attempt1": "5.70",
+              "attempt2": "6.40",
+              "attempt3": "5.43",
+              "attempt4": "5.29",
+              "attempt5": "6.66",
+              "attempt6": "6.05",
+              "result": "6.66",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4106",
+              "name": "邱天立",
+              "className": "高二餐饮",
+              "team": "green",
+              "attempt1": "6.27",
+              "attempt2": "6.70",
+              "attempt3": "6.86",
+              "attempt4": "X",
+              "attempt5": "6.15",
+              "attempt6": "7.00",
+              "result": "7.00",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "2108",
+              "name": "卢锦原",
+              "className": "高三文商",
+              "team": "yellow",
+              "attempt1": "9.05",
+              "attempt2": "8.40",
+              "attempt3": "9.25",
+              "attempt4": "9.25",
+              "attempt5": "X",
+              "attempt6": "9.35",
+              "result": "9.35",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "3101",
+              "name": "邹捷贺",
+              "className": "高三烘培",
+              "team": "blue",
+              "attempt1": "7.96",
+              "attempt2": "7.30",
+              "attempt3": "X",
+              "attempt4": "7.80",
+              "attempt5": "X",
+              "attempt6": "X",
+              "result": "7.96",
+              "status": "OK"
+            },
+            {
+              "lane": 8,
+              "bib": "2107",
+              "name": "邱嘉旭",
+              "className": "高三烘培",
+              "team": "yellow",
+              "attempt1": "9.62",
+              "attempt2": "9.37",
+              "attempt3": "10.05",
+              "attempt4": "10.02",
+              "attempt5": "9.53",
+              "attempt6": "9.32",
+              "result": "10.05",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_sp_jg",
+          "order": 3,
+          "name": "铅球 (3kg)",
+          "group": "女乙",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次1",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1504",
+              "name": "邓卉恩",
+              "className": "初三忠",
+              "team": "red",
+              "attempt1": "3.75",
+              "attempt2": "0.94",
+              "attempt3": "4.22",
+              "attempt4": "3.85",
+              "attempt5": "4.34",
+              "attempt6": "3.85",
+              "result": "4.34",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "4508",
+              "name": "林巧萱",
+              "className": "初三忠",
+              "team": "green",
+              "attempt1": "3.99",
+              "attempt2": "4.40",
+              "attempt3": "4.54",
+              "attempt4": "4.43",
+              "attempt5": "4.85",
+              "attempt6": "5.03",
+              "result": "5.03",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1507",
+              "name": "林杏恩",
+              "className": "初二忠",
+              "team": "red",
+              "attempt1": "3.50",
+              "attempt2": "4.76",
+              "attempt3": "5.10",
+              "attempt4": "5.30",
+              "attempt5": "5.23",
+              "attempt6": "X",
+              "result": "5.30",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4501",
+              "name": "曾钰昕",
+              "className": "初一忠",
+              "team": "green",
+              "attempt1": "2.40",
+              "attempt2": "3.90",
+              "attempt3": "3.71",
+              "attempt4": "3.68",
+              "attempt5": "3.66",
+              "attempt6": "3.45",
+              "result": "3.90",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "3504",
+              "name": "陈宣彤",
+              "className": "初三孝",
+              "team": "blue",
+              "attempt1": "3.07",
+              "attempt2": "4.33",
+              "attempt3": "4.14",
+              "attempt4": "4.30",
+              "attempt5": "4.65",
+              "attempt6": "4.54",
+              "result": "4.65",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3510",
+              "name": "曾紫琳",
+              "className": "初一忠",
+              "team": "blue",
+              "attempt1": "X",
+              "attempt2": "2.95",
+              "attempt3": "2.74",
+              "attempt4": "X",
+              "attempt5": "X",
+              "attempt6": "3.30",
+              "result": "3.30",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "2502",
+              "name": "方翎恩",
+              "className": "初二孝",
+              "team": "yellow",
+              "attempt1": "X",
+              "attempt2": "X",
+              "attempt3": "3.37",
+              "attempt4": "3.15",
+              "attempt5": "3.78",
+              "attempt6": "X",
+              "result": "3.78",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_sp_sg",
+          "order": 4,
+          "name": "铅球 (3kg)",
+          "group": "女甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次10",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1402",
+              "name": "黄嘉欣",
+              "className": "高二文商",
+              "team": "red",
+              "attempt1": "5.38",
+              "attempt2": "5.45",
+              "attempt3": "5.66",
+              "attempt4": "5.45",
+              "attempt5": "5.40",
+              "attempt6": "5.95",
+              "result": "5.95",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "1404",
+              "name": "马峄琪",
+              "className": "高一文商",
+              "team": "red",
+              "attempt1": "4.00",
+              "attempt2": "4.38",
+              "attempt3": "4.72",
+              "attempt4": "5.47",
+              "attempt5": "5.18",
+              "attempt6": "5.32",
+              "result": "5.47",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3405",
+              "name": "张瑜轩",
+              "className": "高一文商",
+              "team": "blue",
+              "attempt1": "2.22",
+              "attempt2": "3.17",
+              "attempt3": "4.08",
+              "attempt4": "4.50",
+              "attempt5": "X",
+              "attempt6": "4.67",
+              "result": "4.67",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4407",
+              "name": "李爱琪",
+              "className": "高一餐饮",
+              "team": "green",
+              "attempt1": "1.99",
+              "attempt2": "2.69",
+              "attempt3": "2.85",
+              "attempt4": "3.30",
+              "attempt5": "3.21",
+              "attempt6": "3.39",
+              "result": "3.39",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "2404",
+              "name": "黄静诗",
+              "className": "高三文商",
+              "team": "yellow",
+              "attempt1": "4.25",
+              "attempt2": "X",
+              "attempt3": "4.47",
+              "attempt4": "4.83",
+              "attempt5": "4.67",
+              "attempt6": "4.83",
+              "result": "4.83",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3403",
+              "name": "杜紫微",
+              "className": "高一文商",
+              "team": "blue",
+              "attempt1": "2.97",
+              "attempt2": "3.35",
+              "attempt3": "3.12",
+              "attempt4": "2.72",
+              "attempt5": "3.57",
+              "attempt6": "3.28",
+              "result": "3.57",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "2402",
+              "name": "张紫微",
+              "className": "高二文商",
+              "team": "yellow",
+              "attempt1": "X",
+              "attempt2": "5.16",
+              "attempt3": "5.05",
+              "attempt4": "4.58",
+              "attempt5": "5.03",
+              "attempt6": "5.48",
+              "result": "5.48",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_hj_jg",
+          "order": 5,
+          "name": "跳高",
+          "group": "女乙",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "15/11 · 场次2",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "3505",
+              "name": "蔡碧恬",
+              "className": "初二忠",
+              "team": "blue",
+              "result": "1.18",
+              "attempt1": "1.18",
+              "tieBreakVal": 3,
+              "note": "118(O) 120(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2505",
+              "name": "黄裔童",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "1.00",
+              "attempt1": "1.00",
+              "tieBreakVal": 101,
+              "note": "100(XO) 105(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3507",
+              "name": "林心茹",
+              "className": "初一忠",
+              "team": "blue",
+              "result": "1.00",
+              "attempt1": "1.00",
+              "tieBreakVal": 101,
+              "note": "100(XO) 105(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1502",
+              "name": "马萱",
+              "className": "初一孝",
+              "team": "red",
+              "result": "1.08",
+              "attempt1": "1.08",
+              "tieBreakVal": 0,
+              "note": "108(O) 110(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "2506",
+              "name": "胡巧萱",
+              "className": "初二忠",
+              "team": "yellow",
+              "result": "1.00",
+              "attempt1": "1.00",
+              "tieBreakVal": 0,
+              "note": "100(O) 105(X--)",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "4506",
+              "name": "林芷宇",
+              "className": "初三孝",
+              "team": "green",
+              "result": "",
+              "note": "100(XXX)",
+              "status": "NM"
+            },
+            {
+              "lane": 7,
+              "bib": "4505",
+              "name": "林恩佩",
+              "className": "初二忠",
+              "team": "green",
+              "result": "1.00",
+              "attempt1": "1.00",
+              "tieBreakVal": 202,
+              "note": "100(XXO) 105(XXX)",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_hj_sg",
+          "order": 6,
+          "name": "跳高",
+          "group": "女甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "15/11 · 场次12",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "3407",
+              "name": "李嘉萱",
+              "className": "高一文商",
+              "team": "blue",
+              "result": "",
+              "note": "105(XXX)",
+              "status": "NM"
+            },
+            {
+              "lane": 2,
+              "bib": "3404",
+              "name": "蔡碧萱",
+              "className": "高一文商",
+              "team": "blue",
+              "result": "",
+              "note": "105(XXX)",
+              "status": "NM"
+            },
+            {
+              "lane": 3,
+              "bib": "1401",
+              "name": "陈慧文",
+              "className": "高一文商",
+              "team": "red",
+              "result": "1.11",
+              "attempt1": "1.11",
+              "tieBreakVal": 203,
+              "note": "111(XXO) 113(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2401",
+              "name": "邱天心",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "1.05",
+              "attempt1": "1.05",
+              "tieBreakVal": 0,
+              "note": "105(O) 108(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4401",
+              "name": "胡巧微",
+              "className": "高三烘培",
+              "team": "green",
+              "result": "",
+              "note": "105(-)",
+              "status": "NM"
+            },
+            {
+              "lane": 6,
+              "bib": "4404",
+              "name": "曾薇颖",
+              "className": "高二餐饮",
+              "team": "green",
+              "result": "",
+              "note": "未出赛",
+              "status": "NM"
+            }
+          ]
+        },
+        {
+          "id": "ev_1500m_jg",
+          "order": 7,
+          "name": "1500米",
+          "group": "女乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次11",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2504",
+              "name": "林思涵",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "10:42.97",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2503",
+              "name": "曾炜焮",
+              "className": "初二孝",
+              "team": "yellow",
+              "result": "10:10.96",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "4505",
+              "name": "林恩佩",
+              "className": "初二忠",
+              "team": "green",
+              "result": "11:12.45",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1506",
+              "name": "李欣芮",
+              "className": "初一忠",
+              "team": "red",
+              "result": "9:03.39",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_1500m_sg",
+          "order": 8,
+          "name": "1500米",
+          "group": "女甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次12",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1404",
+              "name": "马峄琪",
+              "className": "高一文商",
+              "team": "red",
+              "result": "8:55.86",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "1401",
+              "name": "陈慧文",
+              "className": "高一文商",
+              "team": "red",
+              "result": "9:32.96",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "4406",
+              "name": "吴家润",
+              "className": "高一文商",
+              "team": "green",
+              "result": "8:47.77",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2403",
+              "name": "傅卉杉",
+              "className": "高三文商",
+              "team": "yellow",
+              "result": "12:16.49",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4405",
+              "name": "蔡子仪",
+              "className": "高一文商",
+              "team": "green",
+              "result": "9:34.04",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "2402",
+              "name": "张紫微",
+              "className": "高二文商",
+              "team": "yellow",
+              "result": "11:52.61",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_1500m_jb",
+          "order": 9,
+          "name": "1500米",
+          "group": "男乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次13",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2202",
+              "name": "王凯翔",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "7:12.11",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "4205",
+              "name": "达南吉",
+              "className": "初三孝",
+              "team": "green",
+              "result": "6:06.65",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1207",
+              "name": "方梓恒",
+              "className": "初一忠",
+              "team": "red",
+              "result": "8:23.13",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2203",
+              "name": "杨忠万",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "7:22.01",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4206",
+              "name": "全德泉",
+              "className": "初二忠",
+              "team": "green",
+              "result": "7:57.42",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3201",
+              "name": "林子恒",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "6:35.33",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_1500m_sb",
+          "order": 10,
+          "name": "1500米",
+          "group": "男甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "16/11 · 场次14",
+          "status": "finished",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2105",
+              "name": "林港卫",
+              "className": "高一文商",
+              "team": "yellow",
+              "result": "6:38.70",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "3109",
+              "name": "林师宏",
+              "className": "高一文商",
+              "team": "blue",
+              "result": "6:18.59",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1108",
+              "name": "郭佳义",
+              "className": "高二餐饮",
+              "team": "red",
+              "result": "7:51.58",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4105",
+              "name": "朱俊亿",
+              "className": "高三文商",
+              "team": "green",
+              "result": "5:20.63",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "1110",
+              "name": "李文保",
+              "className": "高一餐饮",
+              "team": "red",
+              "result": "6:41.54",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_400m_jg",
+          "order": 11,
+          "name": "400米",
+          "group": "女乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次2",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "4505",
+              "name": "林恩佩",
+              "className": "初二忠",
+              "team": "green",
+              "result": "1:58.89",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "3508",
+              "name": "李芮禛",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "1:56.49",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "1502",
+              "name": "马萱",
+              "className": "初一孝",
+              "team": "red",
+              "result": "1:43.20",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "2503",
+              "name": "曾炜焮",
+              "className": "初二孝",
+              "team": "yellow",
+              "result": "1:47.24",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "1503",
+              "name": "陈媃茵",
+              "className": "初三忠",
+              "team": "red",
+              "result": "1:57.81",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "2502",
+              "name": "方翎恩",
+              "className": "初二孝",
+              "team": "yellow",
+              "result": "2:31.25",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3501",
+              "name": "王愉珺",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "1:45.00",
+              "status": "OK"
+            }
           ],
-          finalEntries: [
-            { lane: 3, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', prelimMark: '11.38s', qualBadge: 'Q', result: '11.18', status: 'OK' },
-            { lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', prelimMark: '11.42s', qualBadge: 'Q', result: '11.39', status: 'OK' },
-            { lane: 1, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', prelimMark: '11.60s', qualBadge: 'q', result: '11.58', status: 'OK' },
-            { lane: 4, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', prelimMark: '11.68s', qualBadge: 'q', result: '11.74', status: 'OK' }
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2503",
+              "name": "曾炜焮",
+              "className": "初二孝",
+              "team": "yellow",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:47.24s"
+            },
+            {
+              "lane": 2,
+              "bib": "3501",
+              "name": "王愉珺",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:45.00s"
+            },
+            {
+              "lane": 3,
+              "bib": "1502",
+              "name": "马萱",
+              "className": "初一孝",
+              "team": "red",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:43.20s"
+            },
+            {
+              "lane": 4,
+              "bib": "3508",
+              "name": "李芮禛",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:56.49s"
+            }
           ]
         },
         {
-          id: 'ev_lj_sg',
-          order: 2,
-          name: '跳远',
-          group: '女甲',
-          type: 'field',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '5.12',
-          recordHolder: '许静宜 (2022)',
-          scheduleTime: '09:30',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '1402', name: '洪宜君', className: '高三文商', team: 'red', attempt1: '5.04', attempt2: '5.21', attempt3: '5.15', result: '5.21', status: 'OK' },
-            { lane: 2, bib: '3406', name: '李舒庈', className: '高二文商', team: 'blue', attempt1: '4.88', attempt2: '4.92', attempt3: '4.75', result: '4.92', status: 'OK' },
-            { lane: 3, bib: '2403', name: '胡巧微', className: '高三烘培', team: 'yellow', attempt1: '4.92', attempt2: 'X', attempt3: '4.81', result: '4.92', status: 'OK' },
-            { lane: 4, bib: '4401', name: '杨迦淇', className: '高二餐饮', team: 'green', attempt1: '4.60', attempt2: '4.70', attempt3: '4.66', result: '4.70', status: 'OK' },
-            { lane: 5, bib: '1410', name: '吴家润', className: '高一文商', team: 'red', attempt1: '4.45', attempt2: '4.52', attempt3: '4.49', result: '4.52', status: 'OK' }
-          ]
-        },
-        {
-          id: 'ev_200m_sb',
-          order: 3,
-          name: '200米',
-          group: '男甲',
-          type: 'track',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '22.90',
-          recordHolder: '陈伟杰 (2023)',
-          scheduleTime: '10:00',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 3, bib: '2102', name: '马有友', className: '高三文商', team: 'yellow', prelimMark: '23.15s', qualBadge: 'Q', result: '22.98', status: 'OK' },
-            { lane: 2, bib: '1101', name: '林师宏', className: '高一文商', team: 'red', prelimMark: '23.28s', qualBadge: 'Q', result: '23.20', status: 'OK' },
-            { lane: 1, bib: '4108', name: '朱俊亿', className: '高三文商', team: 'green', prelimMark: '23.54s', qualBadge: 'q', result: '23.55', status: 'OK' },
-            { lane: 4, bib: '3104', name: '李宗泽', className: '高二文商', team: 'blue', prelimMark: '23.70s', qualBadge: 'q', result: '23.82', status: 'OK' }
-          ]
-        },
-        {
-          id: 'ev_60m_jb',
-          order: 4,
-          name: '60米',
-          group: '男乙',
-          type: 'track',
-          isTeam: false,
-          is60m: true,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '7.45',
-          recordHolder: '罗家俊 (2024)',
-          scheduleTime: '10:25',
-          status: 'finished',
-          prelimEntries: [
-            { heat: 1, lane: 2, bib: '3201', name: '张嘉杰', className: '初三忠', team: 'blue', result: '7.55', status: 'OK' },
-            { heat: 1, lane: 3, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', result: '7.62', status: 'OK' },
-            { heat: 1, lane: 4, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', result: '7.79', status: 'OK' },
-            { heat: 1, lane: 5, bib: '4204', name: '许俊超', className: '初一孝', team: 'green', result: '7.98', status: 'OK' },
-            { heat: 2, lane: 2, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', result: '7.50', status: 'OK' },
-            { heat: 2, lane: 3, bib: '1207', name: '廖文杰', className: '初三忠', team: 'red', result: '7.70', status: 'OK' },
-            { heat: 2, lane: 4, bib: '2209', name: '黄宣晸', className: '初二孝', team: 'yellow', result: '7.85', status: 'OK' },
-            { heat: 2, lane: 5, bib: '3211', name: '封胜阳', className: '初一孝', team: 'blue', result: '8.04', status: 'OK' }
+          "id": "ev_400m_sg",
+          "order": 12,
+          "name": "400米",
+          "group": "女甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次3",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "4404",
+              "name": "曾薇颖",
+              "className": "高二餐饮",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "1406",
+              "name": "雪晶",
+              "className": "高三烘培",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "4403",
+              "name": "洪丽凤",
+              "className": "高一文商",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "2405",
+              "name": "陈靖涵",
+              "className": "高一文商",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            }
           ],
-          finalEntries: [
-            { lane: 4, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', prelimMark: '7.50s', qualBadge: 'Q', result: '7.41', status: 'OK' },
-            { lane: 3, bib: '3201', name: '张嘉杰', className: '初三忠', team: 'blue', prelimMark: '7.55s', qualBadge: 'Q', result: '7.53', status: 'OK' },
-            { lane: 2, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', prelimMark: '7.62s', qualBadge: 'q', result: '7.60', status: 'OK' },
-            { lane: 5, bib: '1207', name: '廖文杰', className: '初三忠', team: 'red', prelimMark: '7.70s', qualBadge: 'q', result: '7.60', status: 'OK' },
-            { lane: 1, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', prelimMark: '7.79s', qualBadge: 'q', result: '7.75', status: 'OK' },
-            { lane: 6, bib: '2209', name: '黄宣晸', className: '初二孝', team: 'yellow', prelimMark: '7.85s', qualBadge: 'q', result: '7.89', status: 'OK' }
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1406",
+              "name": "雪晶",
+              "className": "高三烘培",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "4404",
+              "name": "曾薇颖",
+              "className": "高二餐饮",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2405",
+              "name": "陈靖涵",
+              "className": "高一文商",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4403",
+              "name": "洪丽凤",
+              "className": "高一文商",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
           ]
         },
         {
-          id: 'ev_100m_jg',
-          order: 5,
-          name: '100米',
-          group: '女乙',
-          type: 'track',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '13.20',
-          recordHolder: '梁可欣 (2021)',
-          scheduleTime: '10:45',
-          status: 'prelims_done',
-          prelimEntries: [
-            { heat: 1, lane: 1, bib: '1501', name: '陈宣彤', className: '初三孝', team: 'red', result: '13.45', status: 'OK' },
-            { heat: 1, lane: 2, bib: '2504', name: '苏倩瑶', className: '初二孝', team: 'yellow', result: '13.62', status: 'OK' },
-            { heat: 1, lane: 3, bib: '3503', name: '张妤轩', className: '初三忠', team: 'blue', result: '13.90', status: 'OK' },
-            { heat: 1, lane: 4, bib: '4506', name: '冯佳喜', className: '初二孝', team: 'green', result: '14.18', status: 'OK' },
-            { heat: 2, lane: 1, bib: '3502', name: '林珂伊', className: '初三忠', team: 'blue', result: '13.38', status: 'OK' },
-            { heat: 2, lane: 2, bib: '4501', name: '林芷宇', className: '初三孝', team: 'green', result: '13.55', status: 'OK' },
-            { heat: 2, lane: 3, bib: '1508', name: '蔡碧恬', className: '初二忠', team: 'red', result: '13.85', status: 'OK' },
-            { heat: 2, lane: 4, bib: '2509', name: '娜丽莎', className: '初一孝', team: 'yellow', result: 'DNS', status: 'DNS' }
+          "id": "ev_400m_jb",
+          "order": 13,
+          "name": "400米",
+          "group": "男乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次4",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "3205",
+              "name": "许俊超",
+              "className": "初一孝",
+              "team": "blue",
+              "result": "1:28.89",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "4204",
+              "name": "陈俊",
+              "className": "初一忠",
+              "team": "green",
+              "result": "1:36.03",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "1205",
+              "name": "黄柏杰",
+              "className": "初二孝",
+              "team": "red",
+              "result": "1:23.30",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "4203",
+              "name": "陈国俊",
+              "className": "初一忠",
+              "team": "green",
+              "result": "1:16.01",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "2202",
+              "name": "王凯翔",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "1:13.41",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3201",
+              "name": "林子恒",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "1:11.52",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "1206",
+              "name": "李陈莱",
+              "className": "初三孝",
+              "team": "red",
+              "result": "1:43.51",
+              "status": "OK"
+            }
           ],
-          finalEntries: []
-        },
-        {
-          id: 'ev_hj_jb',
-          order: 6,
-          name: '跳高',
-          group: '男乙',
-          type: 'field',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '1.72',
-          recordHolder: '洪子阳 (2024)',
-          scheduleTime: '11:05',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '4202', name: '刘家泓', className: '初三孝', team: 'green', attempt1: '1.60', attempt2: '1.65', attempt3: '1.68', result: '1.68', status: 'OK' },
-            { lane: 2, bib: '1203', name: '林子恒', className: '初二孝', team: 'red', attempt1: '1.58', attempt2: '1.62', attempt3: 'X', result: '1.62', status: 'OK' },
-            { lane: 3, bib: '3206', name: '周鼎森', className: '初二忠', team: 'blue', attempt1: '1.55', attempt2: '1.60', attempt3: 'X', result: '1.60', status: 'OK' },
-            { lane: 4, bib: '2205', name: '葛子乐', className: '初三孝', team: 'yellow', attempt1: '1.50', attempt2: '1.55', attempt3: 'X', result: '1.55', status: 'OK' }
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2202",
+              "name": "王凯翔",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:13.41s"
+            },
+            {
+              "lane": 2,
+              "bib": "1205",
+              "name": "黄柏杰",
+              "className": "初二孝",
+              "team": "red",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:23.30s"
+            },
+            {
+              "lane": 3,
+              "bib": "3201",
+              "name": "林子恒",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:11.52s"
+            },
+            {
+              "lane": 4,
+              "bib": "4203",
+              "name": "陈国俊",
+              "className": "初一忠",
+              "team": "green",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:16.01s"
+            }
           ]
         },
         {
-          id: 'ev_sp_sg',
-          order: 7,
-          name: '铅球',
-          group: '女甲',
-          type: 'field',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '9.85',
-          recordHolder: '沈慧婷 (2023)',
-          scheduleTime: '11:25',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '1402', name: '洪宜君', className: '高三文商', team: 'red', attempt1: '9.35', attempt2: '9.68', attempt3: '9.50', result: '9.68', status: 'OK' },
-            { lane: 2, bib: '4405', name: '许柔恩', className: '高三文商', team: 'green', attempt1: '8.90', attempt2: '9.12', attempt3: '9.05', result: '9.12', status: 'OK' },
-            { lane: 3, bib: '2408', name: '邱天心', className: '高二餐饮', team: 'yellow', attempt1: '8.75', attempt2: '8.80', attempt3: '8.60', result: '8.80', status: 'OK' },
-            { lane: 4, bib: '3409', name: '陈慧文', className: '高一文商', team: 'blue', attempt1: '8.20', attempt2: '8.44', attempt3: '8.31', result: '8.44', status: 'OK' }
+          "id": "ev_400m_sb",
+          "order": 14,
+          "name": "400米",
+          "group": "男甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次5",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "2103",
+              "name": "伍祥豪",
+              "className": "高三文商",
+              "team": "yellow",
+              "result": "1:14.86",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "1101",
+              "name": "张玮轩",
+              "className": "高三烘培",
+              "team": "red",
+              "result": "1:16.75",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "3110",
+              "name": "沈文轩",
+              "className": "高二文商",
+              "team": "blue",
+              "result": "2:41.08",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "4104",
+              "name": "张嘉杰",
+              "className": "初三忠",
+              "team": "green",
+              "result": "1:08.39",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "3105",
+              "name": "林韦仁",
+              "className": "高二餐饮",
+              "team": "blue",
+              "result": "1:33.06",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "4101",
+              "name": "温宇豪",
+              "className": "初一孝",
+              "team": "green",
+              "result": "1:20.46",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "1:10.82",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2103",
+              "name": "伍祥豪",
+              "className": "高三文商",
+              "team": "yellow",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:14.86s"
+            },
+            {
+              "lane": 2,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:10.82s"
+            },
+            {
+              "lane": 3,
+              "bib": "4104",
+              "name": "张嘉杰",
+              "className": "初三忠",
+              "team": "green",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:08.39s"
+            },
+            {
+              "lane": 4,
+              "bib": "1101",
+              "name": "张玮轩",
+              "className": "高三烘培",
+              "team": "red",
+              "result": "",
+              "status": "OK",
+              "prelimMark": "1:16.75s"
+            }
           ]
         },
         {
-          id: 'ev_800m_jg',
-          order: 8,
-          name: '800米',
-          group: '女乙',
-          type: 'track',
-          isTeam: false,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 1,
-          teamMedalRule: 'individual',
-          recordMark: '2:34.50',
-          recordHolder: '邓婉婷 (2022)',
-          scheduleTime: '11:45',
-          status: 'startlist',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '3502', name: '林珂伊', className: '初三忠', team: 'blue', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 2, bib: '1501', name: '陈宣彤', className: '初三孝', team: 'red', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 3, bib: '2509', name: '娜丽莎', className: '初一孝', team: 'yellow', prelimMark: '-', qualBadge: '', result: '', status: 'OK' },
-            { lane: 4, bib: '4501', name: '林芷宇', className: '初三孝', team: 'green', prelimMark: '-', qualBadge: '', result: '', status: 'OK' }
+          "id": "ev_hj_jb",
+          "order": 15,
+          "name": "跳高",
+          "group": "男乙",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次1",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1201",
+              "name": "叶俊文",
+              "className": "初二忠",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "3209",
+              "name": "郭凯杰",
+              "className": "初二忠",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "4209",
+              "name": "吕浚晖",
+              "className": "初二孝",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "3201",
+              "name": "林子恒",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "2205",
+              "name": "陈慨曜",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "2203",
+              "name": "杨忠万",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            }
           ]
         },
         {
-          id: 'ev_4x100_sb',
-          order: 9,
-          name: '4×100米接力',
-          group: '男甲',
-          type: 'relay',
-          isTeam: true,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 5,
-          teamMedalRule: 'relay',
-          recordMark: '44.80',
-          recordHolder: '蓝队男甲 (2023)',
-          scheduleTime: '14:15',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 3, bib: '1100', name: '红队男甲接力队', className: '高中代表队', team: 'red', result: '44.62', status: 'OK' },
-            { lane: 2, bib: '3100', name: '蓝队男甲接力队', className: '高中代表队', team: 'blue', result: '45.10', status: 'OK' },
-            { lane: 1, bib: '2100', name: '黄队男甲接力队', className: '高中代表队', team: 'yellow', result: '45.48', status: 'OK' },
-            { lane: 4, bib: '4100', name: '青队男甲接力队', className: '高中代表队', team: 'green', result: '46.15', status: 'OK' }
+          "id": "ev_hj_sb",
+          "order": 16,
+          "name": "跳高",
+          "group": "男甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次7",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2102",
+              "name": "朱宇章",
+              "className": "高三烘培",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2109",
+              "name": "王晟祺",
+              "className": "高二文商",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1105",
+              "name": "刘子庆",
+              "className": "高三文商",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1103",
+              "name": "罗弘富",
+              "className": "高一文商",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "3108",
+              "name": "李屹森",
+              "className": "高二文商",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3106",
+              "name": "林靖翔",
+              "className": "高三文商",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "4103",
+              "name": "林浚韦",
+              "className": "高三文商",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 8,
+              "bib": "4107",
+              "name": "卢锦康",
+              "className": "高二餐饮",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
           ]
         },
         {
-          id: 'ev_tug_sg',
-          order: 10,
-          name: '拔河赛',
-          group: '女甲',
-          type: 'tug',
-          isTeam: true,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 8,
-          teamMedalRule: 'tug_or_grand',
-          recordMark: '',
-          recordHolder: '',
-          scheduleTime: '15:00',
-          status: 'finished',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '3400', name: '蓝队女甲拔河队', className: '8人主力阵容', team: 'blue', result: '1', status: 'OK' },
-            { lane: 2, bib: '2400', name: '黄队女甲拔河队', className: '8人主力阵容', team: 'yellow', result: '2', status: 'OK' },
-            { lane: 3, bib: '1400', name: '红队女甲拔河队', className: '8人主力阵容', team: 'red', result: '3', status: 'OK' },
-            { lane: 4, bib: '4400', name: '青队女甲拔河队', className: '8人主力阵容', team: 'green', result: '4', status: 'OK' }
+          "id": "ev_jt_sg",
+          "order": 17,
+          "name": "标枪 (500g公开)",
+          "group": "女甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "18/11 · 场次8",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4407",
+              "name": "李爱琪",
+              "className": "高一餐饮",
+              "team": "green",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2508",
+              "name": "潘安琪",
+              "className": "初一孝",
+              "team": "yellow",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3402",
+              "name": "陈奕汶",
+              "className": "高二餐饮",
+              "team": "blue",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4508",
+              "name": "林巧萱",
+              "className": "初三忠",
+              "team": "green",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "1402",
+              "name": "黄嘉欣",
+              "className": "高二文商",
+              "team": "red",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "1404",
+              "name": "马峄琪",
+              "className": "高一文商",
+              "team": "red",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "3406",
+              "name": "杜姿颖",
+              "className": "高三文商",
+              "team": "blue",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 8,
+              "bib": "2402",
+              "name": "张紫微",
+              "className": "高二文商",
+              "team": "yellow",
+              "attempt1": "",
+              "attempt2": "",
+              "attempt3": "",
+              "attempt4": "",
+              "attempt5": "",
+              "attempt6": "",
+              "result": "",
+              "status": "OK"
+            }
           ]
         },
         {
-          id: 'ev_grand_relay',
-          order: 11,
-          name: '大队接力',
-          group: '男甲',
-          type: 'relay',
-          isTeam: true,
-          is60m: false,
-          windCheck: false,
-          wind: '',
-          physicalMedalCount: 8,
-          teamMedalRule: 'tug_or_grand',
-          recordMark: '3:32.00',
-          recordHolder: '黄队 (2024)',
-          scheduleTime: '16:10',
-          status: 'startlist',
-          prelimEntries: [],
-          finalEntries: [
-            { lane: 1, bib: '1199', name: '红队大队接力', className: '全队8棒联队', team: 'red', result: '', status: 'OK' },
-            { lane: 2, bib: '2199', name: '黄队大队接力', className: '全队8棒联队', team: 'yellow', result: '', status: 'OK' },
-            { lane: 3, bib: '3199', name: '蓝队大队接力', className: '全队8棒联队', team: 'blue', result: '', status: 'OK' },
-            { lane: 4, bib: '4199', name: '青队大队接力', className: '全队8棒联队', team: 'green', result: '', status: 'OK' }
+          "id": "ev_200m_jg",
+          "order": 18,
+          "name": "200米",
+          "group": "女乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:00 · 场次1",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "4504",
+              "name": "陈渲潓",
+              "className": "初一孝",
+              "team": "green",
+              "result": "50.29",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "3511",
+              "name": "黄颖糅",
+              "className": "初二忠",
+              "team": "blue",
+              "result": "40.74",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "1501",
+              "name": "林慧萱",
+              "className": "初一忠",
+              "team": "red",
+              "result": "47.63",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "1503",
+              "name": "陈媃茵",
+              "className": "初三忠",
+              "team": "red",
+              "result": "46.79",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "4503",
+              "name": "林玉美",
+              "className": "初二孝",
+              "team": "green",
+              "result": "46.03",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3501",
+              "name": "王愉珺",
+              "className": "初二孝",
+              "team": "blue",
+              "result": "43.36",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "2501",
+              "name": "杨诗淇",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "46.71",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4503",
+              "name": "林玉美",
+              "className": "初二孝",
+              "team": "green",
+              "prelimMark": "46.03s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "3501",
+              "name": "王愉珺",
+              "className": "初二孝",
+              "team": "blue",
+              "prelimMark": "43.36s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3511",
+              "name": "黄颖糅",
+              "className": "初二忠",
+              "team": "blue",
+              "prelimMark": "40.74s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2501",
+              "name": "杨诗淇",
+              "className": "初三忠",
+              "team": "yellow",
+              "prelimMark": "46.71s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_200m_sg",
+          "order": 19,
+          "name": "200米",
+          "group": "女甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:10 · 场次2",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "4403",
+              "name": "洪丽凤",
+              "className": "高一文商",
+              "team": "green",
+              "result": "43.00",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "1402",
+              "name": "黄嘉欣",
+              "className": "高二文商",
+              "team": "red",
+              "result": "43.03",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "3401",
+              "name": "林可珺",
+              "className": "高二餐饮",
+              "team": "blue",
+              "result": "46.89",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "2401",
+              "name": "邱天心",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "39.28",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "1405",
+              "name": "王芷乐",
+              "className": "高二餐饮",
+              "team": "red",
+              "result": "45.35",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "4401",
+              "name": "胡巧微",
+              "className": "高三烘培",
+              "team": "green",
+              "result": "53.52",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "2406",
+              "name": "罗琳琳",
+              "className": "初三孝",
+              "team": "yellow",
+              "result": "39.92",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4403",
+              "name": "洪丽凤",
+              "className": "高一文商",
+              "team": "green",
+              "prelimMark": "43.00s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2406",
+              "name": "罗琳琳",
+              "className": "初三孝",
+              "team": "yellow",
+              "prelimMark": "39.92s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2401",
+              "name": "邱天心",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "prelimMark": "39.28s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1402",
+              "name": "黄嘉欣",
+              "className": "高二文商",
+              "team": "red",
+              "prelimMark": "43.03s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_200m_jb",
+          "order": 20,
+          "name": "200米",
+          "group": "男乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:20 · 场次3",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "3211",
+              "name": "朱振宇",
+              "className": "初一忠",
+              "team": "blue",
+              "result": "53.93",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "2202",
+              "name": "王凯翔",
+              "className": "初一忠",
+              "team": "yellow",
+              "result": "33.73",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "1204",
+              "name": "梁子康",
+              "className": "初二忠",
+              "team": "red",
+              "result": "37.76",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "4201",
+              "name": "封胜阳",
+              "className": "初一孝",
+              "team": "green",
+              "result": "41.49",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "1201",
+              "name": "叶俊文",
+              "className": "初二忠",
+              "team": "red",
+              "result": "31.07",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3209",
+              "name": "郭凯杰",
+              "className": "初二忠",
+              "team": "blue",
+              "result": "33.79",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "4203",
+              "name": "陈国俊",
+              "className": "初一忠",
+              "team": "green",
+              "result": "31.81",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "2202",
+              "name": "王凯翔",
+              "className": "初一忠",
+              "team": "yellow",
+              "prelimMark": "33.73s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "4203",
+              "name": "陈国俊",
+              "className": "初一忠",
+              "team": "green",
+              "prelimMark": "31.81s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1201",
+              "name": "叶俊文",
+              "className": "初二忠",
+              "team": "red",
+              "prelimMark": "31.07s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "3209",
+              "name": "郭凯杰",
+              "className": "初二忠",
+              "team": "blue",
+              "prelimMark": "33.79s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_200m_sb",
+          "order": 21,
+          "name": "200米",
+          "group": "男甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:30 · 场次4",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "1101",
+              "name": "张玮轩",
+              "className": "高三烘培",
+              "team": "red",
+              "result": "34.40",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "2103",
+              "name": "伍祥豪",
+              "className": "高三文商",
+              "team": "yellow",
+              "result": "29.95",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "3106",
+              "name": "林靖翔",
+              "className": "高三文商",
+              "team": "blue",
+              "result": "31.20",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "4103",
+              "name": "林浚韦",
+              "className": "高三文商",
+              "team": "green",
+              "result": "31.13",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "1102",
+              "name": "许凯竣",
+              "className": "高三文商",
+              "team": "red",
+              "result": "33.79",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "4101",
+              "name": "温宇豪",
+              "className": "初一孝",
+              "team": "green",
+              "result": "31.39",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3103",
+              "name": "黄种喻",
+              "className": "高三烘培",
+              "team": "blue",
+              "result": "38.45",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "30.24",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4103",
+              "name": "林浚韦",
+              "className": "高三文商",
+              "team": "green",
+              "prelimMark": "31.13s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "prelimMark": "30.24s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2103",
+              "name": "伍祥豪",
+              "className": "高三文商",
+              "team": "yellow",
+              "prelimMark": "29.95s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "3106",
+              "name": "林靖翔",
+              "className": "高三文商",
+              "team": "blue",
+              "prelimMark": "31.20s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_800m_jg",
+          "order": 22,
+          "name": "800米",
+          "group": "女乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:40 · 场次5",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": []
+        },
+        {
+          "id": "ev_800m_sg",
+          "order": 23,
+          "name": "800米",
+          "group": "女甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 09:55 · 场次6",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": []
+        },
+        {
+          "id": "ev_800m_jb",
+          "order": 24,
+          "name": "800米",
+          "group": "男乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 10:10 · 场次7",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": []
+        },
+        {
+          "id": "ev_800m_sb",
+          "order": 25,
+          "name": "800米",
+          "group": "男甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 10:25 · 场次8",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": []
+        },
+        {
+          "id": "ev_jt_sb",
+          "order": 26,
+          "name": "标枪 (700g公开)",
+          "group": "男甲",
+          "type": "field",
+          "isTeam": false,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 10:40 · 场次9",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": []
+        },
+        {
+          "id": "ev_4x100_jg",
+          "order": 27,
+          "name": "4×100米接力",
+          "group": "女乙",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 11:20 · 场次10",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1500",
+              "name": "红队接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2500",
+              "name": "黄队接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3500",
+              "name": "蓝队接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4500",
+              "name": "青队接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x100_sg",
+          "order": 28,
+          "name": "4×100米接力",
+          "group": "女甲",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 11:35 · 场次11",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1400",
+              "name": "红队接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2400",
+              "name": "黄队接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3400",
+              "name": "蓝队接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4400",
+              "name": "青队接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x100_jb",
+          "order": 29,
+          "name": "4×100米接力",
+          "group": "男乙",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 11:50 · 场次12",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1200",
+              "name": "红队接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2200",
+              "name": "黄队接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3200",
+              "name": "蓝队接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4200",
+              "name": "青队接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x100_sb",
+          "order": 30,
+          "name": "4×100米接力",
+          "group": "男甲",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 12:05 · 场次13",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1100",
+              "name": "红队接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2100",
+              "name": "黄队接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3100",
+              "name": "蓝队接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4100",
+              "name": "青队接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_60m_jg",
+          "order": 31,
+          "name": "60米",
+          "group": "女乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": true,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 13:30 · 场次14",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "1501",
+              "name": "林慧萱",
+              "className": "初一忠",
+              "team": "red",
+              "result": "13.25",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "2501",
+              "name": "杨诗淇",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "12.86",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "4502",
+              "name": "梁惠琪",
+              "className": "初三孝",
+              "team": "green",
+              "result": "13.48",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "4501",
+              "name": "曾钰昕",
+              "className": "初一忠",
+              "team": "green",
+              "result": "14.95",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "1502",
+              "name": "马萱",
+              "className": "初一孝",
+              "team": "red",
+              "result": "10.80",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "2502",
+              "name": "方翎恩",
+              "className": "初二孝",
+              "team": "yellow",
+              "result": "11.46",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "3502",
+              "name": "娜丽莎",
+              "className": "初一孝",
+              "team": "blue",
+              "result": "12.13",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1501",
+              "name": "林慧萱",
+              "className": "初一忠",
+              "team": "red",
+              "prelimMark": "13.25s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "3502",
+              "name": "娜丽莎",
+              "className": "初一孝",
+              "team": "blue",
+              "prelimMark": "12.13s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2502",
+              "name": "方翎恩",
+              "className": "初二孝",
+              "team": "yellow",
+              "prelimMark": "11.46s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1502",
+              "name": "马萱",
+              "className": "初一孝",
+              "team": "red",
+              "prelimMark": "10.80s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "2501",
+              "name": "杨诗淇",
+              "className": "初三忠",
+              "team": "yellow",
+              "prelimMark": "12.86s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "4502",
+              "name": "梁惠琪",
+              "className": "初三孝",
+              "team": "green",
+              "prelimMark": "13.48s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_60m_sg",
+          "order": 32,
+          "name": "60米",
+          "group": "女甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": true,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 13:35 · 场次15",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "2401",
+              "name": "邱天心",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "10.16",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "3409",
+              "name": "黄宇洁",
+              "className": "高三文商",
+              "team": "blue",
+              "result": "13.77",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "4402",
+              "name": "林恩慧",
+              "className": "高一文商",
+              "team": "green",
+              "result": "11.51",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "1405",
+              "name": "王芷乐",
+              "className": "高二餐饮",
+              "team": "red",
+              "result": "11.53",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "1403",
+              "name": "许柔恩",
+              "className": "高三文商",
+              "team": "red",
+              "result": "14.43",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "2406",
+              "name": "罗琳琳",
+              "className": "初三孝",
+              "team": "yellow",
+              "result": "10.57",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "3408",
+              "name": "黄滢颖",
+              "className": "初三孝",
+              "team": "blue",
+              "result": "10.64",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "4401",
+              "name": "胡巧微",
+              "className": "高三烘培",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1405",
+              "name": "王芷乐",
+              "className": "高二餐饮",
+              "team": "red",
+              "prelimMark": "11.53s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "3408",
+              "name": "黄滢颖",
+              "className": "初三孝",
+              "team": "blue",
+              "prelimMark": "10.64s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2406",
+              "name": "罗琳琳",
+              "className": "初三孝",
+              "team": "yellow",
+              "prelimMark": "10.57s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2401",
+              "name": "邱天心",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "prelimMark": "10.16s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "4402",
+              "name": "林恩慧",
+              "className": "高一文商",
+              "team": "green",
+              "prelimMark": "11.51s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3409",
+              "name": "黄宇洁",
+              "className": "高三文商",
+              "team": "blue",
+              "prelimMark": "13.77s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_60m_jb",
+          "order": 33,
+          "name": "60米",
+          "group": "男乙",
+          "type": "track",
+          "isTeam": false,
+          "is60m": true,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 13:40 · 场次16",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "1201",
+              "name": "叶俊文",
+              "className": "初二忠",
+              "team": "red",
+              "result": "8.06",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "4201",
+              "name": "封胜阳",
+              "className": "初一孝",
+              "team": "green",
+              "result": "11.35",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 3,
+              "bib": "3206",
+              "name": "黄榀喆",
+              "className": "初一忠",
+              "team": "blue",
+              "result": "10.03",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "2201",
+              "name": "林凯泽",
+              "className": "初三忠",
+              "team": "yellow",
+              "result": "9.89",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "4202",
+              "name": "陈伟扬",
+              "className": "初一忠",
+              "team": "green",
+              "result": "11.00",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "1205",
+              "name": "黄柏杰",
+              "className": "初二孝",
+              "team": "red",
+              "result": "9.77",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "3202",
+              "name": "林纮宇",
+              "className": "初三忠",
+              "team": "blue",
+              "result": "13.53",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4202",
+              "name": "陈伟扬",
+              "className": "初一忠",
+              "team": "green",
+              "prelimMark": "11.00s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2201",
+              "name": "林凯泽",
+              "className": "初三忠",
+              "team": "yellow",
+              "prelimMark": "9.89s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "1205",
+              "name": "黄柏杰",
+              "className": "初二孝",
+              "team": "red",
+              "prelimMark": "9.77s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "1201",
+              "name": "叶俊文",
+              "className": "初二忠",
+              "team": "red",
+              "prelimMark": "8.06s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "3206",
+              "name": "黄榀喆",
+              "className": "初一忠",
+              "team": "blue",
+              "prelimMark": "10.03s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "4201",
+              "name": "封胜阳",
+              "className": "初一孝",
+              "team": "green",
+              "prelimMark": "11.35s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_60m_sb",
+          "order": 34,
+          "name": "60米",
+          "group": "男甲",
+          "type": "track",
+          "isTeam": false,
+          "is60m": true,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 1,
+          "teamMedalRule": "individual",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 13:45 · 场次17",
+          "status": "prelims_done",
+          "prelimEntries": [
+            {
+              "heat": 1,
+              "lane": 1,
+              "bib": "4102",
+              "name": "黄俊铭",
+              "className": "高一餐饮",
+              "team": "green",
+              "result": "9.10",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 2,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "result": "8.34",
+              "status": "OK"
+            },
+            {
+              "heat": 1,
+              "lane": 4,
+              "bib": "3105",
+              "name": "林韦仁",
+              "className": "高二餐饮",
+              "team": "blue",
+              "result": "9.19",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 1,
+              "bib": "4101",
+              "name": "温宇豪",
+              "className": "初一孝",
+              "team": "green",
+              "result": "8.68",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 2,
+              "bib": "3101",
+              "name": "邹捷贺",
+              "className": "高三烘培",
+              "team": "blue",
+              "result": "9.79",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 3,
+              "bib": "1102",
+              "name": "许凯竣",
+              "className": "高三文商",
+              "team": "red",
+              "result": "8.88",
+              "status": "OK"
+            },
+            {
+              "heat": 2,
+              "lane": 4,
+              "bib": "2102",
+              "name": "朱宇章",
+              "className": "高三烘培",
+              "team": "yellow",
+              "result": "7.80",
+              "status": "OK"
+            }
+          ],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "4102",
+              "name": "黄俊铭",
+              "className": "高一餐饮",
+              "team": "green",
+              "prelimMark": "9.10s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "4101",
+              "name": "温宇豪",
+              "className": "初一孝",
+              "team": "green",
+              "prelimMark": "8.68s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "2101",
+              "name": "王翔哲",
+              "className": "高二餐饮",
+              "team": "yellow",
+              "prelimMark": "8.34s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "2102",
+              "name": "朱宇章",
+              "className": "高三烘培",
+              "team": "yellow",
+              "prelimMark": "7.80s",
+              "qualBadge": "Q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 5,
+              "bib": "1102",
+              "name": "许凯竣",
+              "className": "高三文商",
+              "team": "red",
+              "prelimMark": "8.88s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 6,
+              "bib": "3105",
+              "name": "林韦仁",
+              "className": "高二餐饮",
+              "team": "blue",
+              "prelimMark": "9.19s",
+              "qualBadge": "q",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_tug_all",
+          "order": 35,
+          "name": "大队拔河 (4男4女)",
+          "group": "公开",
+          "type": "tug",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 8,
+          "teamMedalRule": "tug_or_grand",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 13:50-14:00 · 场次18-19",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1000",
+              "name": "红队拔河代表队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2000",
+              "name": "黄队拔河代表队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3000",
+              "name": "蓝队拔河代表队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4000",
+              "name": "青队拔河代表队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x400_jg",
+          "order": 36,
+          "name": "4×400米接力",
+          "group": "女乙",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 14:10 · 场次20",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1500",
+              "name": "红队4×400接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2500",
+              "name": "黄队4×400接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3500",
+              "name": "蓝队4×400接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4500",
+              "name": "青队4×400接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x400_sg",
+          "order": 37,
+          "name": "4×400米接力",
+          "group": "女甲",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 14:20 · 场次21",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1400",
+              "name": "红队4×400接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2400",
+              "name": "黄队4×400接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3400",
+              "name": "蓝队4×400接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4400",
+              "name": "青队4×400接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x400_jb",
+          "order": 38,
+          "name": "4×400米接力",
+          "group": "男乙",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 14:30 · 场次22",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1200",
+              "name": "红队4×400接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2200",
+              "name": "黄队4×400接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3200",
+              "name": "蓝队4×400接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4200",
+              "name": "青队4×400接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_4x400_sb",
+          "order": 39,
+          "name": "4×400米接力",
+          "group": "男甲",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 5,
+          "teamMedalRule": "relay",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 14:40 · 场次23",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1100",
+              "name": "红队4×400接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2100",
+              "name": "黄队4×400接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3100",
+              "name": "蓝队4×400接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4100",
+              "name": "青队4×400接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
+          ]
+        },
+        {
+          "id": "ev_grand_8x200",
+          "order": 40,
+          "name": "大队接力 8×200米 (4男4女)",
+          "group": "公开",
+          "type": "relay",
+          "isTeam": true,
+          "is60m": false,
+          "windCheck": false,
+          "wind": "",
+          "physicalMedalCount": 8,
+          "teamMedalRule": "tug_or_grand",
+          "recordMark": "",
+          "recordHolder": "",
+          "scheduleTime": "02/12 14:50 · 场次24",
+          "status": "startlist",
+          "prelimEntries": [],
+          "finalEntries": [
+            {
+              "lane": 1,
+              "bib": "1000",
+              "name": "红队大队接力队",
+              "className": "色队代表",
+              "team": "red",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 2,
+              "bib": "2000",
+              "name": "黄队大队接力队",
+              "className": "色队代表",
+              "team": "yellow",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 3,
+              "bib": "3000",
+              "name": "蓝队大队接力队",
+              "className": "色队代表",
+              "team": "blue",
+              "result": "",
+              "status": "OK"
+            },
+            {
+              "lane": 4,
+              "bib": "4000",
+              "name": "青队大队接力队",
+              "className": "色队代表",
+              "team": "green",
+              "result": "",
+              "status": "OK"
+            }
           ]
         }
       ]
@@ -1049,23 +4406,313 @@
     XLSX.writeFile(wb, '新民独立中学2026运动会_报名与成绩导入模板.xlsx');
   }
 
+  function isOfficialMeetWorkbook(XLSX, wb) {
+    for (var i = 0; i < wb.SheetNames.length; i++) {
+      var ws = wb.Sheets[wb.SheetNames[i]];
+      var a1 = ws && ws.A1 ? String(ws.A1.v || '').trim() : '';
+      if (a1.indexOf('亚罗士打新民独立中学运动会') !== -1 || a1.indexOf('新民独立中学运动会') !== -1) {
+        return true;
+      }
+      var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      for (var r = 0; r < Math.min(8, aoa.length); r++) {
+        var rowStr = (aoa[r] || []).join(' ');
+        if (rowStr.indexOf('2026年') !== -1 && (rowStr.indexOf('新民') !== -1 || rowStr.indexOf('场次') !== -1)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function parseOfficialMeetWorkbook(XLSX, wb, currentState) {
+    var nextState = JSON.parse(JSON.stringify(currentState || createDefaultState()));
+    var eventById = {};
+    var eventByKey = {};
+    nextState.events.forEach(function (ev) {
+      eventById[ev.id] = ev;
+      eventByKey[ev.group + '||' + ev.name] = ev;
+    });
+
+    function cleanCell(v) {
+      return v === undefined || v === null ? '' : String(v).trim();
+    }
+
+    function ensureEvent(group, name, type, isTeam, is60m) {
+      var k = group + '||' + name;
+      if (eventByKey[k]) return eventByKey[k];
+      var medalRule = (name.indexOf('拔河') !== -1 || name.indexOf('大队') !== -1) ? 'tug_or_grand' : (isTeam ? 'relay' : 'individual');
+      var ev = {
+        id: 'ev_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        order: nextState.events.length + 1,
+        name: name,
+        group: group,
+        type: type,
+        isTeam: !!isTeam,
+        is60m: !!is60m,
+        windCheck: false,
+        wind: '',
+        physicalMedalCount: medalRule === 'tug_or_grand' ? 8 : (medalRule === 'relay' ? 5 : 1),
+        teamMedalRule: medalRule,
+        recordMark: '',
+        recordHolder: '',
+        scheduleTime: '',
+        status: 'startlist',
+        prelimEntries: [],
+        finalEntries: []
+      };
+      nextState.events.push(ev);
+      eventByKey[k] = ev;
+      return ev;
+    }
+
+    function findMatchingEvent(grp, rawProj) {
+      var cleanProj = rawProj.replace(/决赛|半决赛\s*\d*/g, '').trim().replace(/m$/i, '米').trim();
+      var candidates = [cleanProj];
+      if (cleanProj === '铅球') candidates.push('铅球 (3kg)', '铅球 (4kg)', '铅球 (5kg)');
+      if (cleanProj === '标枪') candidates.push('标枪 (500g公开)', '标枪 (700g公开)');
+      var cleanGrp = grp.replace(/（公开）|\(公开\)|组/g, '').trim();
+      for (var i = 0; i < candidates.length; i++) {
+        if (eventByKey[cleanGrp + '||' + candidates[i]]) return eventByKey[cleanGrp + '||' + candidates[i]];
+      }
+      var isField = /跳|铅球|标枪/.test(cleanProj);
+      return ensureEvent(cleanGrp, cleanProj, isField ? 'field' : 'track', false, cleanProj.indexOf('60') !== -1);
+    }
+
+    function upsertEntry(arr, entry) {
+      var idx = arr.findIndex(function (x) {
+        return (entry.bib && x.bib === entry.bib) || (x.name === entry.name && x.lane === entry.lane);
+      });
+      if (!entry.className) {
+        var st = findLocalStudent(entry.name);
+        if (st && st.className) entry.className = st.className;
+      }
+      if (idx >= 0) {
+        arr[idx] = Object.assign({}, arr[idx], entry);
+      } else {
+        arr.push(entry);
+      }
+    }
+
+    var seenBlocks = {};
+    var importedCount = 0;
+
+    wb.SheetNames.forEach(function (shName) {
+      var aoa = XLSX.utils.sheet_to_json(wb.Sheets[shName], { header: 1, defval: '' });
+      for (var r = 0; r < aoa.length; r++) {
+        var c0 = cleanCell(aoa[r][0]);
+        if (c0.indexOf('2026年') !== 0) continue;
+
+        var metaRow = aoa[r + 2] || [];
+        var grpRaw = cleanCell(metaRow[1]).replace(/组$/, '');
+        var projRaw = '';
+        for (var ci = 5; ci < Math.min(16, metaRow.length); ci++) {
+          var v = cleanCell(metaRow[ci]);
+          if (v && v.indexOf('项目') === -1) {
+            projRaw = v;
+            break;
+          }
+        }
+        if (!grpRaw || !projRaw) continue;
+
+        var hdrRow = aoa[r + 6] || [];
+        var firstHdr = cleanCell(hdrRow[0]);
+
+        // 1) 径赛横排格式（第 r+6 行以「道次」开头）
+        if (firstHdr === '道次') {
+          var bibRow = aoa[r + 7] || [];
+          var nameRow = aoa[r + 8] || [];
+          var markRow = aoa[r + 11] || [];
+          var mHeat = projRaw.match(/半决赛\s*(\d+)?/);
+          var isPrelim = !!mHeat;
+          var heatNum = mHeat ? Number(mHeat[1] || 1) : 1;
+          var sig = grpRaw + '|' + projRaw;
+          var sigBibs = [];
+          for (var lc = 1; lc < hdrRow.length; lc++) {
+            if (bibRow[lc]) sigBibs.push(cleanCell(hdrRow[lc]) + ':' + cleanCell(bibRow[lc]));
+          }
+          sig += '|' + sigBibs.join(',');
+          if (seenBlocks[sig]) continue;
+          seenBlocks[sig] = true;
+
+          var targetEv = findMatchingEvent(grpRaw, projRaw);
+          var hasAnyFinishMark = false;
+          for (var col = 1; col < hdrRow.length; col++) {
+            var laneStr = cleanCell(hdrRow[col]);
+            if (!/^\d+$/.test(laneStr)) continue;
+            var bib = cleanCell(bibRow[col]);
+            var name = cleanCell(nameRow[col]);
+            if (!bib && !name) continue;
+            var sec = parseTrackTimeToSeconds(markRow[col]);
+            var formatted = sec !== null ? formatTrackSeconds(sec) : '';
+            if (formatted && !isPrelim) hasAnyFinishMark = true;
+            var pBib = parseBib(bib);
+            var entry = {
+              heat: heatNum,
+              lane: Number(laneStr),
+              bib: bib,
+              name: name,
+              className: '',
+              team: pBib.team || 'red',
+              result: formatted,
+              status: 'OK'
+            };
+            upsertEntry(isPrelim ? targetEv.prelimEntries : targetEv.finalEntries, entry);
+            importedCount++;
+          }
+          if (!isPrelim && hasAnyFinishMark) targetEv.status = 'finished';
+          else if (isPrelim && targetEv.status === 'startlist') targetEv.status = 'prelims_done';
+          continue;
+        }
+
+        // 2) 田赛（铅球 / 标枪）或 跳高 纵排格式（第 r+6 行以「号码」开头）
+        if (firstHdr === '号码') {
+          var isHighJump = projRaw.indexOf('跳高') !== -1 || cleanCell(hdrRow[3]).indexOf('cm') !== -1;
+          var targetFieldEv = findMatchingEvent(grpRaw, projRaw);
+          var rr = r + 7;
+          var laneIdx = 1;
+
+          if (!isHighJump) {
+            var blockHasMark = false;
+            while (rr < aoa.length) {
+              var rowT = aoa[rr] || [];
+              var bT = cleanCell(rowT[0]);
+              if (!bT || bT.indexOf('检录') === 0 || bT.indexOf('2026年') === 0) break;
+              var nT = cleanCell(rowT[1]);
+              if (nT) {
+                var rawNote = cleanCell(rowT[12]);
+                var stT = rawNote.indexOf('犯规') !== -1 ? 'DQ' : 'OK';
+                var bestNum = parseFieldMark(rowT[10]);
+                var atts = [rowT[3], rowT[4], rowT[5], rowT[7], rowT[8], rowT[9]].map(function (cell) {
+                  var cStr = cleanCell(cell).toUpperCase();
+                  if (cStr === 'X') return 'X';
+                  var v = parseFieldMark(cell);
+                  if (v === null) return '';
+                  if (bestNum !== null && v > bestNum + 1e-6) return '';
+                  return v.toFixed(2);
+                });
+                var bestStr = bestNum !== null && stT === 'OK' ? bestNum.toFixed(2) : '';
+                if (bestStr) {
+                  var hasBestInAtts = atts.some(function (a) {
+                    var av = parseFieldMark(a);
+                    return av !== null && Math.abs(av - bestNum) <= 1e-6;
+                  });
+                  if (!hasBestInAtts) {
+                    var emptyPos = atts.indexOf('');
+                    if (emptyPos >= 0) atts[emptyPos] = bestStr;
+                  }
+                  blockHasMark = true;
+                }
+                upsertEntry(targetFieldEv.finalEntries, {
+                  lane: laneIdx++,
+                  bib: bT,
+                  name: nT,
+                  className: cleanCell(rowT[2]),
+                  team: parseBib(bT).team || 'red',
+                  attempt1: atts[0],
+                  attempt2: atts[1],
+                  attempt3: atts[2],
+                  attempt4: atts[3],
+                  attempt5: atts[4],
+                  attempt6: atts[5],
+                  result: bestStr,
+                  status: stT,
+                  note: stT === 'DQ' ? rawNote : ''
+                });
+                importedCount++;
+              }
+              rr++;
+            }
+            if (blockHasMark) targetFieldEv.status = 'finished';
+          } else {
+            // 跳高格式：解析高度列与 O/X/-
+            var hCols = [];
+            for (var hc = 3; hc < hdrRow.length; hc++) {
+              var hm = cleanCell(hdrRow[hc]).match(/^(\d+)(?:cm|m)$/i);
+              if (hm) hCols.push({ col: hc, cm: Number(hm[1]) });
+            }
+            var hjHasMarks = false;
+            var hjRows = [];
+            while (rr < aoa.length) {
+              var rowH = aoa[rr] || [];
+              var bH = cleanCell(rowH[0]);
+              if (!bH || bH.indexOf('检录') === 0 || bH.indexOf('2026年') === 0) break;
+              var nH = cleanCell(rowH[1]);
+              if (nH) {
+                for (var kc = 3; kc < Math.min(rowH.length, 37); kc++) {
+                  if (cleanCell(rowH[kc])) hjHasMarks = true;
+                }
+                hjRows.push(rowH);
+              }
+              rr++;
+            }
+            hjRows.forEach(function (rowH) {
+              var bH = cleanCell(rowH[0]);
+              var nH = cleanCell(rowH[1]);
+              var clearedCm = null;
+              var failsAtBest = 0;
+              var totalFails = 0;
+              var notes = [];
+              for (var hi = 0; hi < hCols.length; hi++) {
+                var cStart = hCols[hi].col;
+                var cEnd = hi + 1 < hCols.length ? hCols[hi + 1].col : cStart + 3;
+                var seq = '';
+                for (var cc = cStart; cc < cEnd; cc++) seq += cleanCell(rowH[cc]).toUpperCase().replace(/0/g, 'O');
+                if (seq) notes.push(hCols[hi].cm + '(' + seq + ')');
+                var xCount = (seq.match(/X/g) || []).length;
+                if (seq.indexOf('O') !== -1) {
+                  clearedCm = hCols[hi].cm;
+                  failsAtBest = xCount;
+                  totalFails += xCount;
+                }
+              }
+              var hjEntry = {
+                lane: laneIdx++,
+                bib: bH,
+                name: STUDENT_NAME_ALIASES[nH] || nH,
+                className: cleanCell(rowH[2]),
+                team: parseBib(bH).team || 'red',
+                result: !hjHasMarks ? '' : (clearedCm !== null ? (clearedCm / 100).toFixed(2) : ''),
+                attempt1: clearedCm !== null ? (clearedCm / 100).toFixed(2) : '',
+                note: notes.length ? notes.slice(-2).join(' ') : (hjHasMarks ? '未出赛' : ''),
+                status: !hjHasMarks ? 'OK' : (clearedCm !== null ? 'OK' : 'NM')
+              };
+              if (clearedCm !== null) {
+                hjEntry.tieBreakVal = failsAtBest * 100 + totalFails;
+              }
+              upsertEntry(targetFieldEv.finalEntries, hjEntry);
+              importedCount++;
+            });
+            if (hjHasMarks) targetFieldEv.status = 'finished';
+          }
+        }
+      }
+    });
+
+    return { state: nextState, importedCount: importedCount };
+  }
+
+  function importWorkbookArrayBuffer(arrayBuffer, currentState) {
+    var XLSX = ensureXLSX();
+    var data = new Uint8Array(arrayBuffer);
+    var wb = XLSX.read(data, { type: 'array' });
+    if (isOfficialMeetWorkbook(XLSX, wb)) {
+      return parseOfficialMeetWorkbook(XLSX, wb, currentState);
+    }
+    var firstSheet = wb.SheetNames[0];
+    var rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { defval: '' });
+    if (!rows || rows.length === 0) {
+      throw new Error('表格内容为空，请检查第一张工作表。');
+    }
+    return mergeImportedRows(rows, currentState);
+  }
+
   function importExcelFile(file, currentState) {
     return new Promise(function (resolve, reject) {
       try {
-        var XLSX = ensureXLSX();
         var reader = new FileReader();
         reader.onload = function (e) {
           try {
-            var data = new Uint8Array(e.target.result);
-            var wb = XLSX.read(data, { type: 'array' });
-            var firstSheet = wb.SheetNames[0];
-            var rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { defval: '' });
-            if (!rows || rows.length === 0) {
-              reject(new Error('表格内容为空，请检查第一张工作表。'));
-              return;
-            }
-            var merged = mergeImportedRows(rows, currentState);
-            resolve(merged);
+            resolve(importWorkbookArrayBuffer(e.target.result, currentState));
           } catch (err) {
             reject(err);
           }
@@ -1504,16 +5151,24 @@
     return Array.isArray(global.SINMIN_LOCAL_STUDENTS) ? global.SINMIN_LOCAL_STUDENTS : [];
   }
 
+  var STUDENT_NAME_ALIASES = {
+    '曾微颖': '曾薇颖',
+    '李芮禛': '李芮祯',
+    '梁惠琪': '梁惠淇',
+    '胡巧萱': '胡巧瑄'
+  };
+
   function findLocalStudent(nameOrId, className) {
     var q = String(nameOrId || '').trim();
     if (!q) return null;
+    var qAlias = STUDENT_NAME_ALIASES[q] || q;
     var list = getLocalStudents();
     var cls = String(className || '').trim();
     var match = list.find(function (s) {
-      return (s.name === q || s.id === q) && (!cls || s.className === cls);
+      return (s.name === q || s.name === qAlias || s.id === q) && (!cls || s.className === cls);
     });
     if (!match) {
-      match = list.find(function (s) { return s.name === q || s.id === q; });
+      match = list.find(function (s) { return s.name === q || s.name === qAlias || s.id === q; });
     }
     return match || null;
   }
@@ -1623,11 +5278,175 @@
     return items.join('     ✦     ');
   }
 
+  var HANDBOOK_INFO = {
+    schoolName: '亚罗士打新民独立中学',
+    meetTitle: '2026年校内运动会',
+    meetDate: '2026年12月2日（星期三）',
+    workProcess: [
+      { no: 1, date: '01/11/2026', desc: '色队大集合（选顾问、队长、工委、选手）' },
+      { no: 2, date: '10/11/2026', desc: '红队、黄队运动员选拔' },
+      { no: 3, date: '12/11/2026', desc: '各项目报名截止' },
+      { no: 4, date: '15/11/2026', desc: '各项目半决赛及决赛（铅球男乙/男甲、跳高女乙/女甲、60m/400m半决赛）' },
+      { no: 5, date: '16/11/2026', desc: '各项目半决赛及决赛（铅球女乙/女甲、1500m决赛、200m半决赛）' },
+      { no: 6, date: '18/11–30/11/2026', desc: '400m 决赛、男甲/男乙跳高、女甲标枪公开赛及余下预/决赛' },
+      { no: 7, date: '02/12/2026（星期三）', desc: '运动会正日（开幕典礼 8:30am · 田径决赛与闭幕颁奖）' }
+    ],
+    openingCeremony: [
+      '08:30am 国旗、校旗及各队运动员入场',
+      '唱国歌 · 唱校歌',
+      '董事长黄明国致辞 · 校友会主席准拿督陈荣发致辞 · 校长马慈真致辞',
+      '运动员代表宣誓 · 运动员离场'
+    ],
+    daySchedule: [
+      { session: '1', time: '09:00am', event: '女乙 200m', round: '决赛' },
+      { session: '2', time: '09:10am', event: '女甲 200m', round: '决赛' },
+      { session: '3', time: '09:20am', event: '男乙 200m', round: '决赛' },
+      { session: '4', time: '09:30am', event: '男甲 200m', round: '决赛' },
+      { session: '5', time: '09:40am', event: '女乙 800m', round: '决赛' },
+      { session: '6', time: '09:55am', event: '女甲 800m', round: '决赛' },
+      { session: '7', time: '10:10am', event: '男乙 800m', round: '决赛' },
+      { session: '8', time: '10:25am', event: '男甲 800m', round: '决赛' },
+      { session: '9', time: '10:40am', event: '男甲 标枪（700g公开）', round: '决赛' },
+      { session: '10', time: '11:20am', event: '女乙 4×100m 接力', round: '决赛' },
+      { session: '11', time: '11:35am', event: '女甲 4×100m 接力', round: '决赛' },
+      { session: '12', time: '11:50am', event: '男乙 4×100m 接力', round: '决赛' },
+      { session: '13', time: '12:05pm', event: '男甲 4×100m 接力', round: '决赛' },
+      { session: '-', time: '12:20pm–1:30pm', event: '午休时段', round: '休息' },
+      { session: '14', time: '01:30pm', event: '女乙 60m', round: '决赛' },
+      { session: '15', time: '01:35pm', event: '女甲 60m', round: '决赛' },
+      { session: '16', time: '01:40pm', event: '男乙 60m', round: '决赛' },
+      { session: '17', time: '01:45pm', event: '男甲 60m', round: '决赛' },
+      { session: '18', time: '01:50pm', event: '大队拔河（季、殿军）', round: '决赛' },
+      { session: '19', time: '02:00pm', event: '大队拔河（冠、亚军）', round: '决赛' },
+      { session: '20', time: '02:10pm', event: '女乙 4×400m 接力', round: '决赛' },
+      { session: '21', time: '02:20pm', event: '女甲 4×400m 接力', round: '决赛' },
+      { session: '22', time: '02:30pm', event: '男乙 4×400m 接力', round: '决赛' },
+      { session: '23', time: '02:40pm', event: '男甲 4×400m 接力', round: '决赛' },
+      { session: '24', time: '02:50pm', event: '大队接力 8×200m（4男4女）', round: '决赛' },
+      { session: '25', time: '03:00pm', event: '颁奖与闭幕典礼', round: '仪式' }
+    ],
+    houses: [
+      { id: 'red', name: '红队', gathering: '太阳能停车场', leaders: '吴立阳、洪雅芝', captains: '罗弘富、陈慧文', teachers: '梁怀蔚、洪雅芝、吴立阳、Noorismah、Haslinda、李志展、尤宝忠、施玮量' },
+      { id: 'yellow', name: '黄队', gathering: '羽球场', leaders: '张碧涵、刘荠祥、陈依琳', captains: '邱嘉旭、张紫微', teachers: '张展瑜、吴允芬、陈依琳、张碧涵、黄馨香、刘荠祥、王智昭、Christina' },
+      { id: 'blue', name: '蓝队', gathering: '篮球场', leaders: '李欣霓、王盈盈', captains: '林靖翔、黄宇洁', teachers: '林德政、王盈盈、Bala、李欣霓、陈奕桦、李芷馨、张凯旋' },
+      { id: 'green', name: '青队', gathering: '宿舍前台阶', leaders: '杨汉顺、王韵麒', captains: '朱俊亿、蔡子仪', teachers: '李佩珊、王韵麒、杜丽玲、张津门、杨汉顺、吴淑仪、张燕欣' }
+    ],
+    highJumpHeights: [
+      { group: '男甲', heights: '1.30m; 1.35m; 1.40m; 1.45m; 1.50m; 1.54m; 1.58m; 1.62m; 1.65m; 1.68m 以此类推' },
+      { group: '男乙', heights: '1.20m; 1.25m; 1.30m; 1.35m; 1.40m; 1.45m; 1.49m; 1.53m; 1.57m; 1.60m 以此类推' },
+      { group: '女甲', heights: '1.05m; 1.08m; 1.11m; 1.13m; 1.15m; 1.17m; 1.19m; 1.21m; 1.23m; 1.25m 以此类推' },
+      { group: '女乙', heights: '1.00m; 1.05m; 1.08m; 1.10m; 1.12m; 1.14m; 1.16m; 1.18m; 1.20m; 1.22m 以此类推' }
+    ],
+    throwWeights: '铅球：女乙/女甲 3kg、男乙 4kg、男甲 5kg ｜ 标枪：女子公开 500g、男子公开 700g',
+    officials: [
+      { role: '大会主席 / 裁判长', name: '马慈真校长' },
+      { role: '工委会主席 / 竞赛 / 终点', name: '陈奇男' },
+      { role: '副主席 / 器材 / 发令员 / 三铁', name: '曾成利' },
+      { role: '检录组', name: '梁怀蔚（组长）、李佩珊（兼文书/颁奖）' },
+      { role: '检查组 / 场地', name: 'Bala（组长）、施玮量' },
+      { role: '跳跃组 / 计圈组 / 计时组', name: '吴淑仪（跳高）、张展瑜（计圈）、李志展/Noorismah/Haslinda/杜丽玲（计时）' },
+      { role: '总成绩组', name: '尤宝忠' }
+    ]
+  };
+
+  function renderFieldDetailsHtml(entry, ev) {
+    if (!ev || ev.type !== 'field' || !entry) return '';
+    var parts = [];
+    var isHj = ev.name && ev.name.indexOf('跳高') !== -1;
+    if (!isHj) {
+      var attempts = [entry.attempt1, entry.attempt2, entry.attempt3, entry.attempt4, entry.attempt5, entry.attempt6]
+        .filter(function (x) { return x !== undefined && x !== ''; });
+      if (attempts.length > 0) {
+        parts.push('试掷: ' + escapeHtml(attempts.join(' / ')));
+      }
+    }
+    if (entry.note) {
+      parts.push((isHj ? '跃高: ' : '备注: ') + escapeHtml(entry.note));
+    }
+    if (parts.length === 0) return '';
+    return '<div style="font-size:0.72rem; color:var(--text-secondary); line-height:1.45;">' + parts.join('<br/>') + '</div>';
+  }
+
+  function renderHandbookHtml() {
+    var h = HANDBOOK_INFO;
+    var scheduleRows = h.daySchedule.map(function (row) {
+      var isHighlight = row.round === '休息' || row.round === '仪式';
+      return (
+        '<tr style="' + (isHighlight ? 'background:rgba(56,189,248,0.08);' : '') + '">' +
+          '<td style="font-family:var(--font-mono);">' + escapeHtml(row.session) + '</td>' +
+          '<td style="font-family:var(--font-mono); white-space:nowrap;">' + escapeHtml(row.time) + '</td>' +
+          '<td><strong>' + escapeHtml(row.event) + '</strong></td>' +
+          '<td>' + escapeHtml(row.round) + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    var houseCards = h.houses.map(function (item) {
+      var t = TEAMS[item.id];
+      return (
+        '<div style="padding:12px; border-radius:12px; background:' + t.soft + '; border:1px solid ' + t.color + '44;">' +
+          '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">' +
+            '<strong>' + renderTeamPillHtml(item.id) + '</strong>' +
+            '<span style="font-size:0.78rem; color:#fde047; font-weight:700;">📍 集合：' + escapeHtml(item.gathering) + '</span>' +
+          '</div>' +
+          '<div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.55;">' +
+            '<div>召集人：' + escapeHtml(item.leaders) + '</div>' +
+            '<div>队长：' + escapeHtml(item.captains) + '</div>' +
+            '<div>负责老师：' + escapeHtml(item.teachers) + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    var workHtml = h.workProcess.map(function (w) {
+      return '<li><strong>' + escapeHtml(w.date) + '</strong> — ' + escapeHtml(w.desc) + '</li>';
+    }).join('');
+
+    var hjHtml = h.highJumpHeights.map(function (row) {
+      return '<div><strong>' + escapeHtml(row.group) + '：</strong>' + escapeHtml(row.heights) + '</div>';
+    }).join('');
+
+    var officialsHtml = h.officials.map(function (o) {
+      return '<div><strong>' + escapeHtml(o.role) + '：</strong>' + escapeHtml(o.name) + '</div>';
+    }).join('');
+
+    return (
+      '<div style="display:flex; flex-direction:column; gap:18px;">' +
+        '<div style="padding:12px 14px; border-radius:12px; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.28); font-size:0.82rem; line-height:1.6;">' +
+          '<div style="font-weight:800; color:#7dd3fc; margin-bottom:4px;">📅 筹备与赛事日程总览</div>' +
+          '<ul style="margin:0; padding-left:18px;">' + workHtml + '</ul>' +
+        '</div>' +
+        '<div>' +
+          '<h4 style="margin:0 0 8px; font-size:0.95rem;">🏁 正日赛程表（' + escapeHtml(h.meetDate) + ' · 08:30am 开幕礼后接续比赛）</h4>' +
+          '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>场次</th><th>时间</th><th>组别与项目</th><th>阶段</th></tr></thead><tbody>' + scheduleRows + '</tbody></table></div>' +
+        '</div>' +
+        '<div>' +
+          '<h4 style="margin:0 0 8px; font-size:0.95rem;">🚩 四色队伍大集合地点与负责人</h4>' +
+          '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;">' + houseCards + '</div>' +
+        '</div>' +
+        '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; font-size:0.8rem; color:var(--text-secondary); line-height:1.6;">' +
+          '<div style="padding:12px; border-radius:12px; background:rgba(15,23,42,0.65); border:1px solid rgba(148,163,184,0.16);">' +
+            '<div style="font-weight:800; color:#f8fafc; margin-bottom:6px;">📏 跳高起跳高度与投掷器材标准</div>' +
+            hjHtml +
+            '<div style="margin-top:6px; color:#fcd34d;">' + escapeHtml(h.throwWeights) + '</div>' +
+          '</div>' +
+          '<div style="padding:12px; border-radius:12px; background:rgba(15,23,42,0.65); border:1px solid rgba(148,163,184,0.16);">' +
+            '<div style="font-weight:800; color:#f8fafc; margin-bottom:6px;">⚖️ 大会裁判与工委名单（摘要）</div>' +
+            officialsHtml +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   global.SinMinSports = {
     TEAMS: TEAMS,
     TEAM_ORDER: TEAM_ORDER,
     GROUPS: GROUPS,
     GROUP_ORDER: GROUP_ORDER,
+    HANDBOOK_INFO: HANDBOOK_INFO,
+    renderFieldDetailsHtml: renderFieldDetailsHtml,
+    renderHandbookHtml: renderHandbookHtml,
     TV_MODES: TV_MODES,
     LANES_4: LANES_4,
     LANES_60M: LANES_60M,
@@ -1652,6 +5471,7 @@
     subscribeSync: subscribeSync,
     downloadTemplateExcel: downloadTemplateExcel,
     importExcelFile: importExcelFile,
+    importWorkbookArrayBuffer: importWorkbookArrayBuffer,
     exportArchiveExcel: exportArchiveExcel,
     fetchFromGoogleSheetsCsv: fetchFromGoogleSheetsCsv,
     pushToGoogleAppsScript: pushToGoogleAppsScript,

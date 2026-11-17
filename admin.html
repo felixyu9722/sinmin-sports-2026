@@ -320,7 +320,10 @@
         listEl.innerHTML = list.map(function (ev) {
           var isSelected = ev.id === selectedEventId;
           var divLabel = S.getDivisionLabel(ev.group);
-          var divStyle = divLabel === '高中' ? 'background:rgba(56,189,248,0.16); color:#7dd3fc;' : 'background:rgba(16,185,129,0.16); color:#34d399;';
+          var divStyle = divLabel === '高中'
+            ? 'background:rgba(56,189,248,0.16); color:#7dd3fc;'
+            : (divLabel === '全校公开' ? 'background:rgba(168,85,247,0.2); color:#d8b4fe;' : 'background:rgba(16,185,129,0.16); color:#34d399;');
+          var divText = ev.group === '公开' ? '全校公开' : (divLabel + ' · ' + S.escapeHtml(ev.group));
           var badge = ev.status === 'finished'
             ? '<span style="color:#34d399; font-size:0.72rem;">✓ 已完赛</span>'
             : (ev.status === 'prelims_done'
@@ -329,7 +332,7 @@
           return (
             '<button class="event-selector-item ' + (isSelected ? 'active' : '') + '" data-ev-id="' + ev.id + '">' +
               '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-                '<span class="skew-tag" style="' + divStyle + ' padding:2px 7px; font-size:0.72rem;"><span>' + divLabel + ' · ' + S.escapeHtml(ev.group) + '</span></span>' +
+                '<span class="skew-tag" style="' + divStyle + ' padding:2px 7px; font-size:0.72rem;"><span>' + divText + '</span></span>' +
                 badge +
               '</div>' +
               '<div style="font-weight:700; font-size:0.92rem;">' + S.escapeHtml(ev.name) + '</div>' +
@@ -442,13 +445,25 @@
 
           var resultInputsHtml = '';
           if (isField) {
-            resultInputsHtml = (
-              '<div style="display:flex; gap:3px;">' +
-                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt1" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt1 || '') + '" placeholder="试1" />' +
-                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt2" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt2 || '') + '" placeholder="试2" />' +
-                '<input type="text" class="input-control input-mono" style="width:50px; padding:4px 4px; font-size:0.8rem;" data-field="attempt3" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt3 || '') + '" placeholder="试3" />' +
-              '</div>'
-            );
+            if (ev.name && ev.name.indexOf('跳高') !== -1) {
+              resultInputsHtml = (
+                '<div style="display:flex; gap:4px; flex-wrap:wrap;">' +
+                  '<input type="text" class="input-control input-mono" style="width:62px; padding:4px 5px; font-size:0.8rem;" data-field="result" data-idx="' + idx + '" value="' + S.escapeHtml(entry.result || '') + '" placeholder="最佳m" />' +
+                  '<input type="text" class="input-control" style="width:92px; padding:4px 5px; font-size:0.78rem;" data-field="note" data-idx="' + idx + '" value="' + S.escapeHtml(entry.note || '') + '" placeholder="跃高记录" />' +
+                '</div>'
+              );
+            } else {
+              resultInputsHtml = (
+                '<div style="display:grid; grid-template-columns:repeat(3, 50px); gap:3px;">' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt1" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt1 || '') + '" placeholder="试1" />' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt2" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt2 || '') + '" placeholder="试2" />' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt3" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt3 || '') + '" placeholder="试3" />' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt4" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt4 || '') + '" placeholder="试4" />' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt5" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt5 || '') + '" placeholder="试5" />' +
+                  '<input type="text" class="input-control input-mono" style="width:50px; padding:3px 4px; font-size:0.78rem;" data-field="attempt6" data-idx="' + idx + '" value="' + S.escapeHtml(entry.attempt6 || '') + '" placeholder="试6" />' +
+                '</div>'
+              );
+            }
           } else {
             resultInputsHtml = (
               '<input type="text" class="input-control input-mono" style="width:82px; padding:5px 6px; font-size:0.82rem;" data-field="result" data-idx="' + idx + '" value="' + S.escapeHtml(entry.result || '') + '" placeholder="' + (ev.type === 'tug' ? '名次1-4' : '11.42') + '" />'
@@ -540,7 +555,7 @@
               '<thead><tr>' +
                 (activeStage === 'prelim' ? '<th>分组</th>' : '') +
                 '<th>道次</th><th>4位编号 (自动识别)</th><th>姓名 / 班级</th><th>色队</th>' +
-                '<th>' + (isField ? '三次试跳/投 (m)' : (ev.type === 'tug' ? '名次' : '成绩')) + '</th>' +
+                '<th>' + (isField ? ((ev.name && ev.name.indexOf('跳高') !== -1) ? '成绩 / 跃高记录' : '六次试跳/投 (m)') : (ev.type === 'tug' ? '名次' : '成绩')) + '</th>' +
                 '<th>状态</th><th>实时名次/得分预演</th><th class="no-print">操作</th>' +
               '</tr></thead>' +
               '<tbody>' + (tableBodyHtml || '<tr><td colspan="9" style="text-align:center; padding:24px; color:var(--text-secondary);">暂无选手，请点击右上角「+ 添加选手/队伍」或拖入 Excel 导入。</td></tr>') + '</tbody>' +
@@ -586,6 +601,12 @@
           return;
         } else {
           entry[field] = val;
+          if (field === 'result' || field.indexOf('attempt') === 0) {
+            delete entry.tieBreakVal;
+          }
+          if (field === 'result' && ev.name && ev.name.indexOf('跳高') !== -1) {
+            entry.attempt1 = val.trim();
+          }
           if (field === 'name') {
             var matchedStudent = S.findLocalStudent(val);
             if (matchedStudent && matchedStudent.className && !entry.className) {

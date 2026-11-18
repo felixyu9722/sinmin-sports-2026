@@ -64,7 +64,7 @@
         style="padding:5px 10px; font-size:0.82rem; max-width:210px;"></select>
       <button class="btn btn-sm" id="btn-next-ev" title="下一项 / 下一页 (→)">▶</button>
 
-      <button class="btn btn-sm btn-emerald" id="btn-auto-cycle" title="自动轮播：1 四队总榜(10秒) ➔ 3 奖杯细节(10秒) ➔ 4 已完赛单项(各4秒) ➔ 6 预赛晋级(各4秒)">🔄 自动轮播: 开 (1➔3➔4➔6)</button>
+      <button class="btn btn-sm btn-emerald" id="btn-auto-cycle" title="自动轮播：1 四队总榜(10秒) ➔ 3 奖杯细节(15秒) ➔ 4 已完赛单项(各6秒) ➔ 7 领奖台(各4秒)">🔄 自动轮播: 开 (1➔3➔4➔7)</button>
       <button class="btn btn-sm btn-primary" id="btn-sound-toggle">🔊 音效: 开</button>
       <button class="btn btn-sm" id="btn-fullscreen" title="全屏投影">⛶ 全屏</button>
       <button class="btn btn-sm" id="btn-hide-ctrl" title="收起控制栏用于纯净投影">🙈 收起</button>
@@ -759,7 +759,7 @@
         }
       }
 
-      // 构建自动轮播队列：1 (10s) -> 3 (10s) -> 4 已完赛单项逐一 (4s) -> 6 预赛晋级逐一 (4s)
+      // 构建自动轮播队列：1 (10s) -> 3 (15s) -> 4 已完赛单项逐一 (6s) -> 7 领奖台逐一 (4s)
       function getFinishedFinalsEvents() {
         return (state.events || []).filter(function (ev) {
           if (!ev.finalEntries || ev.finalEntries.length === 0) return false;
@@ -768,26 +768,17 @@
         });
       }
 
-      function getCompletedPrelimsEvents() {
-        return (state.events || []).filter(function (ev) {
-          if (!ev.prelimEntries || ev.prelimEntries.length === 0) return false;
-          var hasMarks = ev.prelimEntries.some(function (e) { return e.result && String(e.result).trim() !== ''; });
-          if (!hasMarks) return false;
-          var qInfo = S.computePrelimQualifiers(ev);
-          return !!(qInfo && qInfo.qualifiers && qInfo.qualifiers.length > 0);
-        });
-      }
-
       function buildAutoCycleQueue() {
         var queue = [
           { mode: 'standings', eventId: null, waitMs: 10000 },
-          { mode: 'trophies', eventId: null, waitMs: 10000 }
+          { mode: 'trophies', eventId: null, waitMs: 15000 }
         ];
-        getFinishedFinalsEvents().forEach(function (ev) {
-          queue.push({ mode: 'live_results', eventId: ev.id, waitMs: 4000 });
+        var finishedEvents = getFinishedFinalsEvents();
+        finishedEvents.forEach(function (ev) {
+          queue.push({ mode: 'live_results', eventId: ev.id, waitMs: 6000 });
         });
-        getCompletedPrelimsEvents().forEach(function (ev) {
-          queue.push({ mode: 'qualifiers', eventId: ev.id, waitMs: 4000 });
+        finishedEvents.forEach(function (ev) {
+          queue.push({ mode: 'podium', eventId: ev.id, waitMs: 4000 });
         });
         return queue;
       }
@@ -803,7 +794,7 @@
       function updateAutoCycleButton() {
         var btn = document.getElementById('btn-auto-cycle');
         if (!btn) return;
-        btn.textContent = autoCycleEnabled ? '🔄 自动轮播: 开 (1➔3➔4➔6)' : '🔄 自动轮播: 关';
+        btn.textContent = autoCycleEnabled ? '🔄 自动轮播: 开 (1➔3➔4➔7)' : '🔄 自动轮播: 关';
         btn.classList.toggle('btn-emerald', autoCycleEnabled);
       }
 

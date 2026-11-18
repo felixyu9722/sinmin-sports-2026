@@ -1542,6 +1542,191 @@ body.tv-body {
   }
 }
 
+@media (max-width: 900px) {
+  body.tv-body {
+    height: auto;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .tv-topbar {
+    height: auto;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .tv-brand {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tv-brand .school-logo-wrap {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+  }
+  .tv-brand h1 {
+    font-size: 1.15rem;
+    flex-wrap: wrap;
+  }
+  .tv-brand .tv-sub {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+  .tv-meta-right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  .tv-meta-right .page-switcher-bar {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  .on-air-badge-lg {
+    padding: 4px 10px;
+    font-size: 0.82rem;
+  }
+  .tv-clock {
+    font-size: 1.35rem !important;
+  }
+  .tv-control-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  #tv-event-select {
+    max-width: 100% !important;
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+  .tv-show-ctrl-fab {
+    top: auto;
+    bottom: 56px;
+    right: 12px;
+  }
+  .tv-urgent-banner {
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+  }
+  .tv-stage {
+    padding: 14px;
+    overflow-x: hidden;
+    overflow-y: visible;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tv-stage-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .tv-stage-header > div[style*="text-align:right"] {
+    text-align: left !important;
+  }
+  .tv-event-title {
+    font-size: 1.45rem !important;
+  }
+  .tv-record-pill {
+    padding: 8px 14px;
+    text-align: left;
+  }
+  .tv-standings-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .tv-house-panel {
+    padding: 16px;
+    min-width: 0;
+  }
+  .tv-house-score {
+    font-size: 2.6rem;
+  }
+  .tv-live-results-split {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .tv-lanes-list {
+    overflow-x: hidden;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tv-lane-row.animate__backInRight,
+  .tv-lane-row.animate__fadeInRight {
+    animation-name: fadeInUp;
+  }
+  .tv-lane-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .tv-lane-row > :nth-child(1) {
+    font-size: 1.4rem !important;
+    min-width: 36px;
+    text-align: center;
+  }
+  .tv-lane-row > :nth-child(3) {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+  .tv-athlete-name {
+    font-size: 1.1rem;
+  }
+  .tv-result-time {
+    font-size: 1.3rem !important;
+    margin-left: auto;
+    text-align: right;
+  }
+  .tv-points-badge {
+    font-size: 0.92rem;
+    padding: 4px 10px;
+  }
+  .tv-trophy-champion-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .tv-trophy-ranks-mini {
+    min-width: 0 !important;
+    width: 100%;
+  }
+  .tv-mvp-trophies-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .tv-trophy-specs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .tv-podium-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .podium-1, .podium-2, .podium-3 {
+    min-height: auto;
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .tv-ticker {
+    max-width: 100%;
+    height: 46px;
+  }
+  .tv-ticker-label {
+    padding: 0 12px;
+    font-size: 0.85rem;
+  }
+  .tv-ticker-track {
+    font-size: 0.95rem;
+  }
+  .tv-record-overlay {
+    padding: 18px;
+  }
+  .tv-record-flash-title {
+    font-size: 2.6rem;
+  }
+}
+
 @media (max-width: 680px) {
   .scoreboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -32,7 +32,7 @@
     </div>
 
     <div class="tv-meta-right">
-      <nav class="page-switcher-bar" aria-label="页面切换与返回">
+      <nav class="page-switcher-bar" id="tv-page-switcher" aria-label="页面切换与返回">
         <a href="./index.html" class="switcher-pill" title="返回公开查询与总成绩首页">⬅ 返回成绩首页</a>
         <a href="./admin.html" class="switcher-pill" title="进入现场录入控制台">🎛️ 控制台</a>
         <span class="switcher-pill active">📺 电视大屏</span>
@@ -64,7 +64,7 @@
         style="padding:5px 10px; font-size:0.82rem; max-width:210px;"></select>
       <button class="btn btn-sm" id="btn-next-ev" title="下一项 / 下一页 (→)">▶</button>
 
-      <button class="btn btn-sm" id="btn-auto-cycle" title="在总榜、当天决赛总览、奖杯细节间每12秒自动切换">🔄 自动轮播: 关</button>
+      <button class="btn btn-sm btn-emerald" id="btn-auto-cycle" title="自动轮播：1 四队总榜(10秒) ➔ 3 奖杯细节(10秒) ➔ 4 已完赛单项(各4秒) ➔ 6 预赛晋级(各4秒)">🔄 自动轮播: 开 (1➔3➔4➔6)</button>
       <button class="btn btn-sm btn-primary" id="btn-sound-toggle">🔊 音效: 开</button>
       <button class="btn btn-sm" id="btn-fullscreen" title="全屏投影">⛶ 全屏</button>
       <button class="btn btn-sm" id="btn-hide-ctrl" title="收起控制栏用于纯净投影">🙈 收起</button>
@@ -122,19 +122,40 @@
       var tvCmd = S.loadTvCommand(state);
       if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
       var qsMode = '';
+      var fromLive = false;
+      var qsAutoCycle = '';
       try {
-        qsMode = new URLSearchParams(window.location.search).get('mode') || '';
+        var urlParams = new URLSearchParams(window.location.search);
+        qsMode = urlParams.get('mode') || '';
+        fromLive = (urlParams.get('from') === 'live' || urlParams.get('viewer') === 'public');
+        qsAutoCycle = urlParams.get('autocycle') || '';
         if (qsMode && S.TV_MODES[qsMode]) tvCmd.mode = qsMode;
       } catch (e) {}
 
-      var soundEnabled = true;
+      var soundEnabled = !fromLive;
       var lastFanfareTs = tvCmd.playFanfareAt || 0;
+      var lastHandledPushAt = tvCmd.pushedAt || ((state.meta && state.meta.remoteTvCommand && state.meta.remoteTvCommand.pushedAt) || 0);
       var overlayTimer = null;
       var allFinalsPage = 0;
       var allFinalsDivision = 'all'; // 'all' | 'senior' | 'junior'
       var autoCycleTimer = null;
-      var autoCycleEnabled = false;
-      var cycleOrder = ['standings', 'all_finals', 'trophies'];
+      var autoCycleEnabled = (qsAutoCycle !== '0');
+      var cycleStepIndex = 0;
+
+      if (fromLive) {
+        document.body.classList.add('tv-public-viewer');
+        var switcherEl = document.getElementById('tv-page-switcher');
+        if (switcherEl) {
+          switcherEl.innerHTML =
+            '<a href="./live.html" class="switcher-pill" title="返回师生实时查分榜">⬅ 返回师生查分榜</a>' +
+            '<span class="switcher-pill active">📺 电视大屏直播</span>';
+        }
+        var soundBtnInit = document.getElementById('btn-sound-toggle');
+        if (soundBtnInit) {
+          soundBtnInit.textContent = '🔇 音效: 关';
+          soundBtnInit.classList.remove('btn-primary');
+        }
+      }
 
       // 实时时钟（仅显示时:分，不显示秒针）
       function updateClock() {
@@ -416,7 +437,7 @@
           '<div class="tv-trophy-grid">' +
           // 左栏：全场总冠军杯 + 4座最佳运动员奖杯
           '<div style="display:flex; flex-direction:column; gap:12px;">' +
-          '<div class="tv-trophy-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6); flex-direction:row; align-items:center; justify-content:space-between; gap:16px;">' +
+          '<div class="tv-trophy-card tv-trophy-champion-card animate__animated animate__zoomIn" style="border-color:rgba(255,215,0,0.6); flex-direction:row; align-items:center; justify-content:space-between; gap:16px;">' +
           '<div>' +
           '<div style="font-size:0.9rem; color:var(--gold); font-weight:800;">🏆 全场总冠军杯 (1座)</div>' +
           '<div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:6px;">颁发标准：以全场四队总积分为准</div>' +
@@ -426,7 +447,7 @@
           '</div>' +
           '<div style="font-size:0.86rem; color:var(--text-secondary); margin-top:2px;">🥇' + champion.gold + ' 🥈' + champion.silver + ' 🥉' + champion.bronze + '</div>' +
           '</div>' +
-          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; min-width:240px;">' +
+          '<div class="tv-trophy-ranks-mini" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; min-width:240px;">' +
           standings.rankedTeams.map(function (t) {
             return '<div style="padding:6px 10px; border-radius:8px; background:rgba(7,12,24,0.72); border-left:3px solid ' + t.color + '; display:flex; justify-content:space-between; font-size:0.84rem;"><span>#' + t.rank + ' ' + S.escapeHtml(t.name) + '</span><strong style="color:' + t.color + ';">' + t.points + '分</strong></div>';
           }).join('') +
@@ -434,11 +455,11 @@
           '</div>' +
 
           '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="flex:1;">' +
-          '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">' +
           '<div style="font-size:1.05rem; color:var(--gold); font-weight:800;">👑 最佳运动员奖杯 (4座：男甲 / 女甲 / 男乙 / 女乙)</div>' +
           '<span style="font-size:0.76rem; color:var(--text-secondary);">章程 10.5：个人金牌最多者，同数共享</span>' +
           '</div>' +
-          '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; align-content:center;">' +
+          '<div class="tv-mvp-trophies-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; align-content:center;">' +
           S.GROUP_ORDER.map(function (grp) {
             var info = standings.bestAthletes[grp];
             return (
@@ -474,14 +495,14 @@
           // 右栏：章程第9条实体奖牌分配细节与统计
           '<div class="tv-trophy-card animate__animated animate__fadeInUp" style="border-color:rgba(56,189,248,0.38);">' +
           '<div style="font-size:1.05rem; color:#7dd3fc; font-weight:800;">🎖️ 实体奖牌颁发规格与各队实领统计 (章程 9.1 - 9.4)</div>' +
-          '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">' +
+          '<div class="tv-trophy-specs-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">' +
           '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.1 个人项目</div><div style="font-weight:800; color:var(--gold); font-size:1.05rem;">金/银/铜 各1面</div></div>' +
           '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.2 接力赛</div><div style="font-weight:800; color:#34d399; font-size:1.05rem;">前三名 各5面</div></div>' +
           '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.3 拔河赛</div><div style="font-weight:800; color:#38bdf8; font-size:1.05rem;">前三名 各8面</div></div>' +
           '<div style="padding:8px 10px; border-radius:10px; background:rgba(7,12,24,0.75); text-align:center;"><div style="font-size:0.74rem; color:var(--text-secondary);">9.4 大队接力</div><div style="font-weight:800; color:#fbbf24; font-size:1.05rem;">前三名 各8面</div></div>' +
           '</div>' +
 
-          '<div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">' +
+          '<div class="tv-trophy-specs-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">' +
           standings.rankedTeams.map(function (t) {
             return (
               '<div style="padding:10px 12px; border-radius:12px; background:rgba(7,12,24,0.8); border:1px solid ' + t.color + ';">' +
@@ -493,7 +514,7 @@
           }).join('') +
           '</div>' +
 
-          '<div style="flex:1; overflow-y:auto; border-radius:10px; background:rgba(7,12,24,0.65); padding:8px 12px;">' +
+          '<div class="data-table-wrap" style="flex:1; overflow-y:auto; border-radius:10px; background:rgba(7,12,24,0.65); padding:8px 12px;">' +
           '<table class="data-table" style="font-size:0.84rem;">' +
           '<thead><tr><th>已完赛项目</th><th>规格</th><th>🔴红</th><th>🟡黄</th><th>🔵蓝</th><th>🟢青</th></tr></thead>' +
           '<tbody>' +
@@ -554,7 +575,7 @@
         );
 
         var bodyContentHtml = (ev.eventPhoto && ev.showPhotoPublic !== false)
-          ? '<div style="display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:18px; align-items:stretch; flex:1; min-height:0;">' +
+          ? '<div class="tv-live-results-split" style="display:grid; grid-template-columns:minmax(0, 1fr) 360px; gap:18px; align-items:stretch; flex:1; min-height:0;">' +
               lanesHtml +
               '<div style="display:flex; flex-direction:column; padding:12px; border-radius:16px; background:rgba(13,20,36,0.88); border:1px solid rgba(56,189,248,0.35); overflow:hidden;">' +
                 '<div style="font-size:0.86rem; font-weight:800; color:#7dd3fc; margin-bottom:8px; text-align:center;">📸 现场实拍 / 成绩单对照</div>' +
@@ -732,6 +753,80 @@
         var nextIdx = (idx + delta + list.length) % list.length;
         tvCmd.eventId = list[nextIdx].id;
         renderStage(false);
+        if (autoCycleEnabled) {
+          syncCycleIndexToCurrent();
+          scheduleNextCycle(10000);
+        }
+      }
+
+      // 构建自动轮播队列：1 (10s) -> 3 (10s) -> 4 已完赛单项逐一 (4s) -> 6 预赛晋级逐一 (4s)
+      function getFinishedFinalsEvents() {
+        return (state.events || []).filter(function (ev) {
+          if (!ev.finalEntries || ev.finalEntries.length === 0) return false;
+          var computed = S.calculateEntries(ev.finalEntries, ev, true);
+          return ev.status === 'finished' || computed.some(function (x) { return x.rank !== null; });
+        });
+      }
+
+      function getCompletedPrelimsEvents() {
+        return (state.events || []).filter(function (ev) {
+          if (!ev.prelimEntries || ev.prelimEntries.length === 0) return false;
+          var hasMarks = ev.prelimEntries.some(function (e) { return e.result && String(e.result).trim() !== ''; });
+          if (!hasMarks) return false;
+          var qInfo = S.computePrelimQualifiers(ev);
+          return !!(qInfo && qInfo.qualifiers && qInfo.qualifiers.length > 0);
+        });
+      }
+
+      function buildAutoCycleQueue() {
+        var queue = [
+          { mode: 'standings', eventId: null, waitMs: 10000 },
+          { mode: 'trophies', eventId: null, waitMs: 10000 }
+        ];
+        getFinishedFinalsEvents().forEach(function (ev) {
+          queue.push({ mode: 'live_results', eventId: ev.id, waitMs: 4000 });
+        });
+        getCompletedPrelimsEvents().forEach(function (ev) {
+          queue.push({ mode: 'qualifiers', eventId: ev.id, waitMs: 4000 });
+        });
+        return queue;
+      }
+
+      function syncCycleIndexToCurrent() {
+        var queue = buildAutoCycleQueue();
+        var idx = queue.findIndex(function (step) {
+          return step.mode === tvCmd.mode && (!step.eventId || step.eventId === tvCmd.eventId);
+        });
+        if (idx >= 0) cycleStepIndex = idx;
+      }
+
+      function updateAutoCycleButton() {
+        var btn = document.getElementById('btn-auto-cycle');
+        if (!btn) return;
+        btn.textContent = autoCycleEnabled ? '🔄 自动轮播: 开 (1➔3➔4➔6)' : '🔄 自动轮播: 关';
+        btn.classList.toggle('btn-emerald', autoCycleEnabled);
+      }
+
+      function scheduleNextCycle(overrideWaitMs) {
+        if (autoCycleTimer) {
+          clearTimeout(autoCycleTimer);
+          autoCycleTimer = null;
+        }
+        if (!autoCycleEnabled) return;
+        var queue = buildAutoCycleQueue();
+        if (queue.length === 0) return;
+        var curStep = queue[cycleStepIndex % queue.length] || queue[0];
+        var delay = typeof overrideWaitMs === 'number' ? overrideWaitMs : (curStep.waitMs || 10000);
+        autoCycleTimer = setTimeout(function () {
+          var freshQueue = buildAutoCycleQueue();
+          if (freshQueue.length === 0) return;
+          cycleStepIndex = (cycleStepIndex + 1) % freshQueue.length;
+          var nextStep = freshQueue[cycleStepIndex];
+          tvCmd.mode = nextStep.mode;
+          if (nextStep.eventId) tvCmd.eventId = nextStep.eventId;
+          renderStage(false);
+          scheduleNextCycle();
+        }, delay);
       }
 
       // 接收控制台指令与状态同步
@@ -747,7 +842,12 @@
           if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
           renderTickerAndNotice();
           var isFreshPush = newCmd.pushedAt && newCmd.pushedAt !== prevPush;
+          if (newCmd.pushedAt) lastHandledPushAt = newCmd.pushedAt;
           renderStage(isFreshPush);
+          if (isFreshPush && autoCycleEnabled) {
+            syncCycleIndexToCurrent();
+            scheduleNextCycle(15000);
+          }
 
           if (newCmd.playFanfareAt && newCmd.playFanfareAt !== lastFanfareTs) {
             lastFanfareTs = newCmd.playFanfareAt;
@@ -767,6 +867,10 @@
         btn.addEventListener('click', function () {
           tvCmd.mode = btn.getAttribute('data-local-mode');
           renderStage(true);
+          if (autoCycleEnabled) {
+            syncCycleIndexToCurrent();
+            scheduleNextCycle(10000);
+          }
         });
       });
 
@@ -776,27 +880,30 @@
           tvCmd.mode = 'live_results';
         }
         renderStage(false);
+        if (autoCycleEnabled) {
+          syncCycleIndexToCurrent();
+          scheduleNextCycle(10000);
+        }
       });
       document.getElementById('btn-prev-ev').addEventListener('click', function () { stepEvent(-1); });
       document.getElementById('btn-next-ev').addEventListener('click', function () { stepEvent(1); });
 
       document.getElementById('btn-auto-cycle').addEventListener('click', function () {
         autoCycleEnabled = !autoCycleEnabled;
-        this.textContent = autoCycleEnabled ? '🔄 自动轮播: 开' : '🔄 自动轮播: 关';
-        this.classList.toggle('btn-emerald', autoCycleEnabled);
-        if (autoCycleTimer) clearInterval(autoCycleTimer);
+        updateAutoCycleButton();
         if (autoCycleEnabled) {
-          autoCycleTimer = setInterval(function () {
-            var curIdx = cycleOrder.indexOf(tvCmd.mode);
-            tvCmd.mode = cycleOrder[(curIdx + 1) % cycleOrder.length];
-            renderStage(false);
-          }, 12000);
+          syncCycleIndexToCurrent();
+          scheduleNextCycle();
+        } else if (autoCycleTimer) {
+          clearTimeout(autoCycleTimer);
+          autoCycleTimer = null;
         }
       });
 
       document.getElementById('btn-sound-toggle').addEventListener('click', function () {
         soundEnabled = !soundEnabled;
         this.textContent = soundEnabled ? '🔊 音效: 开' : '🔇 音效: 关';
+        this.classList.toggle('btn-primary', soundEnabled);
         if (soundEnabled) S.playResultChime();
       });
 
@@ -826,6 +933,10 @@
         if (e.key >= '1' && e.key <= '7') {
           tvCmd.mode = modeKeys[Number(e.key) - 1];
           renderStage(false);
+          if (autoCycleEnabled) {
+            syncCycleIndexToCurrent();
+            scheduleNextCycle(10000);
+          }
         } else if (e.key === 'ArrowLeft') {
           stepEvent(-1);
         } else if (e.key === 'ArrowRight') {
@@ -833,16 +944,24 @@
         }
       });
 
-      // 第二电视机云端自动同步（网页访问时每 15 秒拉取最新成绩与远程切屏指令）
+      // 第二电视机与师生端云端自动同步（每 15 秒拉取最新成绩与远程切屏指令）
       function checkRemoteTvSync() {
         S.fetchFromRemoteStateJson('', state, false).then(function (res) {
           if (res && res.updated && res.state) {
             state = res.state;
             S.saveState(state, false, true);
             var remoteCmd = state.meta && state.meta.remoteTvCommand;
-            if (!qsMode && remoteCmd && remoteCmd.pushedAt && remoteCmd.pushedAt !== tvCmd.pushedAt) {
-              tvCmd = Object.assign({}, tvCmd, remoteCmd);
-              if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+            var hasFreshRemotePush = !qsMode && remoteCmd && remoteCmd.pushedAt && remoteCmd.pushedAt !== lastHandledPushAt;
+            if (hasFreshRemotePush) {
+              lastHandledPushAt = remoteCmd.pushedAt;
+              if (Date.now() - remoteCmd.pushedAt < 180000) {
+                tvCmd = Object.assign({}, tvCmd, remoteCmd);
+                if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+                if (autoCycleEnabled) {
+                  syncCycleIndexToCurrent();
+                  scheduleNextCycle(15000);
+                }
+              }
             }
             renderTickerAndNotice();
             renderStage(false);
@@ -850,8 +969,16 @@
         }).catch(function () {});
       }
 
+      if (!qsMode && autoCycleEnabled) {
+        tvCmd.mode = 'standings';
+        cycleStepIndex = 0;
+      } else {
+        syncCycleIndexToCurrent();
+      }
+      updateAutoCycleButton();
       renderTickerAndNotice();
       renderStage(false);
+      if (autoCycleEnabled) scheduleNextCycle();
       checkRemoteTvSync();
       setInterval(checkRemoteTvSync, 15000);
     })();

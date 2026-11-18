@@ -5881,6 +5881,174 @@
     );
   }
 
+  function initBgMusicPlayer(options) {
+    if (typeof document === 'undefined') return null;
+    var existing = document.getElementById('bgm-floating-bar');
+    if (existing) return existing;
+
+    var opts = options || {};
+    var vol = typeof opts.defaultVolume === 'number' ? opts.defaultVolume : 0.22;
+    var tracks = [
+      { title: '《新民少年・勇往直前》①', src: encodeURI('./MP3/《新民少年・勇往直前》 1.mp3') },
+      { title: '《新民少年・勇往直前》②', src: encodeURI('./MP3/《新民少年・勇往直前》 2.mp3') },
+      { title: '《新民少年・勇往直前》③', src: encodeURI('./MP3/《新民少年・勇往直前》 3.mp3') }
+    ];
+
+    var trackIdx = 0;
+    var userPaused = false;
+    var waitingUnlock = false;
+    var errorStreak = 0;
+
+    var audio = document.createElement('audio');
+    audio.id = 'sinmin-bgm-audio';
+    audio.preload = 'auto';
+    audio.src = tracks[trackIdx].src;
+    try {
+      audio.volume = vol;
+    } catch (e) { /* ignore iOS readonly volume */ }
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    var bar = document.createElement('div');
+    bar.id = 'bgm-floating-bar';
+    bar.className = 'bgm-floating-bar no-print';
+    bar.innerHTML =
+      '<button type="button" class="bgm-pill-btn" id="btn-bgm-toggle" title="点击开启或暂停背景主题曲">🎵 主题曲加载中</button>' +
+      '<button type="button" class="bgm-next-btn" id="btn-bgm-next" title="切换下一首《新民少年・勇往直前》">⇄ 1/' + tracks.length + '</button>';
+    document.body.appendChild(bar);
+
+    var toggleBtn = document.getElementById('btn-bgm-toggle');
+    var nextBtn = document.getElementById('btn-bgm-next');
+
+    function updateUi() {
+      var trackTitle = tracks[trackIdx].title;
+      nextBtn.textContent = '⇄ ' + (trackIdx + 1) + '/' + tracks.length;
+      nextBtn.setAttribute('title', '当前：' + trackTitle + '（点击切歌）');
+      if (!audio.paused) {
+        toggleBtn.textContent = '🎵 主题曲: 播放中';
+        bar.classList.add('is-playing');
+        bar.classList.remove('is-waiting');
+      } else if (userPaused) {
+        toggleBtn.textContent = '🔇 主题曲: 静音';
+        bar.classList.remove('is-playing', 'is-waiting');
+      } else if (waitingUnlock) {
+        toggleBtn.textContent = '🎵 轻触播放主题曲';
+        bar.classList.add('is-waiting');
+        bar.classList.remove('is-playing');
+      } else {
+        toggleBtn.textContent = '🎵 主题曲: 准备中';
+        bar.classList.remove('is-playing', 'is-waiting');
+      }
+    }
+
+    var gestureEvents = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+    function removeUnlockListeners() {
+      gestureEvents.forEach(function (evName) {
+        document.removeEventListener(evName, onFirstGesture, true);
+      });
+    }
+    function addUnlockListeners() {
+      gestureEvents.forEach(function (evName) {
+        document.addEventListener(evName, onFirstGesture, true);
+      });
+    }
+    function onFirstGesture(e) {
+      if (userPaused) {
+        removeUnlockListeners();
+        return;
+      }
+      if (e && e.target && e.target.closest && e.target.closest('#bgm-floating-bar')) {
+        return;
+      }
+      tryPlay(false);
+    }
+
+    function tryPlay(isUserClick) {
+      try {
+        audio.volume = vol;
+      } catch (e) { /* ignore */ }
+      try {
+        var playPromise = audio.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.then(function () {
+            waitingUnlock = false;
+            errorStreak = 0;
+            removeUnlockListeners();
+            updateUi();
+          }).catch(function (err) {
+            if (err && err.name === 'AbortError') return;
+            if (!userPaused) {
+              waitingUnlock = true;
+              addUnlockListeners();
+            }
+            if (isUserClick && err && err.name === 'NotAllowedError') {
+              showToast('请再轻触一次以播放背景主题曲');
+            }
+            updateUi();
+          });
+        } else {
+          waitingUnlock = false;
+          removeUnlockListeners();
+          updateUi();
+        }
+      } catch (err) {
+        if (!userPaused) {
+          waitingUnlock = true;
+          addUnlockListeners();
+        }
+        updateUi();
+      }
+    }
+
+    function playTrack(idx, notify) {
+      trackIdx = (idx + tracks.length) % tracks.length;
+      audio.src = tracks[trackIdx].src;
+      userPaused = false;
+      updateUi();
+      tryPlay(notify);
+      if (notify) showToast('🎵 正在播放：' + tracks[trackIdx].title);
+    }
+
+    audio.addEventListener('ended', function () {
+      if (!userPaused) {
+        playTrack(trackIdx + 1, false);
+      }
+    });
+    audio.addEventListener('error', function () {
+      errorStreak += 1;
+      if (!userPaused && errorStreak < tracks.length) {
+        playTrack(trackIdx + 1, false);
+      } else {
+        waitingUnlock = false;
+        updateUi();
+      }
+    });
+    audio.addEventListener('play', updateUi);
+    audio.addEventListener('pause', updateUi);
+
+    bar.addEventListener('click', function (e) { e.stopPropagation(); });
+    toggleBtn.addEventListener('click', function () {
+      if (!audio.paused) {
+        userPaused = true;
+        waitingUnlock = false;
+        removeUnlockListeners();
+        audio.pause();
+        updateUi();
+      } else {
+        userPaused = false;
+        tryPlay(true);
+      }
+    });
+    nextBtn.addEventListener('click', function () {
+      errorStreak = 0;
+      playTrack(trackIdx + 1, true);
+    });
+
+    updateUi();
+    tryPlay(false);
+    return { audio: audio, bar: bar, tracks: tracks };
+  }
+
   global.SinMinSports = {
     TEAMS: TEAMS,
     TEAM_ORDER: TEAM_ORDER,
@@ -5945,6 +6113,7 @@
     renderDayTabButtons: renderDayTabButtons,
     renderDailyCardsStrip: renderDailyCardsStrip,
     renderPublicTopWidgets: renderPublicTopWidgets,
-    bindPublicDayAndJump: bindPublicDayAndJump
+    bindPublicDayAndJump: bindPublicDayAndJump,
+    initBgMusicPlayer: initBgMusicPlayer
   };
 })(window);

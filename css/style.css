@@ -1833,6 +1833,57 @@ body.tv-public-viewer .tv-show-ctrl-fab {
     grid-auto-columns: minmax(218px, 248px);
     gap: 10px;
   }
+  .bgm-floating-bar {
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
+/* 右下角轻柔背景主题曲悬浮控制胶囊 */
+.bgm-floating-bar {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 95;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: rgba(9, 14, 28, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+.bgm-floating-bar.is-playing {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+}
+.bgm-floating-bar.is-waiting {
+  border-color: rgba(251, 191, 36, 0.6);
+}
+.bgm-pill-btn,
+.bgm-next-btn {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 7px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.16s, color 0.16s;
+}
+.bgm-pill-btn:hover,
+.bgm-next-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+.bgm-next-btn {
+  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  color: #7dd3fc;
+  font-family: var(--font-mono);
 }
 
 /* ==========================================================================
@@ -1843,7 +1894,7 @@ body.tv-public-viewer .tv-show-ctrl-fab {
     background: #ffffff !important;
     color: #000000 !important;
   }
-  .no-print, .top-navbar, .admin-sidebar-col, .admin-director-col, .toast-stack {
+  .no-print, .top-navbar, .admin-sidebar-col, .admin-director-col, .toast-stack, .bgm-floating-bar {
     display: none !important;
   }
   .admin-layout {

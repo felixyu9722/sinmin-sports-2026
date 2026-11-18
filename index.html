@@ -47,6 +47,36 @@
   </header>
 
   <main class="container">
+    <!-- 顶部无缝 LIVE 慢速滚动战报条 -->
+    <section class="public-live-ticker" id="public-live-ticker" aria-label="LIVE 实时战报滚动条" title="点击可暂停或继续滚动">
+      <div class="public-ticker-badge">
+        <span class="live-black-badge">LIVE</span>
+        <span class="public-ticker-badge-text">实时战报</span>
+      </div>
+      <div class="public-ticker-viewport">
+        <div class="public-ticker-track" id="public-ticker-track">
+          <span class="public-ticker-copy">新民独立中学 2026 年度运动会实时战报加载中...</span>
+          <span class="public-ticker-copy" aria-hidden="true">新民独立中学 2026 年度运动会实时战报加载中...</span>
+        </div>
+      </div>
+      <button type="button" class="public-ticker-toggle" id="btn-ticker-toggle" aria-label="暂停滚动" title="点击暂停或继续滚动">⏸</button>
+    </section>
+
+    <!-- LIVE 滚动条正下方：每日项目速览与日期切换 -->
+    <section class="glass-panel daily-spotlight-panel" id="daily-spotlight-section" aria-label="每日比赛项目速览">
+      <div class="daily-spotlight-head">
+        <div>
+          <h2 class="section-title">
+            <span>📅</span>
+            <span>每日项目赛程与战况速览</span>
+          </h2>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;" id="daily-spotlight-subtitle">点击项目卡片直达下方完整成绩与名单</div>
+        </div>
+        <div class="filter-chips" id="daily-day-tabs"></div>
+      </div>
+      <div class="daily-cards-strip" id="daily-cards-strip"></div>
+    </section>
+
     <!-- 置顶：四色队伍实时总积分榜 -->
     <section aria-label="四色队伍总积分榜">
       <div class="section-header">
@@ -97,6 +127,11 @@
           <span class="bib-badge bib-white"><span class="bib-color-block team-dot-red"></span><span class="bib-num-text">1101</span></span>
           <span style="font-size:0.76rem; color:var(--text-secondary);">左侧色块代表红/黄/蓝/青队</span>
         </div>
+      </div>
+
+      <div class="filter-row">
+        <span style="font-size:0.78rem; color:var(--text-secondary); min-width:52px;">比赛日期：</span>
+        <div class="filter-chips" id="filter-day"></div>
       </div>
 
       <div class="filter-row">
@@ -202,11 +237,12 @@
     (function () {
       var S = window.SinMinSports;
       var state = S.loadState();
-      var filters = { group: 'all', team: 'all', type: 'all', query: '' };
+      var filters = { day: S.getDefaultActiveDay(), group: 'all', team: 'all', type: 'all', query: '' };
       var activeStageTab = {}; // eventId -> 'final' | 'prelim'
       var pollTimer = null;
 
       function renderAll(highlightAnimate) {
+        S.renderPublicTopWidgets(state, filters);
         renderScoreboard(highlightAnimate);
         renderMvpAndRecords();
         renderAthleteSearchCard();
@@ -405,6 +441,7 @@
         var q = filters.query.trim().toLowerCase();
 
         var filteredEvents = (state.events || []).filter(function (ev) {
+          if (filters.day && filters.day !== 'all' && S.getEventDayBucket(ev) !== filters.day) return false;
           if (filters.group !== 'all') {
             if (filters.group === 'senior' && ev.group !== '男甲' && ev.group !== '女甲') return false;
             else if (filters.group === 'junior' && ev.group !== '男乙' && ev.group !== '女乙') return false;
@@ -433,7 +470,10 @@
         document.getElementById('events-count-label').textContent = '显示 ' + filteredEvents.length + ' / ' + (state.events || []).length + ' 个项目';
 
         if (filteredEvents.length === 0) {
-          feedEl.innerHTML = '<div class="glass-panel" style="padding:36px; text-align:center; color:var(--text-secondary);">当前筛选条件下暂无赛事项目</div>';
+          feedEl.innerHTML = '<div class="glass-panel" style="padding:36px; text-align:center; color:var(--text-secondary);">' +
+            '当前筛选条件下暂无赛事项目' +
+            (filters.day !== 'all' ? '<div style="margin-top:12px;"><button type="button" class="chip-btn active" id="btn-show-all-days">查看全部 ' + (state.events || []).length + ' 个赛期项目</button></div>' : '') +
+            '</div>';
           return;
         }
 
@@ -536,7 +576,7 @@
           }
 
           return (
-            '<article class="event-card animate__animated animate__fadeIn">' +
+            '<article id="event-card-' + S.escapeHtml(ev.id) + '" class="event-card animate__animated animate__fadeIn">' +
               '<div class="event-card-head">' +
                 '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
                   '<span class="skew-tag" style="background:' + (S.getDivisionLabel(ev.group) === '高中' ? 'rgba(56,189,248,0.18); color:#7dd3fc;' : (S.getDivisionLabel(ev.group) === '全校公开' ? 'rgba(168,85,247,0.2); color:#d8b4fe;' : 'rgba(16,185,129,0.18); color:#34d399;')) + ' padding:4px 10px; font-size:0.8rem;"><span>' + (ev.group === '公开' ? '全校公开' : S.getDivisionLabel(ev.group) + ' · ' + S.escapeHtml(ev.group)) + '</span></span>' +
@@ -593,6 +633,10 @@
       setupChipFilter('filter-group', 'group');
       setupChipFilter('filter-team', 'team');
       setupChipFilter('filter-type', 'type');
+      S.bindPublicDayAndJump(function () { return state; }, filters, function () {
+        renderAthleteSearchCard();
+        renderEventsFeed();
+      });
 
       var searchInput = document.getElementById('search-input');
       var clearBtn = document.getElementById('btn-clear-search');

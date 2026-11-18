@@ -5287,15 +5287,46 @@
     }, durationMs || 2800);
   }
 
+  function getEventDayBucket(ev) {
+    var sch = String((ev && ev.scheduleTime) || '');
+    if (sch.indexOf('18/11') !== -1) return '18/11';
+    if (sch.indexOf('02/12') !== -1) return '02/12';
+    if (sch.indexOf('15/11') !== -1 || sch.indexOf('16/11') !== -1) return 'early';
+    return '02/12';
+  }
+
+  function getDefaultActiveDay(nowDate) {
+    var d = nowDate instanceof Date ? nowDate : new Date();
+    var ymd = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    if (ymd <= 20261116) return 'early';
+    if (ymd <= 20261130) return '18/11';
+    return '02/12';
+  }
+
   function buildTickerText(state) {
     if (state.meta && state.meta.tickerOverride) {
       return state.meta.tickerOverride;
     }
     var items = [];
+    var urgent = state.meta && state.meta.remoteTvCommand && state.meta.remoteTvCommand.urgentNotice;
+    if (urgent && String(urgent).trim()) {
+      items.push('📢 现场广播：' + String(urgent).trim());
+    }
+    var defaultDay = getDefaultActiveDay();
+    var todayEvents = (state.events || []).filter(function (ev) { return getEventDayBucket(ev) === defaultDay; });
+    if (todayEvents.length > 0 && defaultDay !== 'early') {
+      var dayTitle = defaultDay === '18/11' ? '18/11 今日焦点赛事' : '02/12 运动会正日赛事';
+      var summaryNames = todayEvents.slice(0, 7).map(function (ev) {
+        return ev.group + ev.name + (ev.status === 'finished' ? '(已完赛)' : '');
+      }).join('、');
+      items.push('📅 ' + dayTitle + '（' + todayEvents.length + '项）：' + summaryNames);
+    }
     var standings = computeStandings(state);
-    var leader = standings.rankedTeams[0];
-    if (leader) {
-      items.push('🏆 全场总积分领先：' + leader.name + ' (' + leader.points + '分 · ' + leader.gold + '金' + leader.silver + '银' + leader.bronze + '铜)');
+    if (standings.rankedTeams && standings.rankedTeams.length > 0) {
+      var scoresLine = standings.rankedTeams.map(function (t) {
+        return t.name + ' ' + t.points + '分';
+      }).join(' ｜ ');
+      items.push('🏆 实时总积分：' + scoresLine);
     }
     (state.events || []).forEach(function (ev) {
       if (ev.status !== 'finished' || !ev.finalEntries || ev.finalEntries.length === 0) return;
@@ -5311,6 +5342,280 @@
       return '欢迎莅临新民独立中学 2026 年度运动会现场！各项目实时成绩将同步播报。';
     }
     return items.join('     ✦     ');
+  }
+
+  function renderPublicLiveTicker(tickerEl, state) {
+    if (!tickerEl) return;
+    var trackEl = tickerEl.querySelector('.public-ticker-track');
+    var toggleBtn = tickerEl.querySelector('.public-ticker-toggle');
+    if (!trackEl) return;
+
+    if (!tickerEl.dataset.bound) {
+      tickerEl.dataset.bound = '1';
+      tickerEl.addEventListener('click', function () {
+        var paused = tickerEl.classList.toggle('is-paused');
+        if (toggleBtn) {
+          toggleBtn.textContent = paused ? '▶' : '⏸';
+          toggleBtn.setAttribute('aria-label', paused ? '继续滚动' : '暂停滚动');
+          toggleBtn.setAttribute('title', paused ? '点击继续滚动' : '点击暂停阅读');
+        }
+      });
+    }
+
+    var text = buildTickerText(state);
+    if (trackEl.dataset.lastText === text) return;
+    trackEl.dataset.lastText = text;
+
+    trackEl.innerHTML =
+      '<span class="public-ticker-copy">' + escapeHtml(text) + '</span>' +
+      '<span class="public-ticker-copy" aria-hidden="true">' + escapeHtml(text) + '</span>';
+
+    global.requestAnimationFrame(function () {
+      var copyEl = trackEl.querySelector('.public-ticker-copy');
+      var halfW = copyEl ? copyEl.offsetWidth : 1800;
+      // 柔和慢速（约 26 px/s），方便师生在手机端从容阅读
+      var sec = Math.max(45, Math.min(900, Math.round(halfW / 26)));
+      trackEl.style.setProperty('--ticker-duration', sec + 's');
+    });
+  }
+
+  function getDayBucketTabsMeta(state) {
+    var counts = { all: 0, '18/11': 0, '02/12': 0, early: 0 };
+    (state.events || []).forEach(function (ev) {
+      counts.all += 1;
+      var bucket = getEventDayBucket(ev);
+      if (counts[bucket] !== undefined) counts[bucket] += 1;
+    });
+    var defDay = getDefaultActiveDay();
+    return {
+      defaultDay: defDay,
+      counts: counts,
+      map: {
+        '18/11': { key: '18/11', label: (defDay === '18/11' ? '📅 18/11 今日比赛' : '📅 18/11 赛事') + ' (' + counts['18/11'] + ')' },
+        '02/12': { key: '02/12', label: (defDay === '02/12' ? '🔥 02/12 今日正日' : '🔥 02/12 运动会正日') + ' (' + counts['02/12'] + ')' },
+        early: { key: 'early', label: '✓ 15-16/11 前期赛果 (' + counts.early + ')' },
+        all: { key: 'all', label: '📋 全部项目 (' + counts.all + ')' }
+      }
+    };
+  }
+
+  function renderDayTabButtons(containerEl, activeDay, state, orderKeys) {
+    if (!containerEl) return;
+    var meta = getDayBucketTabsMeta(state);
+    var keys = orderKeys || ['18/11', '02/12', 'early', 'all'];
+    containerEl.innerHTML = keys.map(function (k) {
+      var info = meta.map[k];
+      if (!info) return '';
+      return '<button type="button" class="chip-btn ' + (activeDay === info.key ? 'active' : '') + '" data-val="' + info.key + '">' + escapeHtml(info.label) + '</button>';
+    }).join('');
+  }
+
+  function renderDailyCardsStrip(stripEl, subtitleEl, state, selectedDay) {
+    if (!stripEl) return;
+    var defaultDay = getDefaultActiveDay();
+    var focusDay = (!selectedDay || selectedDay === 'all') ? defaultDay : selectedDay;
+    var list = (state.events || []).filter(function (ev) {
+      return getEventDayBucket(ev) === focusDay;
+    });
+
+    var dayNames = {
+      '18/11': '18/11 赛程',
+      '02/12': '02/12 运动会正日',
+      early: '15-16/11 前期赛果'
+    };
+    if (subtitleEl) {
+      if (selectedDay === 'all') {
+        subtitleEl.textContent = '下方显示全部 ' + (state.events || []).length + ' 项 · 上方聚焦 ' + (dayNames[focusDay] || focusDay) + '（' + list.length + ' 项，点击卡片直达）';
+      } else {
+        subtitleEl.textContent = (dayNames[focusDay] || focusDay) + ' 共 ' + list.length + ' 项 · 点击卡片直达下方完整成绩';
+      }
+    }
+
+    if (list.length === 0) {
+      stripEl.innerHTML = '<div style="padding:14px; color:var(--text-secondary); font-size:0.84rem;">该赛期暂无比赛项目</div>';
+      return;
+    }
+
+    stripEl.innerHTML = list.map(function (ev) {
+      var divLabel = getDivisionLabel(ev.group);
+      var tagStyle = divLabel === '高中'
+        ? 'background:rgba(56,189,248,0.18); color:#7dd3fc;'
+        : (divLabel === '全校公开' ? 'background:rgba(168,85,247,0.2); color:#d8b4fe;' : 'background:rgba(16,185,129,0.18); color:#34d399;');
+      var grpText = ev.group === '公开' ? '全校公开' : (divLabel + ' · ' + ev.group);
+      var statusPill = ev.status === 'finished'
+        ? '<span style="color:#34d399; font-weight:700; font-size:0.74rem;">✓ 已完赛</span>'
+        : (ev.status === 'prelims_done'
+          ? '<span style="color:#fbbf24; font-weight:700; font-size:0.74rem;">⏳ 预赛已出炉</span>'
+          : '<span style="color:#7dd3fc; font-weight:700; font-size:0.74rem;">🕒 待赛</span>');
+
+      var bodyHtml = '';
+      if (ev.status === 'finished' && ev.finalEntries && ev.finalEntries.length > 0) {
+        var top3 = calculateEntries(ev.finalEntries, ev, true).filter(function (x) { return x.rank && x.rank <= 3; }).slice(0, 3);
+        if (top3.length > 0) {
+          bodyHtml = '<div class="daily-card-podium">' + top3.map(function (r) {
+            var medal = r.rank === 1 ? '🥇' : (r.rank === 2 ? '🥈' : '🥉');
+            var tid = normalizeTeamId(r.team);
+            return '<div class="daily-podium-line">' +
+              '<span style="display:inline-flex; align-items:center; gap:4px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
+                '<span>' + medal + '</span>' +
+                '<span class="bib-dot team-dot-' + tid + '" style="width:7px; height:7px;"></span>' +
+                '<strong>' + escapeHtml(r.name) + '</strong>' +
+              '</span>' +
+              '<span style="font-family:var(--font-mono); color:#e2e8f0; flex-shrink:0;">' + escapeHtml(formatMarkDisplay(r, ev)) + '</span>' +
+            '</div>';
+          }).join('') + '</div>';
+        }
+      }
+      if (!bodyHtml) {
+        var fCount = (ev.finalEntries || []).length;
+        var pCount = (ev.prelimEntries || []).length;
+        var sampleList = fCount > 0 ? ev.finalEntries : (ev.prelimEntries || []);
+        var sampleNames = sampleList.slice(0, 3).map(function (e) { return escapeHtml(e.name); }).join('、');
+        var countLabel = fCount > 0
+          ? ('决赛名单 ' + fCount + ' ' + (ev.isTeam ? '队' : '人'))
+          : (pCount > 0 ? ('预赛名单 ' + pCount + ' 人') : '待检录排道次');
+        bodyHtml =
+          '<div class="daily-card-preview">' +
+            '<div style="color:#cbd5e1; font-weight:600;">' + countLabel + '</div>' +
+            (sampleNames ? '<div class="daily-card-names">' + sampleNames + (sampleList.length > 3 ? ' 等' : '') + '</div>' : '') +
+          '</div>';
+      }
+
+      return (
+        '<button type="button" class="daily-event-card' + (ev.status === 'finished' ? ' is-finished' : '') + '" data-jump-ev="' + escapeHtml(ev.id) + '">' +
+          '<div>' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:6px;">' +
+              '<span class="skew-tag" style="' + tagStyle + ' padding:2px 7px; font-size:0.72rem;"><span>' + escapeHtml(grpText) + '</span></span>' +
+              statusPill +
+            '</div>' +
+            '<div style="font-weight:800; font-size:0.98rem; color:#f8fafc; line-height:1.25;">' + escapeHtml(ev.name) + '</div>' +
+            (ev.scheduleTime ? '<div style="font-size:0.72rem; color:var(--text-secondary); margin-top:3px;">🕒 ' + escapeHtml(ev.scheduleTime) + '</div>' : '') +
+          '</div>' +
+          bodyHtml +
+          '<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:var(--accent-cyan); padding-top:4px; border-top:1px solid rgba(148,163,184,0.12);">' +
+            '<span>查看完整成绩 ↓</span>' +
+            ((ev.eventPhoto && ev.showPhotoPublic !== false) ? '<span style="color:#fbbf24;">📸 含实拍图</span>' : '') +
+          '</div>' +
+        '</button>'
+      );
+    }).join('');
+  }
+
+  function syncChipGroupActive(containerEl, val) {
+    if (!containerEl) return;
+    containerEl.querySelectorAll('.chip-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-val') === val);
+    });
+  }
+
+  function renderPublicTopWidgets(state, filters) {
+    renderPublicLiveTicker(document.getElementById('public-live-ticker'), state);
+    renderDayTabButtons(document.getElementById('daily-day-tabs'), filters.day, state, ['18/11', '02/12', 'early', 'all']);
+    renderDayTabButtons(document.getElementById('filter-day'), filters.day, state, ['all', '18/11', '02/12', 'early']);
+    renderDailyCardsStrip(
+      document.getElementById('daily-cards-strip'),
+      document.getElementById('daily-spotlight-subtitle'),
+      state,
+      filters.day
+    );
+  }
+
+  function bindPublicDayAndJump(getState, filters, onFilterRefresh) {
+    function setDay(dayVal) {
+      filters.day = dayVal;
+      renderPublicTopWidgets(getState(), filters);
+      onFilterRefresh();
+    }
+
+    ['daily-day-tabs', 'filter-day'].forEach(function (id) {
+      var wrap = document.getElementById(id);
+      if (!wrap) return;
+      wrap.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-val]');
+        if (!btn) return;
+        setDay(btn.getAttribute('data-val'));
+      });
+    });
+
+    var stripEl = document.getElementById('daily-cards-strip');
+    if (stripEl) {
+      stripEl.addEventListener('click', function (e) {
+        var cardBtn = e.target.closest('[data-jump-ev]');
+        if (!cardBtn) return;
+        var evId = cardBtn.getAttribute('data-jump-ev');
+        var st = getState();
+        var ev = (st.events || []).find(function (x) { return x.id === evId; });
+        if (!ev) return;
+
+        var changed = false;
+        if (filters.day && filters.day !== 'all' && getEventDayBucket(ev) !== filters.day) {
+          filters.day = getEventDayBucket(ev);
+          changed = true;
+        }
+        if (filters.group !== 'all') {
+          var matchGrp = (filters.group === 'senior' && (ev.group === '男甲' || ev.group === '女甲')) ||
+            (filters.group === 'junior' && (ev.group === '男乙' || ev.group === '女乙')) ||
+            (ev.group === filters.group);
+          if (!matchGrp) {
+            filters.group = 'all';
+            syncChipGroupActive(document.getElementById('filter-group'), 'all');
+            changed = true;
+          }
+        }
+        if (filters.type !== 'all') {
+          var matchType = (filters.type === 'team' && ev.isTeam) ||
+            (filters.type === 'track' && ev.type === 'track' && !ev.isTeam) ||
+            (filters.type === 'field' && ev.type === 'field');
+          if (!matchType) {
+            filters.type = 'all';
+            syncChipGroupActive(document.getElementById('filter-type'), 'all');
+            changed = true;
+          }
+        }
+        if (filters.team !== 'all') {
+          var allEntries = (ev.finalEntries || []).concat(ev.prelimEntries || []);
+          var hasTeam = allEntries.some(function (en) { return normalizeTeamId(en.team) === filters.team; });
+          if (!hasTeam) {
+            filters.team = 'all';
+            syncChipGroupActive(document.getElementById('filter-team'), 'all');
+            changed = true;
+          }
+        }
+        if (filters.query && filters.query.trim()) {
+          filters.query = '';
+          var si = document.getElementById('search-input');
+          var cb = document.getElementById('btn-clear-search');
+          if (si) si.value = '';
+          if (cb) cb.style.display = 'none';
+          changed = true;
+        }
+
+        if (changed) {
+          renderPublicTopWidgets(st, filters);
+          onFilterRefresh();
+        }
+
+        var targetCard = document.getElementById('event-card-' + evId);
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetCard.classList.add('is-jump-highlight');
+          animateOnce(targetCard, 'animate__pulse');
+          setTimeout(function () {
+            targetCard.classList.remove('is-jump-highlight');
+          }, 2200);
+        }
+      });
+    }
+
+    var feedEl = document.getElementById('events-feed');
+    if (feedEl) {
+      feedEl.addEventListener('click', function (e) {
+        var showAllBtn = e.target.closest('#btn-show-all-days');
+        if (showAllBtn) {
+          setDay('all');
+        }
+      });
+    }
   }
 
   var HANDBOOK_INFO = {
@@ -5582,6 +5887,13 @@
     escapeHtml: escapeHtml,
     animateOnce: animateOnce,
     showToast: showToast,
-    buildTickerText: buildTickerText
+    getEventDayBucket: getEventDayBucket,
+    getDefaultActiveDay: getDefaultActiveDay,
+    buildTickerText: buildTickerText,
+    renderPublicLiveTicker: renderPublicLiveTicker,
+    renderDayTabButtons: renderDayTabButtons,
+    renderDailyCardsStrip: renderDailyCardsStrip,
+    renderPublicTopWidgets: renderPublicTopWidgets,
+    bindPublicDayAndJump: bindPublicDayAndJump
   };
 })(window);

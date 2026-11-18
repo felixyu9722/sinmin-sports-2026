@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Inter:wght@500;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/style.css?v=20261118v2" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -46,8 +46,8 @@
     </div>
   </header>
 
-  <!-- 大屏手动导播与画面切换控制栏 -->
-  <section class="tv-control-bar" id="tv-control-bar" aria-label="电视画面手动切换控制条">
+  <!-- 大屏手动导播与画面切换控制栏（默认自动隐藏） -->
+  <section class="tv-control-bar is-collapsed" id="tv-control-bar" aria-label="电视画面手动切换控制条">
     <div class="tv-control-group" id="tv-mode-buttons">
       <button class="btn btn-sm" data-local-mode="standings" title="快捷键 1">1 🏆 四队总榜</button>
       <button class="btn btn-sm" data-local-mode="all_finals" title="快捷键 2">2 📋 当天决赛总览</button>
@@ -71,8 +71,8 @@
     </div>
   </section>
 
-  <!-- 收起控制栏后的悬浮恢复按钮 -->
-  <button class="btn btn-sm btn-primary tv-show-ctrl-fab" id="btn-show-ctrl">🎛️ 显示画面切换栏</button>
+  <!-- 收起控制栏后的悬浮恢复按钮（师生公开视图下自动隐藏） -->
+  <button class="btn btn-sm btn-primary tv-show-ctrl-fab visible" id="btn-show-ctrl">🎛️ 导播切屏</button>
 
   <!-- 紧急检录/广播横幅（控制台可一键推送或清除） -->
   <div class="tv-urgent-banner animate__animated animate__flash" id="tv-urgent-banner" style="display:none;">
@@ -111,7 +111,7 @@
   </footer>
 
   <script src="./student-directory/students-map.js"></script>
-  <script src="./js/core.js"></script>
+  <script src="./js/core.js?v=20261118v2"></script>
   <script>
     (function () {
       var S = window.SinMinSports;
@@ -917,13 +917,38 @@
 
       var ctrlBar = document.getElementById('tv-control-bar');
       var showFab = document.getElementById('btn-show-ctrl');
-      document.getElementById('btn-hide-ctrl').addEventListener('click', function () {
+      var ctrlAutoHideTimer = null;
+
+      function collapseControlBar() {
+        if (ctrlAutoHideTimer) {
+          clearTimeout(ctrlAutoHideTimer);
+          ctrlAutoHideTimer = null;
+        }
         ctrlBar.classList.add('is-collapsed');
-        showFab.classList.add('visible');
-      });
-      showFab.addEventListener('click', function () {
+        if (!fromLive) showFab.classList.add('visible');
+        else showFab.classList.remove('visible');
+      }
+
+      function resetCtrlAutoHideTimer() {
+        if (ctrlAutoHideTimer) clearTimeout(ctrlAutoHideTimer);
+        if (ctrlBar.classList.contains('is-collapsed')) return;
+        ctrlAutoHideTimer = setTimeout(collapseControlBar, 8000);
+      }
+
+      function expandControlBar() {
+        if (fromLive) return;
         ctrlBar.classList.remove('is-collapsed');
         showFab.classList.remove('visible');
+        resetCtrlAutoHideTimer();
+      }
+
+      if (fromLive) {
+        collapseControlBar();
+      }
+      document.getElementById('btn-hide-ctrl').addEventListener('click', collapseControlBar);
+      showFab.addEventListener('click', expandControlBar);
+      ['click', 'change', 'focusin', 'touchstart'].forEach(function (evName) {
+        ctrlBar.addEventListener(evName, resetCtrlAutoHideTimer);
       });
 
       // 键盘快捷键 1~7 切屏，左右方向键切项目/翻页

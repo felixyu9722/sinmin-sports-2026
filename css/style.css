@@ -1111,10 +1111,15 @@ body.tv-body {
 }
 .tv-show-ctrl-fab {
   position: fixed;
-  top: 90px;
+  top: auto;
+  bottom: 64px;
   right: 20px;
   z-index: 80;
   display: none;
+  opacity: 0.82;
+}
+.tv-show-ctrl-fab:hover {
+  opacity: 1;
 }
 .tv-show-ctrl-fab.visible {
   display: inline-flex;
@@ -1517,6 +1522,11 @@ body.tv-body {
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4), 0 12px 32px rgba(56, 189, 248, 0.22);
 }
 
+body.tv-public-viewer .tv-control-bar,
+body.tv-public-viewer .tv-show-ctrl-fab {
+  display: none !important;
+}
+
 /* ==========================================================================
    响应式适配
    ========================================================================== */
@@ -1559,15 +1569,17 @@ body.tv-body {
   .tv-brand {
     min-width: 0;
     max-width: 100%;
+    gap: 10px;
   }
   .tv-brand .school-logo-wrap {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     flex-shrink: 0;
   }
   .tv-brand h1 {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     flex-wrap: wrap;
+    gap: 6px;
   }
   .tv-brand .tv-sub {
     font-size: 0.72rem;

@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v3';
+  var STORAGE_STATE_KEY = 'sinmin_sports_2026_state_v4';
   var STORAGE_TV_KEY = 'sinmin_sports_2026_tv_v2';
   var STORAGE_GH_TOKEN_KEY = 'sinmin_sports_2026_gh_token_local';
   var CHANNEL_NAME = 'sinmin_sports_2026';
@@ -611,7 +611,7 @@
         "schoolName": "亚罗士打新民独立中学",
         "meetTitle": "2026年校内运动会",
         "meetDate": "2026-12-02",
-        "updatedAt": "2026-11-17T06:30:00.000Z",
+        "updatedAt": "2026-11-18T06:50:00.000Z",
         "githubRepo": "felixyu9722/sinmin-sports-2026",
         "googleSheetCsvUrl": "",
         "googleAppsScriptUrl": "",
@@ -1540,8 +1540,9 @@
               "name": "林子恒",
               "className": "初二孝",
               "team": "blue",
-              "result": "6:35.33",
-              "status": "OK"
+              "result": "",
+              "status": "DQ",
+              "note": "犯规 (6:35.33)"
             }
           ]
         },
@@ -1625,7 +1626,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次2",
-          "status": "prelims_done",
+          "status": "finished",
           "prelimEntries": [
             {
               "heat": 1,
@@ -1705,7 +1706,7 @@
               "name": "曾炜焮",
               "className": "初二孝",
               "team": "yellow",
-              "result": "",
+              "result": "1:53.84",
               "status": "OK",
               "prelimMark": "1:47.24s"
             },
@@ -1715,7 +1716,7 @@
               "name": "王愉珺",
               "className": "初二孝",
               "team": "blue",
-              "result": "",
+              "result": "1:46.11",
               "status": "OK",
               "prelimMark": "1:45.00s"
             },
@@ -1725,7 +1726,7 @@
               "name": "马萱",
               "className": "初一孝",
               "team": "red",
-              "result": "",
+              "result": "1:41.35",
               "status": "OK",
               "prelimMark": "1:43.20s"
             },
@@ -1735,7 +1736,7 @@
               "name": "李芮禛",
               "className": "初二孝",
               "team": "blue",
-              "result": "",
+              "result": "2:09.95",
               "status": "OK",
               "prelimMark": "1:56.49s"
             }
@@ -1756,7 +1757,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次3",
-          "status": "prelims_done",
+          "status": "finished",
           "prelimEntries": [
             {
               "heat": 1,
@@ -1806,7 +1807,7 @@
               "name": "雪晶",
               "className": "高三烘培",
               "team": "red",
-              "result": "",
+              "result": "2:19.79",
               "status": "OK"
             },
             {
@@ -1815,7 +1816,7 @@
               "name": "曾薇颖",
               "className": "高二餐饮",
               "team": "green",
-              "result": "",
+              "result": "2:12.19",
               "status": "OK"
             },
             {
@@ -1824,7 +1825,7 @@
               "name": "陈靖涵",
               "className": "高一文商",
               "team": "yellow",
-              "result": "",
+              "result": "1:59.56",
               "status": "OK"
             },
             {
@@ -1833,7 +1834,7 @@
               "name": "洪丽凤",
               "className": "高一文商",
               "team": "green",
-              "result": "",
+              "result": "1:49.03",
               "status": "OK"
             }
           ]
@@ -1853,7 +1854,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次4",
-          "status": "prelims_done",
+          "status": "finished",
           "prelimEntries": [
             {
               "heat": 1,
@@ -1933,7 +1934,7 @@
               "name": "王凯翔",
               "className": "初一忠",
               "team": "yellow",
-              "result": "",
+              "result": "1:14.72",
               "status": "OK",
               "prelimMark": "1:13.41s"
             },
@@ -1943,7 +1944,7 @@
               "name": "黄柏杰",
               "className": "初二孝",
               "team": "red",
-              "result": "",
+              "result": "1:18.01",
               "status": "OK",
               "prelimMark": "1:23.30s"
             },
@@ -1953,7 +1954,7 @@
               "name": "林子恒",
               "className": "初二孝",
               "team": "blue",
-              "result": "",
+              "result": "1:08.01",
               "status": "OK",
               "prelimMark": "1:11.52s"
             },
@@ -1963,7 +1964,7 @@
               "name": "陈国俊",
               "className": "初一忠",
               "team": "green",
-              "result": "",
+              "result": "1:11.68",
               "status": "OK",
               "prelimMark": "1:16.01s"
             }
@@ -1984,7 +1985,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次5",
-          "status": "prelims_done",
+          "status": "finished",
           "prelimEntries": [
             {
               "heat": 1,
@@ -2064,7 +2065,7 @@
               "name": "伍祥豪",
               "className": "高三文商",
               "team": "yellow",
-              "result": "",
+              "result": "1:13.21",
               "status": "OK",
               "prelimMark": "1:14.86s"
             },
@@ -2074,7 +2075,7 @@
               "name": "王翔哲",
               "className": "高二餐饮",
               "team": "yellow",
-              "result": "",
+              "result": "1:02.41",
               "status": "OK",
               "prelimMark": "1:10.82s"
             },
@@ -2084,7 +2085,7 @@
               "name": "张嘉杰",
               "className": "初三忠",
               "team": "green",
-              "result": "",
+              "result": "1:09.60",
               "status": "OK",
               "prelimMark": "1:08.39s"
             },
@@ -2094,7 +2095,7 @@
               "name": "张玮轩",
               "className": "高三烘培",
               "team": "red",
-              "result": "",
+              "result": "1:16.43",
               "status": "OK",
               "prelimMark": "1:16.75s"
             }
@@ -2115,7 +2116,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次1",
-          "status": "startlist",
+          "status": "finished",
           "prelimEntries": [],
           "finalEntries": [
             {
@@ -2124,7 +2125,10 @@
               "name": "叶俊文",
               "className": "初二忠",
               "team": "red",
-              "result": "",
+              "result": "1.35",
+              "attempt1": "1.35",
+              "tieBreakVal": 0,
+              "note": "120(O) 125(O) 130(O) 135(O) 140(XXX)",
               "status": "OK"
             },
             {
@@ -2133,7 +2137,10 @@
               "name": "郭凯杰",
               "className": "初二忠",
               "team": "blue",
-              "result": "",
+              "result": "1.30",
+              "attempt1": "1.30",
+              "tieBreakVal": 2,
+              "note": "120(XO) 125(XO) 130(O) 135(XXX)",
               "status": "OK"
             },
             {
@@ -2142,7 +2149,10 @@
               "name": "吕浚晖",
               "className": "初二孝",
               "team": "green",
-              "result": "",
+              "result": "1.40",
+              "attempt1": "1.40",
+              "tieBreakVal": 101,
+              "note": "120(O) 125(O) 130(O) 135(O) 140(XO) 145(XXX)",
               "status": "OK"
             },
             {
@@ -2151,7 +2161,10 @@
               "name": "林子恒",
               "className": "初二孝",
               "team": "blue",
-              "result": "",
+              "result": "1.20",
+              "attempt1": "1.20",
+              "tieBreakVal": 205,
+              "note": "120(XXO) 125(XXX)",
               "status": "OK"
             },
             {
@@ -2161,7 +2174,9 @@
               "className": "初一忠",
               "team": "yellow",
               "result": "",
-              "status": "OK"
+              "attempt1": "",
+              "note": "120(XXX)",
+              "status": "NM"
             },
             {
               "lane": 6,
@@ -2169,7 +2184,22 @@
               "name": "杨忠万",
               "className": "初三忠",
               "team": "yellow",
-              "result": "",
+              "result": "1.30",
+              "attempt1": "1.30",
+              "tieBreakVal": 101,
+              "note": "120(O) 125(O) 130(XO) 135(XXX)",
+              "status": "OK"
+            },
+            {
+              "lane": 7,
+              "bib": "4205",
+              "name": "达南吉",
+              "className": "初三孝",
+              "team": "green",
+              "result": "1.49",
+              "attempt1": "1.49",
+              "tieBreakVal": 1,
+              "note": "120(O) 125(O) 130(O) 135(O) 140(O) 145(XO) 149(O) 153(XXX)",
               "status": "OK"
             }
           ]
@@ -2189,7 +2219,7 @@
           "recordMark": "",
           "recordHolder": "",
           "scheduleTime": "18/11 · 场次7",
-          "status": "startlist",
+          "status": "finished",
           "prelimEntries": [],
           "finalEntries": [
             {
@@ -2198,7 +2228,10 @@
               "name": "朱宇章",
               "className": "高三烘培",
               "team": "yellow",
-              "result": "",
+              "result": "1.35",
+              "attempt1": "1.35",
+              "tieBreakVal": 0,
+              "note": "130(O) 135(O) 140(XXX)",
               "status": "OK"
             },
             {
@@ -2207,26 +2240,33 @@
               "name": "王晟祺",
               "className": "高二文商",
               "team": "yellow",
-              "result": "",
+              "result": "1.30",
+              "attempt1": "1.30",
+              "tieBreakVal": 202,
+              "note": "130(XXO) 135(XXX)",
               "status": "OK"
             },
             {
               "lane": 3,
-              "bib": "1105",
-              "name": "刘子庆",
-              "className": "高三文商",
+              "bib": "1107",
+              "name": "刘谆宏",
+              "className": "高二餐饮",
               "team": "red",
               "result": "",
-              "status": "OK"
+              "attempt1": "",
+              "note": "130(XXX)",
+              "status": "NM"
             },
             {
               "lane": 4,
               "bib": "1103",
-              "name": "罗弘富",
-              "className": "高一文商",
+              "name": "张玮轩",
+              "className": "高三烘培",
               "team": "red",
               "result": "",
-              "status": "OK"
+              "attempt1": "",
+              "note": "130(XXX)",
+              "status": "NM"
             },
             {
               "lane": 5,
@@ -2235,7 +2275,9 @@
               "className": "高二文商",
               "team": "blue",
               "result": "",
-              "status": "OK"
+              "attempt1": "",
+              "note": "130(XXX)",
+              "status": "NM"
             },
             {
               "lane": 6,
@@ -2244,7 +2286,9 @@
               "className": "高三文商",
               "team": "blue",
               "result": "",
-              "status": "OK"
+              "attempt1": "",
+              "note": "130(XXX)",
+              "status": "NM"
             },
             {
               "lane": 7,
@@ -2252,7 +2296,10 @@
               "name": "林浚韦",
               "className": "高三文商",
               "team": "green",
-              "result": "",
+              "result": "1.40",
+              "attempt1": "1.40",
+              "tieBreakVal": 105,
+              "note": "130(XXO) 135(XXO) 140(XO) 145(XXX)",
               "status": "OK"
             },
             {
@@ -2261,7 +2308,10 @@
               "name": "卢锦康",
               "className": "高二餐饮",
               "team": "green",
-              "result": "",
+              "result": "1.45",
+              "attempt1": "1.45",
+              "tieBreakVal": 202,
+              "note": "130(O) 135(O) 140(O) 145(XXO) 150(XXX)",
               "status": "OK"
             }
           ]
@@ -2280,8 +2330,8 @@
           "teamMedalRule": "individual",
           "recordMark": "",
           "recordHolder": "",
-          "scheduleTime": "18/11 · 场次8",
-          "status": "startlist",
+          "scheduleTime": "18/11 · 场次6",
+          "status": "finished",
           "prelimEntries": [],
           "finalEntries": [
             {
@@ -2290,13 +2340,13 @@
               "name": "李爱琪",
               "className": "高一餐饮",
               "team": "green",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "5.70",
+              "attempt1": "5.07",
+              "attempt2": "X",
+              "attempt3": "5.65",
+              "attempt4": "5.55",
+              "attempt5": "X",
+              "attempt6": "5.70",
               "status": "OK"
             },
             {
@@ -2305,13 +2355,13 @@
               "name": "潘安琪",
               "className": "初一孝",
               "team": "yellow",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "5.02",
+              "attempt1": "4.14",
+              "attempt2": "3.95",
+              "attempt3": "5.02",
+              "attempt4": "4.05",
+              "attempt5": "4.13",
+              "attempt6": "5.02",
               "status": "OK"
             },
             {
@@ -2320,13 +2370,13 @@
               "name": "陈奕汶",
               "className": "高二餐饮",
               "team": "blue",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "5.74",
+              "attempt1": "5.34",
+              "attempt2": "X",
+              "attempt3": "5.74",
+              "attempt4": "X",
+              "attempt5": "X",
+              "attempt6": "X",
               "status": "OK"
             },
             {
@@ -2335,13 +2385,13 @@
               "name": "林巧萱",
               "className": "初三忠",
               "team": "green",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "7.29",
+              "attempt1": "4.093",
+              "attempt2": "X",
+              "attempt3": "4.93",
+              "attempt4": "7.29",
+              "attempt5": "7.18",
+              "attempt6": "6.36",
               "status": "OK"
             },
             {
@@ -2350,13 +2400,13 @@
               "name": "黄嘉欣",
               "className": "高二文商",
               "team": "red",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "14.17",
+              "attempt1": "12.30",
+              "attempt2": "14.17",
+              "attempt3": "12.16",
+              "attempt4": "11.54",
+              "attempt5": "11.00",
+              "attempt6": "X",
               "status": "OK"
             },
             {
@@ -2365,13 +2415,13 @@
               "name": "马峄琪",
               "className": "高一文商",
               "team": "red",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "14.99",
+              "attempt1": "13.50",
+              "attempt2": "12.70",
+              "attempt3": "14.77",
+              "attempt4": "13.56",
+              "attempt5": "12.06",
+              "attempt6": "14.99",
               "status": "OK"
             },
             {
@@ -2380,13 +2430,13 @@
               "name": "杜姿颖",
               "className": "高三文商",
               "team": "blue",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "5.57",
+              "attempt1": "5.40",
+              "attempt2": "4.70",
+              "attempt3": "4.20",
+              "attempt4": "4.17",
+              "attempt5": "4.17",
+              "attempt6": "5.57",
               "status": "OK"
             },
             {
@@ -2395,13 +2445,13 @@
               "name": "张紫微",
               "className": "高二文商",
               "team": "yellow",
-              "attempt1": "",
-              "attempt2": "",
-              "attempt3": "",
-              "attempt4": "",
-              "attempt5": "",
-              "attempt6": "",
-              "result": "",
+              "result": "12.43",
+              "attempt1": "12.43",
+              "attempt2": "11.50",
+              "attempt3": "11.75",
+              "attempt4": "11.24",
+              "attempt5": "10.37",
+              "attempt6": "10.32",
               "status": "OK"
             }
           ]
@@ -5190,7 +5240,8 @@
     '曾微颖': '曾薇颖',
     '李芮禛': '李芮祯',
     '梁惠琪': '梁惠淇',
-    '胡巧萱': '胡巧瑄'
+    '胡巧萱': '胡巧瑄',
+    '方智恒': '方梓恒'
   };
 
   function findLocalStudent(nameOrId, className) {

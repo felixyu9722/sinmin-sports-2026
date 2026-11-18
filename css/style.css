@@ -1781,6 +1781,33 @@ body.tv-public-viewer .tv-show-ctrl-fab {
   .nav-inner {
     padding: 10px 14px;
   }
+  .live-nav-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .live-nav-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 4px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    gap: 4px;
+  }
+  #daily-day-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  #daily-day-tabs .chip-btn {
+    width: 100%;
+    text-align: center;
+    padding: 7px 6px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
   .container {
     padding: 12px;
     overflow-x: hidden;

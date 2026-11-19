@@ -5887,7 +5887,7 @@
     if (existing) return existing;
 
     var opts = options || {};
-    var vol = typeof opts.defaultVolume === 'number' ? opts.defaultVolume : 0.10;
+    var vol = typeof opts.defaultVolume === 'number' ? opts.defaultVolume : 0.30;
     var tracks = [
       { title: '《新民少年・勇往直前》④', src: encodeURI('./MP3/《新民少年・勇往直前》 4.mp3') },
       { title: '《新民少年・勇往直前》⑤', src: encodeURI('./MP3/《新民少年・勇往直前》 5.mp3') },

@@ -5887,17 +5887,19 @@
     if (existing) return existing;
 
     var opts = options || {};
-    var vol = typeof opts.defaultVolume === 'number' ? opts.defaultVolume : 0.22;
+    var vol = typeof opts.defaultVolume === 'number' ? opts.defaultVolume : 0.10;
     var tracks = [
-      { title: '《新民少年・勇往直前》①', src: encodeURI('./MP3/《新民少年・勇往直前》 1.mp3') },
-      { title: '《新民少年・勇往直前》②', src: encodeURI('./MP3/《新民少年・勇往直前》 2.mp3') },
-      { title: '《新民少年・勇往直前》③', src: encodeURI('./MP3/《新民少年・勇往直前》 3.mp3') }
+      { title: '《新民少年・勇往直前》④', src: encodeURI('./MP3/《新民少年・勇往直前》 4.mp3') },
+      { title: '《新民少年・勇往直前》⑤', src: encodeURI('./MP3/《新民少年・勇往直前》 5.mp3') },
+      { title: '《新民少年・勇往直前》⑥', src: encodeURI('./MP3/《新民少年・勇往直前》 6.mp3') },
+      { title: '《新民少年・勇往直前》⑦', src: encodeURI('./MP3/《新民少年・勇往直前》 7.mp3') }
     ];
 
     var trackIdx = 0;
     var userPaused = false;
     var waitingUnlock = false;
     var errorStreak = 0;
+    var gainWired = false;
 
     var audio = document.createElement('audio');
     audio.id = 'sinmin-bgm-audio';
@@ -5963,10 +5965,27 @@
       tryPlay(false);
     }
 
-    function tryPlay(isUserClick) {
+    function ensureSoftVolume() {
       try {
         audio.volume = vol;
-      } catch (e) { /* ignore */ }
+      } catch (e) { /* ignore iOS readonly volume */ }
+      if (!gainWired && Math.abs((audio.volume || 1) - vol) > 0.02) {
+        try {
+          var ctx = getAudioCtx();
+          if (ctx && typeof ctx.createMediaElementSource === 'function') {
+            var srcNode = ctx.createMediaElementSource(audio);
+            var gainNode = ctx.createGain();
+            gainNode.gain.value = vol;
+            srcNode.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            gainWired = true;
+          }
+        } catch (err) { /* ignore if Web Audio unavailable */ }
+      }
+    }
+
+    function tryPlay(isUserClick) {
+      ensureSoftVolume();
       try {
         var playPromise = audio.play();
         if (playPromise && typeof playPromise.then === 'function') {

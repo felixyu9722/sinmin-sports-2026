@@ -1444,6 +1444,181 @@ body.tv-body {
   max-width: 100%;
   overflow: hidden;
 }
+
+/* ==========================================================================
+   色队开幕步操排练 & 接力赛练习通告速查卡
+   ========================================================================== */
+.rehearsal-notice-panel {
+  padding: 16px;
+  margin-bottom: 16px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border-color: rgba(251, 191, 36, 0.42);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.07), rgba(9, 14, 28, 0.88));
+}
+.rehearsal-notice-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.rehearsal-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rehearsal-urgent-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #090d16;
+}
+.rehearsal-sub-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.16);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.rehearsal-notice-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+.rehearsal-collapse-btn {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+}
+.rehearsal-notice-body {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rehearsal-house-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.rehearsal-house-card {
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 11px 12px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rehearsal-house-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.rehearsal-period-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.55);
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.rehearsal-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.rehearsal-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(9, 14, 28, 0.62);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 0.78rem;
+}
+.rehearsal-day-row.is-today {
+  background: rgba(251, 191, 36, 0.16);
+  border-color: rgba(251, 191, 36, 0.65);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
+}
+.rehearsal-day-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #cbd5e1;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.rehearsal-today-pill {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  background: #fbbf24;
+  color: #090d16;
+}
+.rehearsal-venue-text {
+  color: #f8fafc;
+  font-weight: 800;
+  text-align: right;
+  word-break: break-word;
+}
+.rehearsal-day-row.is-today .rehearsal-venue-text {
+  color: #fde047;
+}
+.rehearsal-extra-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.rehearsal-extra-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.79rem;
+  line-height: 1.45;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+.rehearsal-extra-item.is-thursday {
+  border-color: rgba(251, 191, 36, 0.38);
+  background: rgba(251, 191, 36, 0.08);
+}
+.rehearsal-extra-item.is-thursday.is-today {
+  border-color: rgba(251, 191, 36, 0.8);
+  background: rgba(251, 191, 36, 0.18);
+}
+.rehearsal-extra-item.is-relay {
+  border-color: rgba(16, 185, 129, 0.38);
+  background: rgba(16, 185, 129, 0.08);
+}
+.rehearsal-extra-icon {
+  font-size: 1rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
 .daily-spotlight-head {
   display: flex;
   align-items: center;
@@ -1539,6 +1714,12 @@ body.tv-public-viewer .tv-show-ctrl-fab {
   }
   .scoreboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rehearsal-house-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rehearsal-extra-banners {
+    grid-template-columns: minmax(0, 1fr);
   }
   .spotlight-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1826,8 +2007,13 @@ body.tv-public-viewer .tv-show-ctrl-fab {
   .public-ticker-toggle {
     padding: 9px 10px;
   }
-  .daily-spotlight-panel {
+  .daily-spotlight-panel,
+  .rehearsal-notice-panel {
     padding: 13px;
+  }
+  .rehearsal-house-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
   .daily-cards-strip {
     grid-auto-columns: minmax(218px, 248px);

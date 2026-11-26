@@ -5027,14 +5027,17 @@
     } catch (e) { /* ignore */ }
   }
 
-  function fetchFromRemoteStateJson(repoOwnerRepo, currentState, force) {
+  function fetchFromRemoteStateJson(repoOwnerRepo, currentState, force, preferRawFirst) {
     var repo = String(repoOwnerRepo || (currentState && currentState.meta && currentState.meta.githubRepo) || DEFAULT_GITHUB_REPO).trim();
     var urls = [];
-    if (global.location && global.location.protocol !== 'file:') {
-      urls.push('./data/live-state.json?_t=' + Date.now());
-    }
-    if (repo) {
-      urls.push('https://raw.githubusercontent.com/' + repo + '/main/data/live-state.json?_t=' + Date.now());
+    var rawUrl = repo ? ('https://raw.githubusercontent.com/' + repo + '/main/data/live-state.json?_t=' + Date.now()) : '';
+    var localUrl = (global.location && global.location.protocol !== 'file:') ? ('./data/live-state.json?_t=' + Date.now()) : '';
+    if (preferRawFirst && rawUrl) {
+      urls.push(rawUrl);
+      if (localUrl) urls.push(localUrl);
+    } else {
+      if (localUrl) urls.push(localUrl);
+      if (rawUrl) urls.push(rawUrl);
     }
     if (urls.length === 0) return Promise.resolve({ updated: false });
 

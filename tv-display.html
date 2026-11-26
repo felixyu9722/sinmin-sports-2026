@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Inter:wght@500;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="./css/style.css?v=20261123v1" />
+  <link rel="stylesheet" href="./css/style.css?v=20261126v1" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -111,7 +111,7 @@
   </footer>
 
   <script src="./student-directory/students-map.js"></script>
-  <script src="./js/core.js?v=20261123v1"></script>
+  <script src="./js/core.js?v=20261126v1"></script>
   <script>
     (function () {
       var S = window.SinMinSports;
@@ -960,9 +960,9 @@
         }
       });
 
-      // 第二电视机与师生端云端自动同步（每 15 秒拉取最新成绩与远程切屏指令）
+      // 第二电视机与师生端云端自动同步（每 6 秒优先直连 raw.githubusercontent.com 拉取最新成绩与远程切屏指令）
       function checkRemoteTvSync() {
-        S.fetchFromRemoteStateJson('', state, false).then(function (res) {
+        S.fetchFromRemoteStateJson('', state, false, !S.isLocalSyncHost()).then(function (res) {
           if (res && res.updated && res.state) {
             state = res.state;
             S.saveState(state, false, true);
@@ -973,6 +973,11 @@
               if (Date.now() - remoteCmd.pushedAt < 180000) {
                 tvCmd = Object.assign({}, tvCmd, remoteCmd);
                 if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
+                if (remoteCmd.playFanfareAt && remoteCmd.playFanfareAt !== lastFanfareAt) {
+                  lastFanfareAt = remoteCmd.playFanfareAt;
+                  launchConfetti(true);
+                  if (soundEnabled) S.playRecordFanfare();
+                }
                 if (autoCycleEnabled) {
                   syncCycleIndexToCurrent();
                   scheduleNextCycle(15000);
@@ -996,7 +1001,7 @@
       renderStage(false);
       if (autoCycleEnabled) scheduleNextCycle();
       checkRemoteTvSync();
-      setInterval(checkRemoteTvSync, 15000);
+      setInterval(checkRemoteTvSync, 6000);
     })();
   </script>
 </body>

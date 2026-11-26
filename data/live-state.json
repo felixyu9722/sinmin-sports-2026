@@ -5,7 +5,7 @@
     "schoolName": "亚罗士打新民独立中学",
     "meetTitle": "2026年校内运动会",
     "meetDate": "2026-12-02",
-    "updatedAt": "2026-11-26T03:46:21.040Z",
+    "updatedAt": "2026-11-26T03:47:13.079Z",
     "githubRepo": "felixyu9722/sinmin-sports-2026",
     "googleSheetCsvUrl": "",
     "googleAppsScriptUrl": "",
@@ -15,8 +15,8 @@
       "mode": "live_results",
       "eventId": "ev_sp_jb",
       "urgentNotice": "",
-      "playFanfareAt": 1795664781005,
-      "pushedAt": 1795664781005
+      "playFanfareAt": 1795664833027,
+      "pushedAt": 1795664833027
     }
   },
   "spiritScores": {

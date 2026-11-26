@@ -561,6 +561,7 @@
             '</div>' +
             '<div class="no-print" style="display:flex; gap:8px;">' +
               '<button class="btn btn-sm" id="btn-print-sheet">🖨️ 打印检录/成绩单</button>' +
+              '<button class="btn btn-sm" id="btn-delete-event" style="color:#fca5a5; border-color:rgba(248,113,113,0.4);" title="删除此项目（例如测试项目）">🗑️ 删除本项目</button>' +
             '</div>' +
           '</div>' +
 
@@ -763,6 +764,24 @@
         if (e.target.id === 'tab-stage-final') { activeStage = 'final'; renderWorkspace(); return; }
         if (e.target.id === 'tab-stage-prelim') { activeStage = 'prelim'; renderWorkspace(); return; }
         if (e.target.id === 'btn-print-sheet') { window.print(); return; }
+        if (e.target.id === 'btn-delete-event') {
+          if (!confirm('确定要删除项目【' + ev.group + ' ' + ev.name + '】吗？删除后将从列表移除并同步更新。')) return;
+          var delEventIdx = (state.events || []).findIndex(function (x) { return x.id === ev.id; });
+          if (delEventIdx !== -1) {
+            state.events.splice(delEventIdx, 1);
+            selectedEventId = (state.events[Math.min(delEventIdx, state.events.length - 1)] || {}).id || null;
+            if (tvCmd && tvCmd.eventId === ev.id) {
+              tvCmd.eventId = selectedEventId || '';
+              if (state.meta && state.meta.remoteTvCommand) state.meta.remoteTvCommand.eventId = tvCmd.eventId;
+            }
+            persistAndSyncLocal(true);
+            renderEventsSidebar();
+            renderWorkspace();
+            maybeAutoPushGitHub();
+            S.showToast('🗑️ 已删除项目【' + ev.group + ' ' + ev.name + '】');
+          }
+          return;
+        }
         if (e.target.id === 'btn-del-ev-photo') {
           delete ev.eventPhoto;
           persistAndSyncLocal(true);

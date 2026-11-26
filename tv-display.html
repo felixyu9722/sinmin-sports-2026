@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800;900&family=Inter:wght@500;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="./css/style.css?v=20261126v1" />
+  <link rel="stylesheet" href="./css/style.css?v=20261126v2" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -111,7 +111,7 @@
   </footer>
 
   <script src="./student-directory/students-map.js"></script>
-  <script src="./js/core.js?v=20261126v1"></script>
+  <script src="./js/core.js?v=20261126v2"></script>
   <script>
     (function () {
       var S = window.SinMinSports;
@@ -834,10 +834,19 @@
           renderTickerAndNotice();
           var isFreshPush = newCmd.pushedAt && newCmd.pushedAt !== prevPush;
           if (newCmd.pushedAt) lastHandledPushAt = newCmd.pushedAt;
+          if (typeof newCmd.autoCycle === 'boolean') {
+            autoCycleEnabled = newCmd.autoCycle;
+            updateAutoCycleButton();
+            if (!autoCycleEnabled && autoCycleTimer) {
+              clearTimeout(autoCycleTimer);
+              autoCycleTimer = null;
+            }
+          }
           renderStage(isFreshPush);
           if (isFreshPush && autoCycleEnabled) {
+            var localHoldMs = Math.max(5, Math.min(300, Number(newCmd.pushHoldSeconds) || 15)) * 1000;
             syncCycleIndexToCurrent();
-            scheduleNextCycle(15000);
+            scheduleNextCycle(localHoldMs);
           }
 
           if (newCmd.playFanfareAt && newCmd.playFanfareAt !== lastFanfareTs) {
@@ -973,14 +982,23 @@
               if (Date.now() - remoteCmd.pushedAt < 180000) {
                 tvCmd = Object.assign({}, tvCmd, remoteCmd);
                 if (tvCmd.mode === 'mvp') tvCmd.mode = 'trophies';
-                if (remoteCmd.playFanfareAt && remoteCmd.playFanfareAt !== lastFanfareAt) {
-                  lastFanfareAt = remoteCmd.playFanfareAt;
+                if (typeof remoteCmd.autoCycle === 'boolean') {
+                  autoCycleEnabled = remoteCmd.autoCycle;
+                  updateAutoCycleButton();
+                  if (!autoCycleEnabled && autoCycleTimer) {
+                    clearTimeout(autoCycleTimer);
+                    autoCycleTimer = null;
+                  }
+                }
+                if (remoteCmd.playFanfareAt && remoteCmd.playFanfareAt !== lastFanfareTs) {
+                  lastFanfareTs = remoteCmd.playFanfareAt;
                   launchConfetti(true);
                   if (soundEnabled) S.playRecordFanfare();
                 }
                 if (autoCycleEnabled) {
+                  var remoteHoldMs = Math.max(5, Math.min(300, Number(remoteCmd.pushHoldSeconds) || 15)) * 1000;
                   syncCycleIndexToCurrent();
-                  scheduleNextCycle(15000);
+                  scheduleNextCycle(remoteHoldMs);
                 }
               }
             }

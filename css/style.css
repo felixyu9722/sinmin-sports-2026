@@ -1230,12 +1230,31 @@ body.tv-body {
   margin: 0 auto;
   padding: 12px 16px;
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 295px;
-  gap: 12px;
+  grid-template-columns: var(--admin-left-w, 230px) 6px minmax(0, 1fr) 6px var(--admin-right-w, 295px);
+  gap: 6px;
   align-items: start;
 }
 .admin-layout > * {
   min-width: 0;
+}
+.admin-resizer {
+  width: 6px;
+  align-self: stretch;
+  min-height: 360px;
+  cursor: col-resize;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.14);
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+  position: relative;
+}
+.admin-resizer:hover,
+.admin-resizer.is-dragging {
+  background: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+}
+body.admin-resizing {
+  user-select: none;
+  cursor: col-resize !important;
 }
 #admin-entry-table th,
 #admin-entry-table td {
@@ -1708,6 +1727,10 @@ body.tv-public-viewer .tv-show-ctrl-fab {
 @media (max-width: 1120px) {
   .admin-layout {
     grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .admin-resizer {
+    display: none;
   }
   .admin-sidebar-events {
     max-height: 260px;

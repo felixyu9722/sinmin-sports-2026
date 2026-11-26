@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="./css/style.css?v=20261126v1" />
+  <link rel="stylesheet" href="./css/style.css?v=20261126v2" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -78,15 +78,22 @@
       </div>
     </aside>
 
+    <div class="admin-resizer no-print" id="resizer-left" title="左右拖动调整左侧栏宽度（双击恢复默认）"></div>
+
     <!-- 中栏：核心成绩录入与自动计算工作台 -->
     <section class="glass-panel" style="padding:16px;" id="admin-workspace"></section>
+
+    <div class="admin-resizer no-print" id="resizer-right" title="左右拖动调整右侧导播栏宽度（双击恢复默认）"></div>
 
     <!-- 右栏：大屏导播遥控与积分速览 -->
     <aside class="admin-director-col no-print" style="display:flex; flex-direction:column; gap:12px;">
       <div class="glass-panel" style="padding:14px;">
         <div class="section-header" style="margin-bottom:8px;">
           <h3 class="section-title" style="font-size:0.94rem;">📺 电视大屏导播遥控</h3>
-          <span style="font-size:0.72rem; color:#34d399;" id="director-sync-hint">就绪</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="btn btn-sm" id="btn-toggle-director-width" style="padding:2px 7px; font-size:0.7rem;" title="一键切换导播栏宽/窄（也可拖动左边缘自由调宽）">⇔ 加宽</button>
+            <span style="font-size:0.72rem; color:#34d399;" id="director-sync-hint">就绪</span>
+          </div>
         </div>
 
         <!-- PiP 电视画面实时状态预览 -->
@@ -112,6 +119,14 @@
         </div>
 
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap; padding:8px 10px; border-radius:10px; background:rgba(9,14,28,0.68); border:1px solid rgba(148,163,184,0.18);">
+            <button type="button" class="btn btn-sm btn-emerald" id="btn-remote-autocycle" style="flex:1; min-width:128px; justify-content:center; font-size:0.76rem;" title="一键遥控本地与线上大屏是否开启自动轮播">🔄 自动轮播: 开</button>
+            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.76rem; color:var(--text-secondary); white-space:nowrap;">
+              <span>⏱️ 停留</span>
+              <input type="number" id="input-push-hold-sec" class="input-control input-mono" min="5" max="300" step="1" value="15" style="width:54px; padding:4px 5px; font-size:0.78rem; text-align:center;" title="推送新画面后停留多少秒再恢复轮播" />
+              <span>秒</span>
+            </label>
+          </div>
           <button class="btn btn-sm btn-emerald" id="btn-trigger-fanfare">🎆 手动重播破纪录礼花特效</button>
           <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-secondary);">
             <input type="checkbox" id="chk-auto-tts" />
@@ -303,7 +318,7 @@
 
   <datalist id="sinmin-student-datalist"></datalist>
   <script src="./student-directory/students-map.js"></script>
-  <script src="./js/core.js?v=20261126v1"></script>
+  <script src="./js/core.js?v=20261126v2"></script>
   <script>
     (function () {
       var S = window.SinMinSports;
@@ -407,6 +422,16 @@
         });
 
         document.getElementById('input-urgent-notice').value = tvCmd.urgentNotice || '';
+        var remoteCycleOn = tvCmd.autoCycle !== false;
+        var cycleBtn = document.getElementById('btn-remote-autocycle');
+        if (cycleBtn) {
+          cycleBtn.textContent = remoteCycleOn ? '🔄 自动轮播: 开' : '⏸ 自动轮播: 关';
+          cycleBtn.classList.toggle('btn-emerald', remoteCycleOn);
+        }
+        var holdInput = document.getElementById('input-push-hold-sec');
+        if (holdInput && document.activeElement !== holdInput) {
+          holdInput.value = Math.max(5, Math.min(300, Number(tvCmd.pushHoldSeconds) || 15));
+        }
 
         var standings = S.computeStandings(state);
         var miniEl = document.getElementById('admin-mini-standings');
@@ -887,6 +912,102 @@
         maybeAutoPushGitHub();
       }
 
+      function getDirectorHoldSeconds() {
+        var el = document.getElementById('input-push-hold-sec');
+        var v = el ? parseInt(el.value, 10) : 15;
+        if (isNaN(v) || v < 5) v = 5;
+        if (v > 300) v = 300;
+        if (el) el.value = v;
+        return v;
+      }
+
+      document.getElementById('btn-remote-autocycle').addEventListener('click', function () {
+        var nextOn = !(tvCmd.autoCycle !== false);
+        syncRemoteTvCommand({ autoCycle: nextOn, pushHoldSeconds: getDirectorHoldSeconds() });
+        S.showToast(nextOn ? '🔄 已开启大屏自动轮播 (1➔3➔4➔7)' : '⏸ 已关闭大屏自动轮播（大屏将锁定当前画面）');
+      });
+
+      document.getElementById('input-push-hold-sec').addEventListener('change', function () {
+        var sec = getDirectorHoldSeconds();
+        syncRemoteTvCommand({ pushHoldSeconds: sec });
+        S.showToast('⏱️ 已设置大屏推送停留时间为 ' + sec + ' 秒');
+      });
+
+      // 控制台左右面板自由拖拽调宽 + 一键宽/窄切换
+      (function initAdminResizers() {
+        var layout = document.querySelector('.admin-layout');
+        var leftResizer = document.getElementById('resizer-left');
+        var rightResizer = document.getElementById('resizer-right');
+        var widthToggleBtn = document.getElementById('btn-toggle-director-width');
+        if (!layout) return;
+
+        function applyWidths(lw, rw) {
+          if (lw) {
+            layout.style.setProperty('--admin-left-w', lw + 'px');
+            try { localStorage.setItem('sinmin_admin_left_w', String(lw)); } catch (e) {}
+          }
+          if (rw) {
+            layout.style.setProperty('--admin-right-w', rw + 'px');
+            try { localStorage.setItem('sinmin_admin_right_w', String(rw)); } catch (e) {}
+            if (widthToggleBtn) widthToggleBtn.textContent = rw >= 350 ? '⇔ 还原' : '⇔ 加宽';
+          }
+        }
+
+        try {
+          var savedL = parseInt(localStorage.getItem('sinmin_admin_left_w'), 10);
+          var savedR = parseInt(localStorage.getItem('sinmin_admin_right_w'), 10);
+          if (savedL >= 180 && savedL <= 380) applyWidths(savedL, null);
+          if (savedR >= 240 && savedR <= 520) applyWidths(null, savedR);
+        } catch (e) {}
+
+        function bindDrag(resizerEl, side) {
+          if (!resizerEl) return;
+          resizerEl.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            var startX = e.clientX;
+            var rect = layout.getBoundingClientRect();
+            var curL = parseInt(getComputedStyle(layout).getPropertyValue('--admin-left-w'), 10) || 230;
+            var curR = parseInt(getComputedStyle(layout).getPropertyValue('--admin-right-w'), 10) || 295;
+            resizerEl.classList.add('is-dragging');
+            document.body.classList.add('admin-resizing');
+
+            function onMove(ev) {
+              var dx = ev.clientX - startX;
+              if (side === 'left') {
+                var nextL = Math.max(180, Math.min(380, curL + dx));
+                applyWidths(nextL, null);
+              } else {
+                var maxR = Math.min(520, Math.max(320, Math.round(rect.width * 0.42)));
+                var nextR = Math.max(240, Math.min(maxR, curR - dx));
+                applyWidths(null, nextR);
+              }
+            }
+            function onUp() {
+              resizerEl.classList.remove('is-dragging');
+              document.body.classList.remove('admin-resizing');
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          });
+          resizerEl.addEventListener('dblclick', function () {
+            if (side === 'left') applyWidths(230, null);
+            else applyWidths(null, 295);
+          });
+        }
+
+        bindDrag(leftResizer, 'left');
+        bindDrag(rightResizer, 'right');
+
+        if (widthToggleBtn) {
+          widthToggleBtn.addEventListener('click', function () {
+            var curR = parseInt(getComputedStyle(layout).getPropertyValue('--admin-right-w'), 10) || 295;
+            applyWidths(null, curR >= 350 ? 295 : 385);
+          });
+        }
+      })();
+
       // 导播遥控：推送成绩到大屏
       document.getElementById('btn-push-results-tv').addEventListener('click', function () {
         var ev = getSelectedEvent();
@@ -896,7 +1017,7 @@
         }
 
         var targetMode = activeStage === 'prelim' ? 'qualifiers' : 'live_results';
-        syncRemoteTvCommand({ mode: targetMode, eventId: ev.id });
+        syncRemoteTvCommand({ mode: targetMode, eventId: ev.id, pushHoldSeconds: getDirectorHoldSeconds() });
 
         // 若配置了 Google Apps Script Webhook，则同步写入云端表格
         if (state.meta && state.meta.googleAppsScriptUrl) {

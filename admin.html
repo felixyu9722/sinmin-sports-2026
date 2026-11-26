@@ -127,7 +127,10 @@
               <span>秒</span>
             </label>
           </div>
-          <button class="btn btn-sm btn-emerald" id="btn-trigger-fanfare" title="仅在真实破大会纪录时弹出破纪录横幅，普通项目仅放庆祝礼花">🎆 播放大屏庆祝礼花特效</button>
+          <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px;">
+            <button type="button" class="btn btn-sm btn-emerald" id="btn-celebrate-top3" style="justify-content:center; font-size:0.75rem; padding:7px 6px;" title="切到领奖台显示头3名并播放庆祝礼花">🥇 庆祝头3名+礼花</button>
+            <button type="button" class="btn btn-sm btn-gold" id="btn-celebrate-record" style="justify-content:center; font-size:0.75rem; padding:7px 6px;" title="弹出金色全屏「破大会纪录」横幅与金色礼花">⚡ 破大会纪录横幅</button>
+          </div>
           <label style="display:flex; align-items:center; gap:8px; font-size:0.82rem; cursor:pointer; color:var(--text-secondary);">
             <input type="checkbox" id="chk-auto-tts" />
             <span>推送成绩时在本机自动语音播报前三名</span>
@@ -1047,10 +1050,34 @@
         S.showToast('📺 电视大屏已切换至：' + S.TV_MODES[mode].label);
       });
 
-      document.getElementById('btn-trigger-fanfare').addEventListener('click', function () {
+      document.getElementById('btn-celebrate-top3').addEventListener('click', function () {
         var ev = getSelectedEvent();
-        syncRemoteTvCommand({ mode: 'live_results', eventId: ev ? ev.id : '', playFanfareAt: Date.now() });
-        S.showToast('🎆 已向本地与云端电视大屏发送礼花庆祝指令！');
+        syncRemoteTvCommand({
+          mode: 'podium',
+          eventId: ev ? ev.id : '',
+          playFanfareAt: Date.now(),
+          fanfareType: 'top3',
+          pushHoldSeconds: getDirectorHoldSeconds()
+        });
+        S.showToast('🥇 已向本地与云端大屏推送头3名领奖台与庆祝礼花！');
+      });
+
+      document.getElementById('btn-celebrate-record').addEventListener('click', function () {
+        var ev = getSelectedEvent();
+        if (!ev) return;
+        var computed = S.calculateEntries(ev.finalEntries || [], ev, true);
+        var hasRec = computed.some(function (x) { return x.isRecord; });
+        if (!hasRec && !confirm('当前项目【' + ev.group + ' ' + ev.name + '】尚未检测到破大会纪录，确定仍要弹出「破大会纪录」金色横幅吗？')) {
+          return;
+        }
+        syncRemoteTvCommand({
+          mode: 'live_results',
+          eventId: ev.id,
+          playFanfareAt: Date.now(),
+          fanfareType: 'record',
+          pushHoldSeconds: getDirectorHoldSeconds()
+        });
+        S.showToast('⚡ 已向本地与云端大屏发送破大会纪录金色横幅！');
       });
 
       // 紧急检录通知

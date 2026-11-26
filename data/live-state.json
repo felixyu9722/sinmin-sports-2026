@@ -5,7 +5,7 @@
     "schoolName": "亚罗士打新民独立中学",
     "meetTitle": "2026年校内运动会",
     "meetDate": "2026-12-02",
-    "updatedAt": "2026-11-26T02:37:36.496Z",
+    "updatedAt": "2026-11-26T02:38:34.352Z",
     "githubRepo": "felixyu9722/sinmin-sports-2026",
     "googleSheetCsvUrl": "",
     "googleAppsScriptUrl": "",
@@ -13,7 +13,7 @@
     "githubAutoPush": true,
     "remoteTvCommand": {
       "mode": "live_results",
-      "eventId": "ev_1795658567326",
+      "eventId": "ev_grand_8x200",
       "urgentNotice": "",
       "playFanfareAt": 0,
       "pushedAt": 1795660656440
@@ -3697,40 +3697,6 @@
           "className": "色队代表",
           "team": "green",
           "result": "",
-          "status": "OK"
-        }
-      ]
-    },
-    {
-      "id": "ev_1795658567326",
-      "order": 41,
-      "name": "test",
-      "group": "男甲",
-      "type": "track",
-      "isTeam": true,
-      "is60m": false,
-      "windCheck": false,
-      "wind": "",
-      "physicalMedalCount": 8,
-      "teamMedalRule": "tug_or_grand",
-      "recordMark": "11",
-      "recordHolder": "",
-      "scheduleTime": "11",
-      "status": "finished",
-      "prelimEntries": [],
-      "finalEntries": [
-        {
-          "heat": 1,
-          "lane": 1,
-          "bib": "",
-          "name": "黄语森",
-          "className": "初一孝",
-          "team": "red",
-          "group": "男甲",
-          "result": "",
-          "attempt1": "",
-          "attempt2": "",
-          "attempt3": "",
           "status": "OK"
         }
       ]

@@ -852,11 +852,16 @@
           if (newCmd.playFanfareAt && newCmd.playFanfareAt !== lastFanfareTs) {
             lastFanfareTs = newCmd.playFanfareAt;
             var ev = getCurrentEvent();
+            var rec = null;
             if (ev) {
               var computed = S.calculateEntries(ev.finalEntries || [], ev, true);
-              var rec = computed.find(function (x) { return x.isRecord; }) || computed[0];
-              if (rec) triggerRecordCelebration(ev, rec);
-              else launchConfetti(true);
+              rec = computed.find(function (x) { return x.isRecord; }) || null;
+            }
+            if (rec) {
+              triggerRecordCelebration(ev, rec);
+            } else {
+              launchConfetti(false);
+              if (soundEnabled) S.playResultChime();
             }
           }
         }
@@ -992,8 +997,18 @@
                 }
                 if (remoteCmd.playFanfareAt && remoteCmd.playFanfareAt !== lastFanfareTs) {
                   lastFanfareTs = remoteCmd.playFanfareAt;
-                  launchConfetti(true);
-                  if (soundEnabled) S.playRecordFanfare();
+                  var rEv = getCurrentEvent();
+                  var rRec = null;
+                  if (rEv) {
+                    var rComp = S.calculateEntries(rEv.finalEntries || [], rEv, true);
+                    rRec = rComp.find(function (x) { return x.isRecord; }) || null;
+                  }
+                  if (rRec) {
+                    triggerRecordCelebration(rEv, rRec);
+                  } else {
+                    launchConfetti(false);
+                    if (soundEnabled) S.playResultChime();
+                  }
                 }
                 if (autoCycleEnabled) {
                   var remoteHoldMs = Math.max(5, Math.min(300, Number(remoteCmd.pushHoldSeconds) || 15)) * 1000;

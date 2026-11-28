@@ -5353,7 +5353,7 @@
     var d = nowDate instanceof Date ? nowDate : new Date();
     var ymd = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     if (ymd <= 20261116) return 'early';
-    if (ymd <= 20261130) return '18/11';
+    if (ymd <= 20261118) return '18/11';
     return '02/12';
   }
 
@@ -5441,12 +5441,14 @@
       if (counts[bucket] !== undefined) counts[bucket] += 1;
     });
     var defDay = getDefaultActiveDay();
+    var now = new Date();
+    var ymd = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
     return {
       defaultDay: defDay,
       counts: counts,
       map: {
-        '18/11': { key: '18/11', label: (defDay === '18/11' ? '📅 18/11 今日比赛' : '📅 18/11 赛事') + ' (' + counts['18/11'] + ')' },
-        '02/12': { key: '02/12', label: (defDay === '02/12' ? '🔥 02/12 今日正日' : '🔥 02/12 运动会正日') + ' (' + counts['02/12'] + ')' },
+        '02/12': { key: '02/12', label: (ymd === 20261202 ? '🔥 02/12 今日正日' : '🔥 02/12 运动会正日') + ' (' + counts['02/12'] + ')' },
+        '18/11': { key: '18/11', label: (ymd === 20261118 ? '📅 18/11 今日比赛' : '✓ 18/11 赛果') + ' (' + counts['18/11'] + ')' },
         early: { key: 'early', label: '✓ 15-16/11 前期赛果 (' + counts.early + ')' },
         all: { key: 'all', label: '📋 全部项目 (' + counts.all + ')' }
       }
@@ -5456,7 +5458,7 @@
   function renderDayTabButtons(containerEl, activeDay, state, orderKeys) {
     if (!containerEl) return;
     var meta = getDayBucketTabsMeta(state);
-    var keys = orderKeys || ['18/11', '02/12', 'early', 'all'];
+    var keys = orderKeys || ['02/12', '18/11', 'early', 'all'];
     containerEl.innerHTML = keys.map(function (k) {
       var info = meta.map[k];
       if (!info) return '';
@@ -5564,8 +5566,8 @@
 
   function renderPublicTopWidgets(state, filters) {
     renderPublicLiveTicker(document.getElementById('public-live-ticker'), state);
-    renderDayTabButtons(document.getElementById('daily-day-tabs'), filters.day, state, ['18/11', '02/12', 'early', 'all']);
-    renderDayTabButtons(document.getElementById('filter-day'), filters.day, state, ['all', '18/11', '02/12', 'early']);
+    renderDayTabButtons(document.getElementById('daily-day-tabs'), filters.day, state, ['02/12', '18/11', 'early', 'all']);
+    renderDayTabButtons(document.getElementById('filter-day'), filters.day, state, ['all', '02/12', '18/11', 'early']);
     renderDailyCardsStrip(
       document.getElementById('daily-cards-strip'),
       document.getElementById('daily-spotlight-subtitle'),

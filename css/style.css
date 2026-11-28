@@ -545,12 +545,39 @@ html, body {
   font-weight: 700;
 }
 
-/* 荣耀聚焦条：最佳运动员 + 破纪录榜 */
+/* 荣耀聚焦条：最佳运动员（上） + 破纪录榜（下·紧凑横条） */
 .spotlight-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
   margin-bottom: 20px;
+}
+.records-horizontal-panel {
+  padding: 11px 16px;
+}
+.records-horizontal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.records-horizontal-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.records-empty-inline {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.records-horizontal-items {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
 }
 .section-header {
   display: flex;
@@ -572,7 +599,7 @@ html, body {
 }
 .mvp-mini-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 .mvp-mini-card {
@@ -1746,6 +1773,9 @@ body.tv-public-viewer .tv-show-ctrl-fab {
   }
   .spotlight-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .mvp-mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .spotlight-grid > .glass-panel {
     min-width: 0;

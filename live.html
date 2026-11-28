@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-  <link rel="stylesheet" href="./css/style.css?v=20261128v2" />
+  <link rel="stylesheet" href="./css/style.css?v=20261128v3" />
 </head>
 
 <body class="arena-bg">
@@ -96,13 +96,15 @@
         <div class="mvp-mini-grid" id="mvp-mini-grid"></div>
       </div>
 
-      <div class="glass-panel animate__animated animate__fadeInUp" style="padding:18px;">
-        <div class="section-header">
-          <h3 class="section-title">⚡ 破大会纪录英雄榜 (NEW RECORD)</h3>
+      <div class="glass-panel records-horizontal-panel animate__animated animate__fadeInUp">
+        <div class="records-horizontal-bar">
+          <div class="records-horizontal-left">
+            <h3 class="section-title" style="font-size:0.95rem;">⚡ 破大会纪录英雄榜 (NEW RECORD)</h3>
+            <span class="records-empty-inline" id="records-empty-hint">暂未有打破大会纪录的成绩，期待新纪录诞生！</span>
+          </div>
           <span class="badge-record" id="record-total-count">0 项新纪录</span>
         </div>
-        <div id="records-spotlight-list"
-          style="display:flex; flex-direction:column; gap:8px; max-height:210px; overflow-y:auto;"></div>
+        <div id="records-spotlight-list" class="records-horizontal-items" style="display:none;"></div>
       </div>
     </section>
 
@@ -184,7 +186,7 @@
     </div>
   </div>
 
-  <script src="./js/core.js?v=20261128v2"></script>
+  <script src="./js/core.js?v=20261128v3"></script>
   <script>
     (function () {
       var S = window.SinMinSports;
@@ -272,11 +274,16 @@
         }).join('');
 
         var recListEl = document.getElementById('records-spotlight-list');
+        var recEmptyEl = document.getElementById('records-empty-hint');
         var recCountEl = document.getElementById('record-total-count');
         recCountEl.textContent = standings.recordsList.length + ' 项新纪录';
         if (standings.recordsList.length === 0) {
-          recListEl.innerHTML = '<div style="color:var(--text-muted); font-size:0.86rem; padding:12px 0;">暂未有打破大会纪录的成绩，期待新纪录诞生！</div>';
+          if (recEmptyEl) recEmptyEl.style.display = '';
+          recListEl.style.display = 'none';
+          recListEl.innerHTML = '';
         } else {
+          if (recEmptyEl) recEmptyEl.style.display = 'none';
+          recListEl.style.display = 'grid';
           recListEl.innerHTML = standings.recordsList.map(function (r) {
             return (
               '<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border-radius:10px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.28);">' +

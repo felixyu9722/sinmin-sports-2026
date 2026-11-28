@@ -58,16 +58,33 @@
 
 ---
 
-## 📁 文件结构
+## 🔗 全部可点击链接总览 & 对话留档
 
-- `live.html` — 纯净师生实时查分榜（无后台操作按钮，自动每 20 秒拉取云端赛果）
-- `index.html` — 公开成绩查询与四色总积分榜（主任预览与管理员工具入口）
-- `tv-display.html` — 决赛现场大屏幕投影页（7 大模式、手动切屏、自动轮播、礼花、跑马灯与本地学生肖像）
-- `admin.html` — 现场成绩录入与导播控制台（Excel 导入、PiP 预览、一键推送大屏、A4 扫码海报与检录单打印）
-- `css/style.css` — 深色广播级科技感主题、白底色块号码布样式与手机窄屏适配
-- `js/core.js` — 新民独立中学章程核心规则引擎、手册速查数据、SheetJS 多表/模板读写、主题曲播放器与云端同步模块
-- `data/live-state.json` — 云端实时赛事数据快照（含官方 40 项赛程与已赛成绩）
-- `local_server.py` & `启动运动会系统.bat` — 本机一键启动服务与免 Token 自动 GitHub 云同步脚本
-- `MP3/` — 运动会原创主题曲《新民少年・勇往直前》（4～7 号无损调音背景音乐）
-- `PROJECT_RECORD.md` — 项目完整开发决策、赛果快照与对话留档
-- `Sin Min Logo.png` — 亚罗士打新民独立中学校徽
+### 1. 🌐 线上 GitHub Pages 网址（手机端 / 第二台联网电视 / 群发链接）
+- 📱 **师生纯净实时查分榜（主推扫码/群发）**：[https://felixyu9722.github.io/sinmin-sports-2026/live.html](https://felixyu9722.github.io/sinmin-sports-2026/live.html)
+- 🏠 **完整总览首页（主任审阅 / 各端导航入口）**：[https://felixyu9722.github.io/sinmin-sports-2026/](https://felixyu9722.github.io/sinmin-sports-2026/)
+- 📺 **电视 / LED 大屏转播页（默认 `1➔3➔4➔7` 自动轮播 + 6秒云同步）**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html)
+- 📺 **师生端纯净大屏直播页（无导播控制条）**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live)
+- 🏆 **电视大屏固定「四队总积分榜」专页**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?mode=standings](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?mode=standings)
+- 🎛️ **线上成绩录入与导播控制台**：[https://felixyu9722.github.io/sinmin-sports-2026/admin.html](https://felixyu9722.github.io/sinmin-sports-2026/admin.html)
+- 📝 **线上查看完整对话留档（GitHub）**：[https://github.com/felixyu9722/sinmin-sports-2026/blob/main/PROJECT_RECORD.md](https://github.com/felixyu9722/sinmin-sports-2026/blob/main/PROJECT_RECORD.md)
+- 📦 **GitHub 代码仓库主页**：[https://github.com/felixyu9722/sinmin-sports-2026](https://github.com/felixyu9722/sinmin-sports-2026)
+
+### 2. 💻 本机记录台零延迟网址（先双击运行 `启动运动会系统.bat` 后点击打开）
+- 🎛️ **本机记录台与导播控制台（免 Token 自动云同步）**：[http://localhost:8080/admin.html](http://localhost:8080/admin.html)
+- 📺 **本机 HDMI 电视大屏页（0 秒即时联动）**：[http://localhost:8080/tv-display.html](http://localhost:8080/tv-display.html)
+- 📱 **本机预览师生纯净查分榜**：[http://localhost:8080/live.html](http://localhost:8080/live.html)
+- 🏠 **本机预览完整总览首页**：[http://localhost:8080/index.html](http://localhost:8080/index.html)
+
+### 3. 📁 本地核心项目文件与对话留档（编辑器按住 `Ctrl + 点击` 即可打开）
+- 📝 **[PROJECT_RECORD.md](./PROJECT_RECORD.md)** — **项目完整开发决策、赛果快照与对话留档**
+- 📱 **[live.html](./live.html)** — 纯净师生实时查分榜（无后台操作按钮，自动每 20 秒拉取云端赛果）
+- 🏠 **[index.html](./index.html)** — 公开成绩查询与四色总积分榜（主任预览与管理员工具入口）
+- 📺 **[tv-display.html](./tv-display.html)** — 决赛现场大屏幕投影页（7 大模式、自动轮播、礼花、跑马灯与学生肖像）
+- 🎛️ **[admin.html](./admin.html)** — 现场成绩录入与导播控制台（面板拖拽调宽、远程轮播控制、一键推屏与扫码海报）
+- ⚙️ **[js/core.js](./js/core.js)** — 新民独立中学章程核心规则引擎、手册速查数据、SheetJS 读写、主题曲播放器与云端同步模块
+- 🎨 **[css/style.css](./css/style.css)** — 深色广播级科技感主题、白底色块号码布样式与手机窄屏适配
+- 📊 **[data/live-state.json](./data/live-state.json)** — 云端实时赛事数据快照（含官方 40 项赛程与已赛成绩）
+- 🚀 **[local_server.py](./local_server.py)** & **[启动运动会系统.bat](./启动运动会系统.bat)** — 本机一键启动服务与免 Token 自动 GitHub 云同步脚本
+- 🎵 **[MP3/](./MP3/)** — 运动会原创主题曲《新民少年・勇往直前》（4～7 号无损调音背景音乐）
+- 🏫 **[Sin Min Logo.png](./Sin Min Logo.png)** — 亚罗士打新民独立中学校徽

@@ -1,9 +1,9 @@
 # 项目开发与完整对话决策留档（亚罗士打新民独立中学 2026 运动会系统）
 
-**最后更新**：2026-11-18  
+**最后更新**：2026-11-28  
 **学校名称**：亚罗士打新民独立中学（新民独立中学 / Sin Min Middle School）  
 **GitHub 仓库**：`felixyu9722/sinmin-sports-2026`（`main` 分支）  
-**当前最新代码基准**：已接入《竞赛检录表格 (1).pdf》全部 17 项完赛成绩、师生端无缝慢速 LIVE 滚动条与每日速览，以及电视大屏 `1➔3➔4➔7` 自动轮播与自动隐藏控制栏（提交 `16e0c41` 起）
+**当前最新代码基准**：已完成运动会主题曲 4～7 号无损轻柔背景播放、双电视 6 秒极速免 Token 云同步、控制台远程轮播开关/停留秒数/面板拖拽调宽/删除项目、庆祝头3名与破纪录双按钮拆分，以及赛前默认聚焦 `02/12` 正日 23 项与破纪录紧凑横条排版（提交 `2733b4e` 起）
 
 ---
 
@@ -172,6 +172,25 @@
 - **依《竞赛检录表格 (1).pdf》全面审核并同步今日全部赛果**：
   - 导入 `18/11` 全部 7 项决赛完整成绩（女乙/女甲/男乙/男甲 400米、男乙跳高新增 `4205` 达南吉夺冠并精确区分 `3209`/`2203` 并列、男甲跳高更新红队替补 `1107`/`1103`、女甲标枪 500g 公开 6 次试掷明细及场次 6），并依第 4 页修订联将 `16/11` 男乙 1500米道 6 `3201` 林子恒更正为犯规 `DQ`；同步升级默认数据缓存键为 `sinmin_sports_2026_state_v4` 及前端版本 `?v=20261118v4`。
 
+### 第七阶段（2026-11-18 晚 ～ 2026-11-28）：运动会主题曲、双大屏极速云同步、控制台导播增强与正日赛前界面定稿
+- **运动会原创主题曲《新民力量 / 新民少年・勇往直前》接入与无损音量调校（[`MP3/`](file:///c:/Downloads/运动会2026/MP3)、[`js/core.js`](file:///c:/Downloads/运动会2026/js/core.js)）**：
+  - 完成 Suno AI 运动会主题曲歌词与曲风设计，精选 `《新民少年・勇往直前》 4.mp3` ～ `7.mp3` 共 4 首曲目接入 `live.html` 与 `index.html` 自动循环播放，右下角提供悬浮播放/静音与 `⇄ 1/4 ~ 4/4` 切歌胶囊（自动兼容手机端首次触屏解锁播放与 iOS Web Audio `GainNode`）。
+  - 针对人耳对数听感及部分手机硬件解码器忽略 `audio.volume` 的问题，对 4 首 MP3 执行 **MPEG 帧 `global_gain` 无损衰减 `-12 dB`（物理振幅降至 25%）** 并配合 `defaultVolume: 0.30`，实现电脑与手机端一致的轻柔背景音乐体验。
+- **赛前排练通告临时上线与撤下 & 精神奖准则核对（2026-11-23 ～ 11-28）**：
+  - 11/23 配合体育处通告在顶部滚动条与四色速查卡上线「星期一至三第 4–6 节开幕步操排练场地、星期四开幕总彩排与接力赛放学练习」提醒，并于 11/28 彩排结束后干净撤下。
+  - 核对确认《最佳精神奖评分准则》（独立奖杯不计入田径总积分，由校长、行政、教务、联课、体育处主任 5 人评分：开幕闭幕队形步操 `20%`、团队精神 `35%`、体育精神 `20%`、口号 `15%`、帐篷整洁设计 `10%`）。
+- **双电视大屏免 Token 云同步提速（定案采用「方案 1」，无需配置 Firebase）**：
+  - 确认无需额外部署 Firebase，直接使用本机 `启动运动会系统.bat`（`local_server.py`）免 Token 自动推送 GitHub；
+  - 线上 `tv-display.html` 轮询间隔由 `15 秒` 缩短至 **`6 秒`**，并优先直连 `raw.githubusercontent.com` 读取最新提交绕过静态缓存，使线上第二台电视在 **约 8～15 秒内** 即可自动跟随本机控制台切换画面与播放礼花。
+- **控制台工作台与导播面板全方位升级（[`admin.html`](file:///c:/Downloads/运动会2026/admin.html)、[`tv-display.html`](file:///c:/Downloads/运动会2026/tv-display.html)、[`css/style.css`](file:///c:/Downloads/运动会2026/css/style.css)）**：
+  1. **删除项目功能**：中栏右上角新增 **「🗑️ 删除本项目」** 按钮（带二次确认弹窗），方便随时清理测试建项并自动同步至本机与云端。
+  2. **远程轮播开关与停留秒数**：右侧导播栏新增 **「🔄 自动轮播: 开 / ⏸ 关」** 开关及 **「⏱️ 停留 `[15]` 秒」**（`5～300` 秒可调）输入框，无需去电视机上操作即可锁定大屏画面或自定义推送停留时长。
+  3. **左右面板宽度自由调节（合二为一）**：新增鼠标拖动分隔线自由调节左栏（`180～380px`）与右栏（`240～520px`）宽度（自动记忆在本地 `localStorage`，双击分隔线复位），并在导播栏标题旁提供 **`⇔ 加宽 / 还原`** 快捷按钮。
+  4. **庆祝头 3 名与破大会纪录双按钮拆分**：修复未破纪录时误弹「NEW RECORD」全屏横幅的问题，拆分为并排的 **「🥇 庆祝头3名+礼花」**（切至领奖台展示金银铜并放彩带礼花）与 **「⚡ 破大会纪录横幅」**（弹出金色全屏破纪录横幅，若未检测到破纪录自动弹框二次确认防误触），双屏同步响应。
+- **02/12 正日赛前界面定稿（2026-11-28）**：
+  - `live.html` 与 `index.html` 默认选中页签切换为 **`🔥 02/12 运动会正日 (23)`** 并排在首位，原 `18/11` 归档为 `✓ 18/11 赛果 (7)`。
+  - 将 **「⚡ 破大会纪录英雄榜」** 移至 **「👑 各组最佳运动员实时领跑榜」** 正下方，无新纪录时以单行紧凑横条呈现，最佳运动员领跑榜扩展为整行四组并列展示。
+
 ---
 
 ## 五、比赛当天与赛后清理备忘录（Checklist）
@@ -190,6 +209,17 @@
 
 | 提交哈希 | 主要内容 |
 | --- | --- |
+| `2733b4e` | `style: 将破大会纪录榜移至最佳运动员领跑榜正下方并改为紧凑横条排版` |
+| `4df0a54` | `feat: 将师生查分页与首页默认聚焦赛期切换为 02/12 运动会正日（23项）` |
+| `356ff4e` | `chore: 移除已结束的色队步操排练与接力练习通告卡片及滚动条内容` |
+| `b940caf` | `feat: 控制台拆分「庆祝头3名+礼花」与「破大会纪录横幅」双按钮并双屏同步` |
+| `ec902ef` | `fix: 修复未破大会纪录时点击礼花按钮误弹破纪录全屏横幅的问题` |
+| `1e82029` | `feat: 控制台新增远程大屏自动轮播开关、自定义推送停留秒数及左右面板自由拖拽调宽` |
+| `a7dd171` | `feat: 在控制台新增删除本项目按钮（含二次确认与自动云同步）` |
+| `b1f6339` | `feat: 优化线上电视大屏云同步速度（6秒轮询+直读GitHub最新提交+同步礼花指令）` |
+| `69e0d55` | `feat: 新增色队开幕步操排练与接力赛练习滚动广播及四队速查卡，并无损优化MP3背景音量` |
+| `217594d` | `chore: 更换MP3主题曲为4-7号（移除1-3号）并调小背景音量至10%（含iOS兼容）` |
+| `3fa5932` | `feat: 接入MP3目录3首运动会主题曲，在live.html与首页实现22%轻柔自动循环播放` |
 | `16e0c41` | `data: 依最新竞赛检录表格(1).pdf全面审核更新18/11今日7项决赛及16/11男乙1500m判罚` |
 | `f9552d8` | `feat: 更新电视大屏自动轮播为 1(10s)->3(15s)->4(各6s)->7(各4s)` |
 | `82a9501` | `style: 修复师生查分页手机端顶部三按钮三等分对齐及日期栏2x2网格排版` |
@@ -207,3 +237,33 @@
 | `943071c` | `style: 优化师生查分页 live.html 手机窄屏卡片与导航自适应排版` |
 | `a098a76` | `feat: 新增纯净师生查分版 live.html 与控制台一键生成打印 A4 扫码查分海报` |
 | `635556e` | `ui: 升级左侧满高队伍色块号码牌、中文晋级标识及移除精神奖评分` |
+
+---
+
+## 七、全部可点击链接总览（线上 GitHub Pages + 本机服务 + 本地文件）
+
+### 1. 🌐 线上 GitHub Pages 网址（全校手机 / 第二台联网电视 / 外部浏览）
+- 📱 **师生纯净实时查分榜**：[https://felixyu9722.github.io/sinmin-sports-2026/live.html](https://felixyu9722.github.io/sinmin-sports-2026/live.html)
+- 🏠 **完整总览首页（主任审阅 / 多端入口）**：[https://felixyu9722.github.io/sinmin-sports-2026/](https://felixyu9722.github.io/sinmin-sports-2026/)
+- 📺 **电视 / LED 大屏直播页（默认 `1➔3➔4➔7` 自动轮播 + 6秒云同步）**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html)
+- 📺 **师生端纯净大屏直播页（无导播控制条）**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live)
+- 🏆 **电视大屏锁定「四队总积分榜」专页**：[https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?mode=standings](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?mode=standings)
+- 🎛️ **线上成绩录入与导播控制台**：[https://felixyu9722.github.io/sinmin-sports-2026/admin.html](https://felixyu9722.github.io/sinmin-sports-2026/admin.html)
+- 📦 **GitHub 代码仓库主页**：[https://github.com/felixyu9722/sinmin-sports-2026](https://github.com/felixyu9722/sinmin-sports-2026)
+
+### 2. 💻 本机记录台零延迟网址（双击 `启动运动会系统.bat` 后点击打开）
+- 🎛️ **本机记录台与导播控制台（免 Token 自动云同步）**：[http://localhost:8080/admin.html](http://localhost:8080/admin.html)
+- 📺 **本机 HDMI 电视大屏页（BroadcastChannel 0 秒秒切）**：[http://localhost:8080/tv-display.html](http://localhost:8080/tv-display.html)
+- 📱 **本机预览师生纯净查分榜**：[http://localhost:8080/live.html](http://localhost:8080/live.html)
+- 🏠 **本机预览完整总览首页**：[http://localhost:8080/index.html](http://localhost:8080/index.html)
+
+### 3. 📁 本地核心项目文件直达
+- [live.html](file:///c:/Downloads/运动会2026/live.html) — 纯净师生实时查分榜
+- [index.html](file:///c:/Downloads/运动会2026/index.html) — 完整总览首页
+- [tv-display.html](file:///c:/Downloads/运动会2026/tv-display.html) — 电视 / LED 大屏幕转播页
+- [admin.html](file:///c:/Downloads/运动会2026/admin.html) — 现场成绩录入与导播控制台
+- [js/core.js](file:///c:/Downloads/运动会2026/js/core.js) — 核心竞赛规则引擎、同步模块与主题曲播放器
+- [css/style.css](file:///c:/Downloads/运动会2026/css/style.css) — 全局视觉主题与响应式样式
+- [data/live-state.json](file:///c:/Downloads/运动会2026/data/live-state.json) — 40 项赛事与积分实时数据快照
+- [local_server.py](file:///c:/Downloads/运动会2026/local_server.py) & [启动运动会系统.bat](file:///c:/Downloads/运动会2026/启动运动会系统.bat) — 本机一键启动与免 Token GitHub 同步服务
+- [README.md](file:///c:/Downloads/运动会2026/README.md) & [PROJECT_RECORD.md](file:///c:/Downloads/运动会2026/PROJECT_RECORD.md) — 项目说明与完整对话留档

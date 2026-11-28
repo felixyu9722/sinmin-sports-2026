@@ -5,16 +5,23 @@
 
 ---
 
-## 🔗 在线预览链接（可直接转发给运动会主任查看界面）
+## 🔗 全部可点击在线链接（可直接打开查看或转发）
 
-- **📱 纯净师生查分版（推荐印成二维码贴操场，无任何后台设置按钮）**：
-  `https://felixyu9722.github.io/sinmin-sports-2026/live.html`
+- **📱 纯净师生实时查分版（推荐印成二维码贴操场，默认聚焦 02/12 正日项目）**：
+  [https://felixyu9722.github.io/sinmin-sports-2026/live.html](https://felixyu9722.github.io/sinmin-sports-2026/live.html)
 - **🏠 完整总览首页（供主任与工作人员一站式预览切换）**：
-  `https://felixyu9722.github.io/sinmin-sports-2026/`
-- **📺 决赛现场大屏幕投影页（电视机 / LED 屏）**：
-  `https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html`
+  [https://felixyu9722.github.io/sinmin-sports-2026/](https://felixyu9722.github.io/sinmin-sports-2026/)
+- **📺 决赛现场大屏幕投影页（电视机 / LED 屏 · 默认 1➔3➔4➔7 轮播 + 6秒极速云同步）**：
+  [https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html)
+- **📺 师生手机端大屏直播入口（隐藏导播条）**：
+  [https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live](https://felixyu9722.github.io/sinmin-sports-2026/tv-display.html?from=live)
 - **🎛️ 现场成绩录入与导播控制台（检录处 / 记录台）**：
-  `https://felixyu9722.github.io/sinmin-sports-2026/admin.html`
+  [https://felixyu9722.github.io/sinmin-sports-2026/admin.html](https://felixyu9722.github.io/sinmin-sports-2026/admin.html)
+- **💻 本机记录台一键启动地址（先双击运行 `启动运动会系统.bat`）**：
+  - 本机控制台：[http://localhost:8080/admin.html](http://localhost:8080/admin.html)
+  - 本机 HDMI 大屏：[http://localhost:8080/tv-display.html](http://localhost:8080/tv-display.html)
+  - 本机师生查分预览：[http://localhost:8080/live.html](http://localhost:8080/live.html)
+  - 本机首页预览：[http://localhost:8080/index.html](http://localhost:8080/index.html)
 
 ---
 
@@ -58,6 +65,9 @@
 - `tv-display.html` — 决赛现场大屏幕投影页（7 大模式、手动切屏、自动轮播、礼花、跑马灯与本地学生肖像）
 - `admin.html` — 现场成绩录入与导播控制台（Excel 导入、PiP 预览、一键推送大屏、A4 扫码海报与检录单打印）
 - `css/style.css` — 深色广播级科技感主题、白底色块号码布样式与手机窄屏适配
-- `js/core.js` — 新民中学章程核心规则引擎、手册速查数据、SheetJS 多表/模板读写与云端同步模块
+- `js/core.js` — 新民独立中学章程核心规则引擎、手册速查数据、SheetJS 多表/模板读写、主题曲播放器与云端同步模块
 - `data/live-state.json` — 云端实时赛事数据快照（含官方 40 项赛程与已赛成绩）
-- `Sin Min Logo.png` — 新民中学校徽
+- `local_server.py` & `启动运动会系统.bat` — 本机一键启动服务与免 Token 自动 GitHub 云同步脚本
+- `MP3/` — 运动会原创主题曲《新民少年・勇往直前》（4～7 号无损调音背景音乐）
+- `PROJECT_RECORD.md` — 项目完整开发决策、赛果快照与对话留档
+- `Sin Min Logo.png` — 亚罗士打新民独立中学校徽

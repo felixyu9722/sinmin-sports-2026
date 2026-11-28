@@ -5357,29 +5357,6 @@
     return '02/12';
   }
 
-  var REHEARSAL_NOTICE_DATA = {
-    title: '体育处重要通告：色队开幕列队步操排练 & 接力赛放学练习',
-    subtitle: '全体色队学生必须参与开幕列队进场步操活动 · 体育处安排第四、五、六节分场地排练',
-    thursdaySummary: '星期四早上 8:10 静坐后进行运动会开幕总彩排，直到第四节结束（全体色队学生必须参与）',
-    relaySummary: '凡有报名 4×100m、4×400m 接力赛的同学，请色队老师督促同学在 星期一、二、三 放学后 4:00pm 到草场进行练习',
-    houses: [
-      { id: 'red', name: '红队', mon: '思源池羽球场', tue: '礼堂', wed: '思源池' },
-      { id: 'yellow', name: '黄队', mon: '礼堂', tue: '思源池羽球场', wed: '太阳能停车场' },
-      { id: 'blue', name: '蓝队', mon: '太阳能停车场', tue: '餐饮室前的羽球场', wed: '礼堂' },
-      { id: 'green', name: '青队', mon: '餐饮室前的羽球场', tue: '太阳能停车场', wed: '思源池的羽球场' }
-    ]
-  };
-
-  function getActiveRehearsalWeekday(nowDate) {
-    var d = nowDate instanceof Date ? nowDate : new Date();
-    var dow = d.getDay(); // 1=Mon, 2=Tue, 3=Wed, 4=Thu
-    if (dow === 1) return { key: 'mon', label: '星期一' };
-    if (dow === 2) return { key: 'tue', label: '星期二' };
-    if (dow === 3) return { key: 'wed', label: '星期三' };
-    if (dow === 4) return { key: 'thu', label: '星期四' };
-    return { key: 'mon', label: '星期一' };
-  }
-
   function buildTickerText(state) {
     if (state.meta && state.meta.tickerOverride) {
       return state.meta.tickerOverride;
@@ -5390,20 +5367,6 @@
       items.push('📢 现场广播：' + String(urgent).trim());
     }
     var defaultDay = getDefaultActiveDay();
-    if (defaultDay !== '02/12') {
-      var activeWd = getActiveRehearsalWeekday();
-      if (activeWd.key === 'thu') {
-        items.push('📢 【体育处重要通告 · 今日开幕总彩排】' + REHEARSAL_NOTICE_DATA.thursdaySummary);
-      } else {
-        var todayMapStr = REHEARSAL_NOTICE_DATA.houses.map(function (h) {
-          var icon = h.id === 'red' ? '🔴' : (h.id === 'yellow' ? '🟡' : (h.id === 'blue' ? '🔵' : '🟢'));
-          return icon + h.name + '：' + h[activeWd.key];
-        }).join(' ｜ ');
-        items.push('📢 【体育处重要通告 · 开幕步操排练】全体色队学生必须参与开幕列队进场步操活动（第4、5、6节排练） 👉 【' + activeWd.label + '地点】' + todayMapStr);
-      }
-      items.push('📅 【第4–6节步操排练完整地点】星期一（红:思源池羽球场 / 黄:礼堂 / 蓝:太阳能停车场 / 青:餐饮室前的羽球场） ｜ 星期二（红:礼堂 / 黄:思源池羽球场 / 蓝:餐饮室前的羽球场 / 青:太阳能停车场） ｜ 星期三（红:思源池 / 黄:太阳能停车场 / 蓝:礼堂 / 青:思源池的羽球场） ｜ ⏰ ' + REHEARSAL_NOTICE_DATA.thursdaySummary);
-      items.push('🏃 【接力赛放学练习】' + REHEARSAL_NOTICE_DATA.relaySummary);
-    }
     var todayEvents = (state.events || []).filter(function (ev) { return getEventDayBucket(ev) === defaultDay; });
     if (todayEvents.length > 0 && defaultDay !== 'early') {
       var dayTitle = defaultDay === '18/11' ? '18/11 已完赛焦点赛事' : '02/12 运动会正日赛事';
@@ -5599,100 +5562,8 @@
     });
   }
 
-  function renderRehearsalNoticePanel(panelEl) {
-    if (!panelEl) return;
-    var defaultDay = getDefaultActiveDay();
-    if (defaultDay === '02/12') {
-      panelEl.style.display = 'none';
-      return;
-    }
-    panelEl.style.display = '';
-    if (panelEl.dataset.rendered === '1') return;
-    panelEl.dataset.rendered = '1';
-
-    var activeWd = getActiveRehearsalWeekday();
-    var daysMeta = [
-      { key: 'mon', label: '星期一', period: '第 4、5、6 节' },
-      { key: 'tue', label: '星期二', period: '第 4、5、6 节' },
-      { key: 'wed', label: '星期三', period: '第 4、5、6 节' }
-    ];
-
-    var houseCardsHtml = REHEARSAL_NOTICE_DATA.houses.map(function (h) {
-      var t = TEAMS[h.id];
-      var rowsHtml = daysMeta.map(function (dm) {
-        var isToday = activeWd.key === dm.key;
-        return (
-          '<div class="rehearsal-day-row' + (isToday ? ' is-today' : '') + '">' +
-            '<span class="rehearsal-day-label">' +
-              escapeHtml(dm.label) +
-              (isToday ? '<span class="rehearsal-today-pill">今日</span>' : '') +
-            '</span>' +
-            '<strong class="rehearsal-venue-text">' + escapeHtml(h[dm.key]) + '</strong>' +
-          '</div>'
-        );
-      }).join('');
-
-      return (
-        '<div class="rehearsal-house-card" style="background:' + t.soft + '; border-color:' + t.color + '55;">' +
-          '<div class="rehearsal-house-head">' +
-            renderTeamPillHtml(h.id) +
-            '<span class="rehearsal-period-tag">第 4–6 节排练</span>' +
-          '</div>' +
-          '<div class="rehearsal-days-list">' + rowsHtml + '</div>' +
-        '</div>'
-      );
-    }).join('');
-
-    var isThu = activeWd.key === 'thu';
-    panelEl.innerHTML =
-      '<div class="rehearsal-notice-head">' +
-        '<div>' +
-          '<div class="rehearsal-badge-row">' +
-            '<span class="rehearsal-urgent-tag">📢 体育处重要通告</span>' +
-            '<span class="rehearsal-sub-tag">最佳精神奖 · 开幕步操占 20%</span>' +
-          '</div>' +
-          '<h2 class="section-title" style="margin-top:4px;">' +
-            '<span>🚩</span>' +
-            '<span>色队开幕列队步操排练 & 接力赛练习地点分配</span>' +
-          '</h2>' +
-          '<div class="rehearsal-notice-desc">' + escapeHtml(REHEARSAL_NOTICE_DATA.subtitle) + '</div>' +
-        '</div>' +
-        '<button type="button" class="btn btn-sm rehearsal-collapse-btn" id="btn-toggle-rehearsal">收起 ▲</button>' +
-      '</div>' +
-      '<div class="rehearsal-notice-body" id="rehearsal-notice-body">' +
-        '<div class="rehearsal-house-grid">' + houseCardsHtml + '</div>' +
-        '<div class="rehearsal-extra-banners">' +
-          '<div class="rehearsal-extra-item is-thursday' + (isThu ? ' is-today' : '') + '">' +
-            '<span class="rehearsal-extra-icon">⏰</span>' +
-            '<div>' +
-              '<strong>星期四开幕总彩排：</strong>' +
-              '<span>早上 <strong>8:10</strong> 静坐后进行运动会开幕彩排，直到<strong>第四节结束</strong>（全体色队学生必须参与）。</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="rehearsal-extra-item is-relay">' +
-            '<span class="rehearsal-extra-icon">🏃</span>' +
-            '<div>' +
-              '<strong>4×100m、4×400m 接力赛放学练习：</strong>' +
-              '<span>凡有报名接力赛的同学，请色队老师督促同学在 <strong>星期一、二、三 放学后 4:00pm</strong> 到 <strong>草场</strong> 进行练习。</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-
-    var toggleBtn = panelEl.querySelector('#btn-toggle-rehearsal');
-    var bodyEl = panelEl.querySelector('#rehearsal-notice-body');
-    if (toggleBtn && bodyEl) {
-      toggleBtn.addEventListener('click', function () {
-        var collapsed = panelEl.classList.toggle('is-collapsed');
-        bodyEl.style.display = collapsed ? 'none' : '';
-        toggleBtn.textContent = collapsed ? '展开地点表 ▼' : '收起 ▲';
-      });
-    }
-  }
-
   function renderPublicTopWidgets(state, filters) {
     renderPublicLiveTicker(document.getElementById('public-live-ticker'), state);
-    renderRehearsalNoticePanel(document.getElementById('rehearsal-notice-section'));
     renderDayTabButtons(document.getElementById('daily-day-tabs'), filters.day, state, ['18/11', '02/12', 'early', 'all']);
     renderDayTabButtons(document.getElementById('filter-day'), filters.day, state, ['all', '18/11', '02/12', 'early']);
     renderDailyCardsStrip(
